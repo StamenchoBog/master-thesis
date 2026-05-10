@@ -20,7 +20,7 @@ services:
       - superlink:9091
     environment:
       FL_STRATEGY: fedprox      # fedavg | fedprox | krum | trimmedmean
-      NUM_ROUNDS: "10"
+      NUM_ROUNDS: "20"
       MIN_FIT_CLIENTS: "3"
       MIN_EVAL_CLIENTS: "3"
       MIN_AVAILABLE_CLIENTS: "3"
