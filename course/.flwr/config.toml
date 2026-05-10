@@ -1,0 +1,12 @@
+[superlink]
+default = "docker"
+
+# Used by the runner container inside Docker
+[superlink.docker]
+address = "superlink:9093"
+insecure = true
+
+# Use when running `flwr run .` from your host machine
+[superlink.local]
+address = "127.0.0.1:9093"
+insecure = true

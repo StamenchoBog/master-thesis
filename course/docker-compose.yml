@@ -1,0 +1,177 @@
+services:
+  superlink:
+    image: flwr/superlink:1.29.0
+    command:
+      - --insecure
+      - --isolation
+      - process
+    ports:
+      - "9093:9093"
+    networks:
+      - fl-network
+
+  superexec-serverapp:
+    image: flwr/superexec:1.29.0
+    command:
+      - --insecure
+      - --plugin-type
+      - serverapp
+      - --appio-api-address
+      - superlink:9091
+    environment:
+      FL_STRATEGY: fedprox      # fedavg | fedprox | krum | trimmedmean
+      NUM_ROUNDS: "10"
+      MIN_FIT_CLIENTS: "3"
+      MIN_EVAL_CLIENTS: "3"
+      MIN_AVAILABLE_CLIENTS: "3"
+    restart: on-failure:3
+    depends_on:
+      - superlink
+    networks:
+      - fl-network
+
+  # Preprocesses all CSV partitions into .npz cache files before training starts.
+  # Runs once and exits — clientapp services wait for it to complete.
+  preprocessor:
+    build: ./edge_nodes
+    entrypoint: python
+    command: /src/preprocess.py
+    environment:
+      DATA_DIR: /data
+      NUM_PARTITIONS: "3"
+    volumes:
+      - ./edge_nodes:/src:ro
+      - ./data:/data
+    networks:
+      - fl-network
+
+  supernode-1:
+    image: flwr/supernode:1.29.0
+    command:
+      - --insecure
+      - --superlink
+      - superlink:9092
+      - --clientappio-api-address
+      - 0.0.0.0:9094
+      - --isolation
+      - process
+      - --node-config
+      - "partition-id=0 num-partitions=3"
+    depends_on:
+      - superlink
+    networks:
+      - fl-network
+
+  superexec-clientapp-1:
+    build: ./edge_nodes
+    command:
+      - --insecure
+      - --plugin-type
+      - clientapp
+      - --appio-api-address
+      - supernode-1:9094
+    environment:
+      DATA_DIR: /data
+    depends_on:
+      supernode-1:
+        condition: service_started
+      preprocessor:
+        condition: service_completed_successfully
+    volumes:
+      - ./data:/data:ro
+    networks:
+      - fl-network
+
+  supernode-2:
+    image: flwr/supernode:1.29.0
+    command:
+      - --insecure
+      - --superlink
+      - superlink:9092
+      - --clientappio-api-address
+      - 0.0.0.0:9095
+      - --isolation
+      - process
+      - --node-config
+      - "partition-id=1 num-partitions=3"
+    depends_on:
+      - superlink
+    networks:
+      - fl-network
+
+  superexec-clientapp-2:
+    build: ./edge_nodes
+    command:
+      - --insecure
+      - --plugin-type
+      - clientapp
+      - --appio-api-address
+      - supernode-2:9095
+    environment:
+      DATA_DIR: /data
+    depends_on:
+      supernode-2:
+        condition: service_started
+      preprocessor:
+        condition: service_completed_successfully
+    volumes:
+      - ./data:/data:ro
+    networks:
+      - fl-network
+
+  supernode-3:
+    image: flwr/supernode:1.29.0
+    command:
+      - --insecure
+      - --superlink
+      - superlink:9092
+      - --clientappio-api-address
+      - 0.0.0.0:9096
+      - --isolation
+      - process
+      - --node-config
+      - "partition-id=2 num-partitions=3"
+    depends_on:
+      - superlink
+    networks:
+      - fl-network
+
+  superexec-clientapp-3:
+    build: ./edge_nodes
+    command:
+      - --insecure
+      - --plugin-type
+      - clientapp
+      - --appio-api-address
+      - supernode-3:9096
+    environment:
+      DATA_DIR: /data
+    depends_on:
+      supernode-3:
+        condition: service_started
+      preprocessor:
+        condition: service_completed_successfully
+    volumes:
+      - ./data:/data:ro
+    networks:
+      - fl-network
+
+  runner:
+    image: flwr/base:1.29.0-py3.13-ubuntu24.04
+    command: sh -c "sleep 5 && flwr run . --stream"
+    working_dir: /app
+    environment:
+      FLWR_HOME: /app/.flwr
+    volumes:
+      - .:/app
+    depends_on:
+      - superexec-serverapp
+      - superexec-clientapp-1
+      - superexec-clientapp-2
+      - superexec-clientapp-3
+    networks:
+      - fl-network
+
+networks:
+  fl-network:
+    driver: bridge

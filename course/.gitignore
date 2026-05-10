@@ -1,0 +1,12 @@
+# Dataset and generated caches — too large for git
+data/*.csv
+data/**/*.csv
+data/.cache/
+
+# Flower CLI runtime cache
+.flwr/.cache/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo

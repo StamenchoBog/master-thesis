@@ -1,0 +1,26 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "fl-ids"
+version = "1.0.0"
+description = "Federated Learning for IoT network attack detection using the TON_IoT dataset"
+license = { text = "MIT" }
+dependencies = [
+    "flwr>=1.29.0",
+    "torch",
+    "pandas",
+    "scikit-learn",
+    "numpy",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["server", "edge_nodes"]
+
+[tool.flwr.app]
+publisher = "thesis"
+
+[tool.flwr.app.components]
+serverapp = "server.server_app:app"
+clientapp = "edge_nodes.client_app:app"
