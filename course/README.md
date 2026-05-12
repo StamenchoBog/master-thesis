@@ -4,11 +4,15 @@ Proof-of-concept FL system that trains an intrusion detection model across three
 
 ![Architecture](./docs/msc-thesis-diagrams-course.png)
 
+## Dataset
+
+Download the **TON_IoT Network dataset** from [research.unsw.edu.au/projects/toniot-datasets](https://research.unsw.edu.au/projects/toniot-datasets) and place all 23 `Network_dataset_*.csv` files into `data/`. The CSVs are excluded from git (3.3 GB total).
+
 ## Quick start
 
 Requires Docker Desktop with at least 12 GB memory allocated (Settings > Resources > Memory).
 
-1. Place the TON_IoT CSV files in `data/`.
+1. Download the dataset and place the 23 CSV files in `data/` (see above).
 2. Build partition caches (run once):
    ```sh
    docker compose run --rm preprocessor

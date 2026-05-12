@@ -1,6 +1,5 @@
-# Dataset and generated caches — too large for git
+# TON_IoT dataset — download from https://research.unsw.edu.au/projects/toniot-datasets
 data/*.csv
-data/**/*.csv
 data/.cache/
 
 # Flower CLI runtime cache
@@ -8,5 +7,9 @@ data/.cache/
 
 # Python
 __pycache__/
-*.pyc
-*.pyo
+*.py[cod]
+*.egg-info/
+.venv/
+
+# Docker
+.env
