@@ -1,8 +1,11 @@
+name: fl-ids
+
 ### Shared templates
 x-supernode: &supernode
   image: flwr/supernode:1.29.0
   depends_on:
-    - superlink
+    toxiproxy-setup:
+      condition: service_completed_successfully
   networks:
     - fl-network
 
@@ -16,6 +19,8 @@ x-clientapp: &clientapp
     - fl-network
 
 services:
+
+  ### Infrastructure
   superlink:
     image: flwr/superlink:1.29.0
     command:
@@ -27,7 +32,7 @@ services:
     networks:
       - fl-network
 
-  ### Data preparation (runs once) 
+  ### Data preparation (runs once)
   preprocessor:
     build: ./edge_nodes
     entrypoint: python
@@ -56,7 +61,7 @@ services:
       MIN_FIT_CLIENTS: "3"
       MIN_EVAL_CLIENTS: "3"
       MIN_AVAILABLE_CLIENTS: "3"
-      RESULTS_SUFFIX: _chaos   # appended to result filename — remove for baseline runs
+      RESULTS_SUFFIX: ""       # set to e.g. _chaos to avoid overwriting baseline results
     restart: on-failure:3
     volumes:
       - ./results:/results
@@ -65,13 +70,44 @@ services:
     networks:
       - fl-network
 
+  ### Chaos engineering
+  # toxiproxy sits between supernodes and superlink on port 19092,
+  # injecting 5ms ± 3ms latency to simulate inter-VLAN routing in a wired hospital LAN.
+  toxiproxy:
+    image: ghcr.io/shopify/toxiproxy:latest
+    ports:
+      - "8474:8474"    # REST API — useful for inspecting/adjusting toxins at runtime
+      - "19092:19092"  # FL communication proxy (supernode → superlink)
+    depends_on:
+      - superlink
+    networks:
+      - fl-network
+
+  toxiproxy-setup:
+    image: curlimages/curl:latest
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        sleep 2 &&
+        curl -sf -X POST http://toxiproxy:8474/proxies \
+          -H 'Content-Type: application/json' \
+          -d '{"name":"superlink-fl","listen":"0.0.0.0:19092","upstream":"superlink:9092","enabled":true}' &&
+        curl -sf -X POST http://toxiproxy:8474/proxies/superlink-fl/toxics \
+          -H 'Content-Type: application/json' \
+          -d '{"name":"latency","type":"latency","stream":"upstream","toxicity":1.0,"attributes":{"latency":5,"jitter":3}}'
+    depends_on:
+      - toxiproxy
+    networks:
+      - fl-network
+
   ### Edge node 1
   supernode-1:
     <<: *supernode
+    container_name: supernode-1
     command:
       - --insecure
       - --superlink
-      - superlink:9092
+      - toxiproxy:19092
       - --clientappio-api-address
       - 0.0.0.0:9094
       - --isolation
@@ -96,10 +132,11 @@ services:
   ### Edge node 2
   supernode-2:
     <<: *supernode
+    container_name: supernode-2
     command:
       - --insecure
       - --superlink
-      - superlink:9092
+      - toxiproxy:19092
       - --clientappio-api-address
       - 0.0.0.0:9095
       - --isolation
@@ -124,10 +161,11 @@ services:
   ### Edge node 3
   supernode-3:
     <<: *supernode
+    container_name: supernode-3
     command:
       - --insecure
       - --superlink
-      - superlink:9092
+      - toxiproxy:19092
       - --clientappio-api-address
       - 0.0.0.0:9096
       - --isolation
@@ -163,27 +201,6 @@ services:
       - superexec-clientapp-1
       - superexec-clientapp-2
       - superexec-clientapp-3
-    networks:
-      - fl-network
-
-  ### Chaos engineering
-  # Simulates wired LAN conditions (inter-VLAN routing through a firewall):
-  # 5ms ± 3ms latency, 0.1% packet loss. Prevents containers behaving as localhost.
-  pumba:
-    image: gaiaadm/pumba:latest
-    command: >
-      netem
-      --duration 3h
-      --tc-image ghcr.io/alexei-led/pumba-tc-alpine:latest
-      delay --time 5 --jitter 3 --distribution normal
-      loss --percent 0.1
-      supernode-1 supernode-2 supernode-3
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    depends_on:
-      - supernode-1
-      - supernode-2
-      - supernode-3
     networks:
       - fl-network
 

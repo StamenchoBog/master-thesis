@@ -59,6 +59,22 @@ def fit_config(server_round: int) -> dict:
     return {"local_epochs": 1, "lr": 0.001}
 
 
+class ResilientFedAvg(FedAvg):
+    """FedAvg that reuses the previous round's weights if too few clients respond."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._last_good_weights = None
+
+    def aggregate_fit(self, server_round, results, failures):
+        if len(results) < self.min_fit_clients:
+            print(f"[Round {server_round}] Only {len(results)} clients responded — reusing previous weights.")
+            return self._last_good_weights, {}
+        aggregated = super().aggregate_fit(server_round, results, failures)
+        self._last_good_weights = aggregated
+        return aggregated
+
+
 def get_strategy():
     """Instantiate the aggregation strategy selected via the FL_STRATEGY env var."""
     common = dict(
@@ -78,14 +94,14 @@ def get_strategy():
     elif FL_STRATEGY == "trimmedmean":
         return FedTrimmedAvg(**common)
     else:
-        return FedAvg(**common)
+        return ResilientFedAvg(**common)
 
 
 def server_fn(context):
     """Entry point called by Flower to create the server components for this run."""
     return ServerAppComponents(
         strategy=get_strategy(),
-        config=ServerConfig(num_rounds=NUM_ROUNDS, round_timeout=3600),
+        config=ServerConfig(num_rounds=NUM_ROUNDS),
     )
 
 
