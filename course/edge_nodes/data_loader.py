@@ -16,31 +16,24 @@ DROP_COLS = ["ts", "src_ip", "dst_ip", "src_mac", "dst_mac", "Unnamed: 0", "type
 
 
 def _cache_path(partition_id: int, num_partitions: int) -> str:
+    """Return the .npz path for a given partition."""
     return os.path.join(CACHE_DIR, f"partition_{partition_id}_of_{num_partitions}.npz")
 
 
 def load_data(partition_id: int, num_partitions: int, batch_size: int = 512):
-    """Load the TON_IoT dataset and return data loaders for one partition.
+    """Load a partition of the TON_IoT dataset and return train/val data loaders.
 
-    Uses a two-level cache strategy:
-    1. If a .npz cache exists for this partition, load it directly (~1s).
-    2. Otherwise, load from CSV, keep only the agreed-upon numeric columns
-       (from columns.json), normalise, and save to cache.
-
-    The column list in columns.json is created by preprocess.py by taking the
-    intersection of numeric columns across all CSV files. This guarantees every
-    node builds a model with the same input_dim, so global weights are always
-    compatible during aggregation.
+    Loads from .npz cache if available (~1s), otherwise reads from CSV and
+    writes the cache. The column list in columns.json — written by preprocess.py —
+    ensures every node uses the same features so global weights stay compatible.
 
     Args:
-        partition_id:    Index of this node (0-based).
-        num_partitions:  Total number of nodes.
-        batch_size:      Mini-batch size for both loaders.
+        partition_id:   Index of this node (0-based).
+        num_partitions: Total number of nodes.
+        batch_size:     Mini-batch size for both loaders.
 
     Returns:
-        trainloader: DataLoader for the training split.
-        valloader:   DataLoader for the validation split.
-        input_dim:   Number of features — passed to IDS_Model at construction time.
+        Tuple of (trainloader, valloader, input_dim).
     """
     cache = _cache_path(partition_id, num_partitions)
 

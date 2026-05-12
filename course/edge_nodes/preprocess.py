@@ -1,14 +1,3 @@
-"""Pre-processes all data partitions and saves them as .npz cache files.
-
-Run by the `preprocessor` docker-compose service before the FL federation starts.
-
-Step 1 — scans all CSV files to find the numeric columns present in every file.
-         Saves that agreed-upon column list to columns.json so all nodes use
-         identical features and the global model weights are always compatible.
-
-Step 2 — preprocesses each partition and saves a compressed .npz cache so each
-         round loads in ~1 second instead of re-reading CSV files.
-"""
 import glob
 import json
 import os

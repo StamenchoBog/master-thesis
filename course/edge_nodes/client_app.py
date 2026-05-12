@@ -7,41 +7,41 @@ from .model import IDS_Model
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+
 class FlowerClient(NumPyClient):
     """Flower client that trains and evaluates the IDS model on a local data partition."""
 
     def __init__(self, model, trainloader, valloader):
-        """Store the model and the train/validation data loaders for this node."""
+        """Store the model, data loaders, and shared loss criterion for this node."""
         self.model = model
         self.trainloader = trainloader
         self.valloader = valloader
+        self.criterion = torch.nn.BCELoss()
 
     def get_parameters(self, config):
-        """Extract model weights as a list of NumPy arrays to send to the server."""
+        """Return current model weights as a list of NumPy arrays."""
         return [val.cpu().numpy() for val in self.model.state_dict().values()]
 
     def set_parameters(self, parameters):
-        """Replace the model weights with the global weights received from the server."""
+        """Load a list of NumPy arrays into the model as its new weights."""
         state_dict = {k: torch.tensor(v) for k, v in zip(self.model.state_dict().keys(), parameters)}
         self.model.load_state_dict(state_dict, strict=True)
 
     def fit(self, parameters, config):
-        """Train the model on local data for one federation round.
+        """Train on local data for one federation round and return updated weights.
 
-        The server sends the current global weights and a config dict with
-        `local_epochs` and `lr`. After training, the updated weights and
-        average training loss are returned to the server for aggregation.
+        Reads `local_epochs` and `lr` from the server config each round so the
+        server can adjust hyperparameters without rebuilding the client image.
         """
         self.set_parameters(parameters)
         optimizer = torch.optim.Adam(self.model.parameters(), lr=float(config.get("lr", 0.001)))
-        criterion = torch.nn.BCELoss()
         self.model.train()
         total_loss, batches = 0.0, 0
         for _ in range(int(config.get("local_epochs", 1))):
             for X, y in self.trainloader:
                 X, y = X.to(DEVICE), y.to(DEVICE).float()
                 optimizer.zero_grad()
-                loss = criterion(self.model(X).squeeze(), y)
+                loss = self.criterion(self.model(X).squeeze(), y)
                 loss.backward()
                 optimizer.step()
                 total_loss += loss.item()
@@ -49,15 +49,12 @@ class FlowerClient(NumPyClient):
         return self.get_parameters({}), len(self.trainloader.dataset), {"train_loss": total_loss / max(batches, 1)}
 
     def evaluate(self, parameters, config):
-        """Evaluate the global model on this node's local validation set.
+        """Evaluate the global model on the local validation set.
 
-        Returns BCE loss, number of samples, and four classification metrics:
-        accuracy, precision, recall, and F1. Precision and recall matter more
-        than accuracy here because the dataset is class-imbalanced — a model
-        predicting 'normal' for everything would score high accuracy but zero recall.
+        Returns BCE loss, sample count, and accuracy/precision/recall/F1.
+        F1 is the primary metric — accuracy is misleading on class-imbalanced data.
         """
         self.set_parameters(parameters)
-        criterion = torch.nn.BCELoss()
         total_loss = 0.0
         tp = fp = fn = correct = 0
         self.model.eval()
@@ -65,7 +62,7 @@ class FlowerClient(NumPyClient):
             for X, y in self.valloader:
                 X, y = X.to(DEVICE), y.to(DEVICE).float()
                 pred = self.model(X).squeeze()
-                total_loss += criterion(pred, y).item()
+                total_loss += self.criterion(pred, y).item()
                 predicted = (pred > 0.5).long()
                 labels = y.long()
                 correct += (predicted == labels).sum().item()
@@ -87,9 +84,8 @@ class FlowerClient(NumPyClient):
 def client_fn(context: Context):
     """Instantiate a FlowerClient for this SuperNode.
 
-    Flower calls this once per run. The partition-id and num-partitions values
-    come from the --node-config flag set on each SuperNode in docker-compose,
-    so each node automatically trains on a different slice of the dataset.
+    Partition assignment comes from the --node-config flag on each SuperNode
+    in docker-compose, so each container trains on a different data slice.
     """
     partition_id = int(context.node_config["partition-id"])
     num_partitions = int(context.node_config["num-partitions"])

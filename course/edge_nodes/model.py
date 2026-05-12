@@ -6,11 +6,11 @@ class IDS_Model(nn.Module):
     """MLP binary classifier: outputs the probability that a network flow is an attack."""
 
     def __init__(self, input_dim: int, hidden_dims: list[int] | None = None):
-        """Build the network as a stack of Linear → ReLU → BatchNorm → Dropout blocks.
+        """Build a stack of Linear → ReLU → BatchNorm → Dropout blocks.
 
         Args:
-            input_dim:   Number of input features (determined at runtime from the dataset).
-            hidden_dims: Sizes of the hidden layers. Defaults to [128, 64, 32].
+            input_dim:   Number of input features, determined at runtime from the dataset.
+            hidden_dims: Hidden layer sizes. Defaults to [128, 64, 32].
         """
         super().__init__()
         if hidden_dims is None:
@@ -25,5 +25,5 @@ class IDS_Model(nn.Module):
         self.net = nn.Sequential(*layers)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Run a forward pass and return a probability in [0, 1] per sample."""
+        """Return attack probability in [0, 1] for each sample."""
         return self.net(x)
