@@ -1,7 +1,24 @@
 # Experiment Results
 
-Dataset: TON_IoT (23 CSV files, ~22M rows, 15 features)
-Nodes: 3 | Batch size: 512 | Local epochs: 1 | Optimizer: Adam (lr=0.001)
+Four federated learning strategies compared on binary network intrusion detection.
+Dataset: TON_IoT (23 CSV files, ~22M rows, 15 features) | Nodes: 3 | Rounds: 10
+Training: batch 512 · 1 local epoch · Adam lr=0.001
+
+---
+
+## Metrics
+
+Aggregated server-side as a weighted average (by sample count) over all nodes' validation splits.
+
+| Metric | Why it matters |
+|---|---|
+| **Train Loss** (BCE) | Tracks learning speed; spikes signal client drift or convergence stall |
+| **Accuracy** | Reported for completeness — misleading on imbalanced data |
+| **Precision** | Low → false alarms (alert fatigue) |
+| **Recall** | Low → missed attacks (primary failure mode for an IDS) |
+| **F1** ★ | Harmonic mean of precision/recall; primary metric for imbalanced classification |
+
+Round-by-round F1 oscillation is normal in FL: aggregating non-IID local weights temporarily degrades the global model before it re-adapts.
 
 ---
 
