@@ -5,15 +5,14 @@ import sys
 
 import numpy as np
 import pandas as pd
-
-sys.path.insert(0, os.path.dirname(__file__))
+from sklearn.preprocessing import StandardScaler
 
 DATA_DIR = os.getenv("DATA_DIR", "/app/data")
 CACHE_DIR = os.path.join(DATA_DIR, ".cache")
 COLUMNS_FILE = os.path.join(CACHE_DIR, "columns.json")
 NUM_PARTITIONS = int(os.getenv("NUM_PARTITIONS", "3"))
 
-DROP_COLS = ["ts", "src_ip", "dst_ip", "src_mac", "dst_mac", "Unnamed: 0", "type", "label"]
+METADATA_COLS = ["ts", "src_ip", "dst_ip", "src_mac", "dst_mac", "Unnamed: 0", "type"]
 
 all_csvs = sorted(glob.glob(os.path.join(DATA_DIR, "**", "*.csv"), recursive=True))
 if not all_csvs:
@@ -33,7 +32,7 @@ print(f"=== Step 1: Finding common numeric columns across {len(all_csvs)} CSV fi
 common_cols = None
 for f in all_csvs:
     df = pd.read_csv(f, low_memory=False)
-    df.drop(columns=[c for c in DROP_COLS if c in df.columns], inplace=True)
+    df.drop(columns=[c for c in METADATA_COLS + ["label"] if c in df.columns], inplace=True)
     numeric = set(df.select_dtypes(include=[np.number]).columns)
     common_cols = numeric if common_cols is None else common_cols.intersection(numeric)
 
@@ -45,10 +44,24 @@ with open(COLUMNS_FILE, "w") as f:
 
 print(f"Column list saved to {COLUMNS_FILE}")
 
-from data_loader import load_data  # noqa: E402
-
 for partition_id in range(NUM_PARTITIONS):
     print(f"\n=== Step 2: Preprocessing partition {partition_id + 1}/{NUM_PARTITIONS} ===")
-    load_data(partition_id, NUM_PARTITIONS)
+    cache_path = os.path.join(CACHE_DIR, f"partition_{partition_id}_of_{NUM_PARTITIONS}.npz")
+
+    assigned = np.array_split(all_csvs, NUM_PARTITIONS)[partition_id]
+    print(f"  Files: {[os.path.basename(f) for f in assigned]}")
+
+    df = pd.concat(
+        [pd.read_csv(f, low_memory=False) for f in assigned],
+        ignore_index=True,
+    )
+    df.drop(columns=[c for c in METADATA_COLS if c in df.columns], inplace=True)
+    y = df.pop("label").values.astype(np.int64)
+
+    available = [c for c in common_cols if c in df.columns]
+    X = StandardScaler().fit_transform(df[available].values).astype(np.float32)
+
+    np.savez_compressed(cache_path, X=X, y=y)
+    print(f"  Saved: {cache_path}")
 
 print("\nAll partitions cached. Ready for FL run.")

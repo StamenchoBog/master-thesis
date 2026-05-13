@@ -16,10 +16,13 @@ Requires Docker Desktop with at least 12 GB memory allocated (Settings > Resourc
 
 1. Download the dataset and place the 23 CSV files in `data/` (see above).
 2. Build partition caches (run once):
+
    ```sh
    docker compose run --rm preprocessor
    ```
+
 3. Start the federation:
+
    ```sh
    docker compose up
    ```

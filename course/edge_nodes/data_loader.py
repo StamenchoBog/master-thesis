@@ -1,31 +1,19 @@
-import glob
-import json
 import os
 
 import numpy as np
-import pandas as pd
 import torch
-from sklearn.preprocessing import StandardScaler
 from torch.utils.data import DataLoader, TensorDataset
 
 DATA_DIR = os.getenv("DATA_DIR", "/app/data")
 CACHE_DIR = os.path.join(DATA_DIR, ".cache")
-COLUMNS_FILE = os.path.join(CACHE_DIR, "columns.json")
-
-DROP_COLS = ["ts", "src_ip", "dst_ip", "src_mac", "dst_mac", "Unnamed: 0", "type"]
 
 
 def _cache_path(partition_id: int, num_partitions: int) -> str:
-    """Return the .npz path for a given partition."""
     return os.path.join(CACHE_DIR, f"partition_{partition_id}_of_{num_partitions}.npz")
 
 
 def load_data(partition_id: int, num_partitions: int, batch_size: int = 512):
-    """Load a partition of the TON_IoT dataset and return train/val data loaders.
-
-    Loads from .npz cache if available (~1s), otherwise reads from CSV and
-    writes the cache. The column list in columns.json — written by preprocess.py —
-    ensures every node uses the same features so global weights stay compatible.
+    """Load a pre-built partition from the .npz cache and return train/val data loaders.
 
     Args:
         partition_id:   Index of this node (0-based).
@@ -36,41 +24,15 @@ def load_data(partition_id: int, num_partitions: int, batch_size: int = 512):
         Tuple of (trainloader, valloader, input_dim).
     """
     cache = _cache_path(partition_id, num_partitions)
-
-    if os.path.exists(cache):
-        print(f"[Node {partition_id}] Loading from cache: {cache}")
-        data = np.load(cache)
-        X, y = data["X"], data["y"]
-    else:
-        csvs = sorted(glob.glob(os.path.join(DATA_DIR, "**", "*.csv"), recursive=True))
-        if not csvs:
-            raise FileNotFoundError(f"No CSV files found in {DATA_DIR}. Place the TON_IoT dataset there and re-run.")
-
-        if not os.path.exists(COLUMNS_FILE):
-            raise FileNotFoundError(
-                f"Column list not found at {COLUMNS_FILE}. "
-                "Run the preprocessor service first: docker compose run preprocessor"
-            )
-        with open(COLUMNS_FILE) as f:
-            use_cols = json.load(f)
-
-        assigned = np.array_split(csvs, num_partitions)[partition_id]
-        print(f"[Node {partition_id}] Preprocessing {len(assigned)} file(s): {[os.path.basename(f) for f in assigned]}")
-
-        df = pd.concat(
-            [pd.read_csv(f, low_memory=False) for f in assigned],
-            ignore_index=True,
+    if not os.path.exists(cache):
+        raise FileNotFoundError(
+            f"Cache not found: {cache}. "
+            "Run the preprocessor first: docker compose run --rm preprocessor"
         )
-        df.drop(columns=[c for c in DROP_COLS if c in df.columns], inplace=True)
-        y = df.pop("label").values.astype(np.int64)
 
-        available = [c for c in use_cols if c in df.columns]
-        X = StandardScaler().fit_transform(df[available].values).astype(np.float32)
-
-        os.makedirs(CACHE_DIR, exist_ok=True)
-        np.savez_compressed(cache, X=X, y=y)
-        print(f"[Node {partition_id}] Cache saved to {cache}")
-
+    print(f"[Node {partition_id}] Loading from cache: {cache}")
+    data = np.load(cache)
+    X, y = data["X"], data["y"]
     split = int(0.8 * len(X))
 
     def make_loader(Xa, ya, shuffle):
