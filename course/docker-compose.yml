@@ -20,19 +20,16 @@ x-clientapp: &clientapp
 
 services:
 
-  ### Infrastructure
+  ### Central Flower coordinator
   superlink:
     image: flwr/superlink:1.29.0
-    command:
-      - --insecure
-      - --isolation
-      - process
+    command: [--insecure, --isolation, process]
     ports:
       - "9093:9093"
     networks:
       - fl-network
 
-  ### Data preparation (runs once)
+  ### Pre-processor (splits CSVs into per-node .npz caches — runs once, then exits)
   preprocessor:
     build: ./edge_nodes
     entrypoint: python
@@ -46,15 +43,10 @@ services:
     networks:
       - fl-network
 
-  ### Server (Aggregator)
+  ### FL central server (Aggregator)
   superexec-serverapp:
     image: flwr/superexec:1.29.0
-    command:
-      - --insecure
-      - --plugin-type
-      - serverapp
-      - --appio-api-address
-      - superlink:9091
+    command: [--insecure, --plugin-type, serverapp, --appio-api-address, superlink:9091]
     environment:
       FL_STRATEGY: fedavg      # fedavg | fedprox | krum | trimmedmean
       NUM_ROUNDS: "10"
@@ -71,13 +63,13 @@ services:
       - fl-network
 
   ### Chaos engineering
-  # toxiproxy sits between supernodes and superlink on port 19092,
-  # injecting 5ms ± 3ms latency to simulate inter-VLAN routing in a wired hospital LAN.
+  # toxiproxy intercepts traffic between supernodes and superlink (port 19092),
+  # injecting 5ms ± 3ms latency to simulate inter-VLAN routing on a wired LAN.
   toxiproxy:
     image: ghcr.io/shopify/toxiproxy:latest
     ports:
-      - "8474:8474"    # REST API — useful for inspecting/adjusting toxins at runtime
-      - "19092:19092"  # FL communication proxy (supernode → superlink)
+      - "8474:8474"    # REST API for inspecting or adjusting toxins at runtime
+      - "19092:19092"  # Proxied FL traffic (supernode → superlink)
     depends_on:
       - superlink
     networks:
@@ -88,10 +80,10 @@ services:
     entrypoint: ["sh", "-c"]
     command:
       - |
-        sleep 2 &&
+        sleep 2
         curl -sf -X POST http://toxiproxy:8474/proxies \
           -H 'Content-Type: application/json' \
-          -d '{"name":"superlink-fl","listen":"0.0.0.0:19092","upstream":"superlink:9092","enabled":true}' &&
+          -d '{"name":"superlink-fl","listen":"0.0.0.0:19092","upstream":"superlink:9092","enabled":true}'
         curl -sf -X POST http://toxiproxy:8474/proxies/superlink-fl/toxics \
           -H 'Content-Type: application/json' \
           -d '{"name":"latency","type":"latency","stream":"upstream","toxicity":1.0,"attributes":{"latency":5,"jitter":3}}'
@@ -100,7 +92,7 @@ services:
     networks:
       - fl-network
 
-  ### Edge node 1
+  ### Edge Nodes
   supernode-1:
     <<: *supernode
     container_name: supernode-1
@@ -117,19 +109,13 @@ services:
 
   superexec-clientapp-1:
     <<: *clientapp
-    command:
-      - --insecure
-      - --plugin-type
-      - clientapp
-      - --appio-api-address
-      - supernode-1:9094
+    command: [--insecure, --plugin-type, clientapp, --appio-api-address, supernode-1:9094]
     depends_on:
       supernode-1:
         condition: service_started
       preprocessor:
         condition: service_completed_successfully
 
-  ### Edge node 2
   supernode-2:
     <<: *supernode
     container_name: supernode-2
@@ -146,19 +132,13 @@ services:
 
   superexec-clientapp-2:
     <<: *clientapp
-    command:
-      - --insecure
-      - --plugin-type
-      - clientapp
-      - --appio-api-address
-      - supernode-2:9095
+    command: [--insecure, --plugin-type, clientapp, --appio-api-address, supernode-2:9095]
     depends_on:
       supernode-2:
         condition: service_started
       preprocessor:
         condition: service_completed_successfully
 
-  ### Edge node 3
   supernode-3:
     <<: *supernode
     container_name: supernode-3
@@ -175,19 +155,14 @@ services:
 
   superexec-clientapp-3:
     <<: *clientapp
-    command:
-      - --insecure
-      - --plugin-type
-      - clientapp
-      - --appio-api-address
-      - supernode-3:9096
+    command: [--insecure, --plugin-type, clientapp, --appio-api-address, supernode-3:9096]
     depends_on:
       supernode-3:
         condition: service_started
       preprocessor:
         condition: service_completed_successfully
 
-  ### Runner (for run submission)
+  # Submits the FL run to superlink after all services are ready
   runner:
     image: flwr/base:1.29.0-py3.13-ubuntu24.04
     command: sh -c "sleep 5 && flwr run . --stream"
@@ -204,6 +179,7 @@ services:
     networks:
       - fl-network
 
+### Network
 networks:
   fl-network:
     driver: bridge

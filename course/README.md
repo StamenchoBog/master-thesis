@@ -2,7 +2,9 @@
 
 Proof-of-concept FL system that trains an intrusion detection model across three edge nodes without sharing raw network traffic data. Built with [Flower](https://flower.ai) 1.29.0 and PyTorch on the [TON_IoT](https://research.unsw.edu.au/projects/toniot-datasets) dataset.
 
-![Architecture](./docs/msc-thesis-diagrams-course.png)
+![Architecture](./docs/diagrams/msc-thesis-diagrams-course.png)
+
+![Architecture (detailed)](./docs/diagrams/msc-thesis-diagrams-course-detailed.drawio.png)
 
 ## Dataset
 
