@@ -1,0 +1,8 @@
+[
+  {
+    "name": "superlink-fl",
+    "listen": "0.0.0.0:19092",
+    "upstream": "superlink:9092",
+    "enabled": true
+  }
+]

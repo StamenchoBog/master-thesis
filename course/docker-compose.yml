@@ -54,7 +54,6 @@ services:
       MIN_EVAL_CLIENTS: "3"
       MIN_AVAILABLE_CLIENTS: "3"
       RESULTS_SUFFIX: ""       # set to e.g. _chaos to avoid overwriting baseline results
-    restart: on-failure:3
     volumes:
       - ./results:/results
     depends_on:
@@ -62,14 +61,17 @@ services:
     networks:
       - fl-network
 
-  ### Chaos engineering
-  # toxiproxy intercepts traffic between supernodes and superlink (port 19092),
-  # injecting 5ms ± 3ms latency to simulate inter-VLAN routing on a wired LAN.
+  ### Chaos engineering — 5ms ± 3ms latency via toxiproxy to simulate inter-VLAN routing.
+  # Proxy is declared in toxiproxy.json; the toxic is added at runtime since
+  # toxiproxy's config format can't express toxics.
   toxiproxy:
     image: ghcr.io/shopify/toxiproxy:latest
+    command: ["-host=0.0.0.0", "-config=/config/toxiproxy.json"]
     ports:
-      - "8474:8474"    # REST API for inspecting or adjusting toxins at runtime
+      - "8474:8474"    # REST API
       - "19092:19092"  # Proxied FL traffic (supernode → superlink)
+    volumes:
+      - ./toxiproxy.json:/config/toxiproxy.json:ro
     depends_on:
       - superlink
     networks:
@@ -80,10 +82,7 @@ services:
     entrypoint: ["sh", "-c"]
     command:
       - |
-        sleep 2
-        curl -sf -X POST http://toxiproxy:8474/proxies \
-          -H 'Content-Type: application/json' \
-          -d '{"name":"superlink-fl","listen":"0.0.0.0:19092","upstream":"superlink:9092","enabled":true}'
+        until curl -sf http://toxiproxy:8474/version >/dev/null; do sleep 0.2; done
         curl -sf -X POST http://toxiproxy:8474/proxies/superlink-fl/toxics \
           -H 'Content-Type: application/json' \
           -d '{"name":"latency","type":"latency","stream":"upstream","toxicity":1.0,"attributes":{"latency":5,"jitter":3}}'
@@ -162,7 +161,6 @@ services:
       preprocessor:
         condition: service_completed_successfully
 
-  # Submits the FL run to superlink after all services are ready
   runner:
     image: flwr/base:1.29.0-py3.13-ubuntu24.04
     command: sh -c "sleep 5 && flwr run . --stream"
