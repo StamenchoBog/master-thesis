@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 
-class IDS_Model(nn.Module):
+class IDSModel(nn.Module):
     """MLP binary classifier: outputs the probability that a network flow is an attack."""
 
     def __init__(self, input_dim: int, hidden_dims: list[int] | None = None):

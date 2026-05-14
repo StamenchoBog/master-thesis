@@ -3,7 +3,7 @@ from flwr.client import ClientApp, NumPyClient
 from flwr.common import Context
 
 from .data_loader import load_data
-from .model import IDS_Model
+from .model import IDSModel
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -90,7 +90,7 @@ def client_fn(context: Context):
     partition_id = int(context.node_config["partition-id"])
     num_partitions = int(context.node_config["num-partitions"])
     trainloader, valloader, input_dim = load_data(partition_id, num_partitions)
-    model = IDS_Model(input_dim=input_dim).to(DEVICE)
+    model = IDSModel(input_dim=input_dim).to(DEVICE)
     return FlowerClient(model, trainloader, valloader).to_client()
 
 
