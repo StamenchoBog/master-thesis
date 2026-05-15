@@ -12,13 +12,3 @@ Each node trains the IDS model on its local data partition and returns updated w
 | `preprocess.py` | Finds common columns and builds `.npz` partition caches |
 | `Dockerfile` | Extends `flwr/superexec` with project dependencies |
 | `requirements.txt` | Python dependencies |
-
-## Preprocessing
-
-Run once before starting the federation:
-
-```sh
-docker compose run --rm preprocessor
-```
-
-Scans all CSV files for numeric columns present in every file, splits them into N partitions, and saves each as a compressed `.npz` cache. Skips automatically on subsequent runs if caches already exist.
