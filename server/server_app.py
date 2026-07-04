@@ -1,6 +1,8 @@
 import json
 import os
 
+import numpy as np
+from flwr.common import ndarrays_to_parameters, parameters_to_ndarrays
 from flwr.server import ServerApp, ServerAppComponents, ServerConfig
 from flwr.server.strategy import FedAvg, FedProx, FedTrimmedAvg, Krum
 
@@ -75,6 +77,29 @@ class ResilientFedAvg(FedAvg):
         return aggregated
 
 
+def _with_global_checkpoints(strategy):
+    """Save the aggregated global weights after every round (MSc experiment only).
+
+    Enabled via SAVE_GLOBAL_CHECKPOINTS=1; the course simulation leaves it off.
+    Checkpoints allow the round-resume logic after client-side recovery.
+    """
+    if os.getenv("SAVE_GLOBAL_CHECKPOINTS", "0") != "1":
+        return strategy
+    original = strategy.aggregate_fit
+
+    def aggregate_fit(server_round, results, failures):
+        aggregated, metrics = original(server_round, results, failures)
+        if aggregated is not None:
+            ckpt_dir = os.path.join(RESULTS_DIR, "global_checkpoints")
+            os.makedirs(ckpt_dir, exist_ok=True)
+            arrays = parameters_to_ndarrays(aggregated)
+            np.savez(os.path.join(ckpt_dir, f"round_{server_round}.npz"), *arrays)
+        return aggregated, metrics
+
+    strategy.aggregate_fit = aggregate_fit
+    return strategy
+
+
 def build_strategy():
     """Instantiate the aggregation strategy selected via the FL_STRATEGY env var."""
     common = dict(
@@ -87,6 +112,13 @@ def build_strategy():
         fit_metrics_aggregation_fn=aggregate_fit_metrics,
         evaluate_metrics_aggregation_fn=aggregate_eval_metrics,
     )
+    # Phase-4 rejoin (MSc): resume from the Phase-1 global model instead of a
+    # fresh random init — global forgetting-by-dilution is measured from there.
+    init_ckpt = os.getenv("INIT_FROM_CHECKPOINT", "")
+    if init_ckpt:
+        z = np.load(init_ckpt)
+        common["initial_parameters"] = ndarrays_to_parameters([z[f] for f in z.files])
+        print(f"Resuming global model from {init_ckpt}")
     if FL_STRATEGY == "fedprox":
         return FedProx(**common, proximal_mu=0.1)
     elif FL_STRATEGY == "krum":
@@ -100,7 +132,7 @@ def build_strategy():
 def server_fn(context):
     """Entry point called by Flower to create the server components for this run."""
     return ServerAppComponents(
-        strategy=build_strategy(),
+        strategy=_with_global_checkpoints(build_strategy()),
         config=ServerConfig(num_rounds=NUM_ROUNDS),
     )
 

@@ -1,0 +1,114 @@
+name: fl-ids-msc-host
+
+### MSc hybrid topology — host side.
+# Runs the coordinator, aggregator, and simulated nodes 1-2. The physical
+# Raspberry Pi joins over the LAN as node 3 (see docker-compose.edge.yml).
+# No toxiproxy: the LAN provides real network conditions.
+
+x-supernode: &supernode
+  image: flwr/supernode:1.29.0
+  networks:
+    - fl-network
+
+x-clientapp: &clientapp
+  build: ./edge_nodes
+  environment:
+    DATA_DIR: /data
+    CACHE_DIR: /data/.cache/msc
+    SEED: ${SEED:-42}
+  volumes:
+    - ./data:/data:ro
+  networks:
+    - fl-network
+
+services:
+
+  superlink:
+    image: flwr/superlink:1.29.0
+    command: [--insecure, --isolation, process]
+    ports:
+      - "9092:9092"   # Fleet API — published to the LAN for the Pi supernode
+      - "9093:9093"   # Exec API — for `flwr run` from the host
+    networks:
+      - fl-network
+
+  superexec-serverapp:
+    image: flwr/superexec:1.29.0
+    command: [--insecure, --plugin-type, serverapp, --appio-api-address, superlink:9091]
+    environment:
+      FL_STRATEGY: ${FL_STRATEGY:-fedavg}
+      NUM_ROUNDS: ${NUM_ROUNDS:-10}
+      MIN_FIT_CLIENTS: "3"
+      MIN_EVAL_CLIENTS: "3"
+      MIN_AVAILABLE_CLIENTS: "3"
+      RESULTS_SUFFIX: ${RESULTS_SUFFIX:-}
+      SAVE_GLOBAL_CHECKPOINTS: "1"   # per-round global weights for round-resume logic
+      INIT_FROM_CHECKPOINT: ${INIT_FROM_CHECKPOINT:-}   # Phase 4: /results/... .npz to resume from
+    volumes:
+      - ./results/msc:/results
+    depends_on:
+      - superlink
+    networks:
+      - fl-network
+
+  supernode-1:
+    <<: *supernode
+    container_name: msc-supernode-1
+    command:
+      - --insecure
+      - --superlink
+      - superlink:9092
+      - --clientappio-api-address
+      - 0.0.0.0:9094
+      - --isolation
+      - process
+      - --node-config
+      - "partition-id=0 num-partitions=3"
+    depends_on:
+      - superlink
+
+  superexec-clientapp-1:
+    <<: *clientapp
+    command: [--insecure, --plugin-type, clientapp, --appio-api-address, supernode-1:9094]
+    depends_on:
+      - supernode-1
+
+  supernode-2:
+    <<: *supernode
+    container_name: msc-supernode-2
+    command:
+      - --insecure
+      - --superlink
+      - superlink:9092
+      - --clientappio-api-address
+      - 0.0.0.0:9095
+      - --isolation
+      - process
+      - --node-config
+      - "partition-id=1 num-partitions=3"
+    depends_on:
+      - superlink
+
+  superexec-clientapp-2:
+    <<: *clientapp
+    command: [--insecure, --plugin-type, clientapp, --appio-api-address, supernode-2:9095]
+    depends_on:
+      - supernode-2
+
+  ### Job trigger — started explicitly by the run driver once the Pi is connected:
+  #   docker compose -f docker-compose.host.yml run --rm runner
+  runner:
+    profiles: [trigger]
+    image: flwr/base:1.29.0-py3.13-ubuntu24.04
+    command: sh -c "flwr run . --stream"
+    working_dir: /app
+    environment:
+      FLWR_HOME: /app/.flwr
+    volumes:
+      - .:/app
+    networks:
+      - fl-network
+
+networks:
+  fl-network:
+    driver: bridge

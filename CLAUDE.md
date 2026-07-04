@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 MSc thesis repo on Federated Learning for IoT network intrusion detection: an FL intrusion-detection system built with [Flower](https://flower.ai) 1.29.0 + PyTorch, trained on the TON_IoT dataset, extended with a physical Raspberry Pi 5 edge node for the MSc experiment (Naive Retraining vs. SISA unlearning after data poisoning — see the MSc section below).
 
-The codebase is unified at the repo root. The earlier course-assignment phase (simulation-only) is preserved at the `course-final` git tag; its results live in `results/course/`. Key directories: `edge_nodes/` (ClientApp), `server/` (ServerApp), `ansible/` (Pi provisioning), `experiments/` (MSc orchestration), `analysis/` (stats/plots), `results/{course,msc}/`.
+The codebase is unified at the repo root. The earlier course-assignment phase (simulation-only) is preserved at the `course-final` git tag; its results live in `results/course/`. Key directories: `edge_nodes/` (ClientApp), `server/` (ServerApp), `ansible/` (Pi provisioning), `experiments/` (MSc protocol + runbook + data prep), `analysis/` (stats), `results/{course,msc}/`. Experiment runs are executed manually per `experiments/RUNBOOK.md` — deliberately not automated, since the operator must be present for the power meter and cooldown anyway.
 
 ## Commands
 

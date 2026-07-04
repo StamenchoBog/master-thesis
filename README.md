@@ -15,7 +15,7 @@ The FL system is built with [Flower](https://flower.ai) 1.29.0 and PyTorch on th
 | `edge_nodes/` | ClientApp — local training, model, data pipeline, poisoning, SISA |
 | `server/` | ServerApp — aggregation strategy and round configuration |
 | `ansible/` | Raspberry Pi 5 edge-node provisioning |
-| `experiments/` | MSc experiment orchestration (cooldown gate, run driver, artifact collection) |
+| `experiments/` | MSc experiment: protocol, runbook, data prep, cooldown gate |
 | `analysis/` | Statistics and plots for experiment results |
 | `results/course/` | Course-phase results (FedAvg baseline + chaos, FedProx, Krum, TrimmedMean) |
 | `results/msc/` | MSc experiment outputs |

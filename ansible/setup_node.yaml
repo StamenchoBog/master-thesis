@@ -125,26 +125,55 @@
         mode: '0755'
         content: |
           #!/bin/bash
-          # Writing directly to RAM (/dev/shm) so telemetry doesn't use SD card IOPS
+          # RAM-based telemetry: writes only to /dev/shm so the SD card I/O
+          # metrics reflect the FL workload alone. 1 Hz sampling.
+          # I/O rates are per-second deltas (iostat without an interval reports
+          # since-boot averages, which is useless here). The Marker column
+          # mirrors /dev/shm/run_marker so experiment phases align with the trace.
           LOG_FILE="/dev/shm/hardware_telemetry_$(date +%Y%m%d_%H%M%S).csv"
-          
-          echo "Timestamp,Temp_C,CPU_Freq_MHz,RAM_Used_MB,CPU_Wait_Percent,SD_Read_kBps,SD_Write_kBps" > $LOG_FILE
-          echo "Logging hardware metrics to RAM: $LOG_FILE. Press Ctrl+C to stop."
-          
+          trap 'echo -e "\nSaved to: $LOG_FILE\nCopy this file off the Pi before rebooting!"' EXIT
+
+          read_temp() {
+            if command -v vcgencmd >/dev/null 2>&1; then
+              vcgencmd measure_temp | grep -oE '[0-9]+\.[0-9]+'
+            else
+              awk '{printf "%.1f", $1/1000}' /sys/class/thermal/thermal_zone0/temp
+            fi
+          }
+          read_throttled() {
+            if command -v vcgencmd >/dev/null 2>&1; then
+              vcgencmd get_throttled | cut -d= -f2
+            else
+              echo "n/a"
+            fi
+          }
+
+          read -r _ pu pn ps pi pw pq psq pst _ < /proc/stat
+          pstat=($(cat /sys/block/mmcblk0/stat))
+          prd=${pstat[2]}; pwr=${pstat[6]}
+
+          echo "Timestamp,Epoch_s,Temp_C,CPU_Freq_MHz,Throttled,RAM_Used_MB,IOWait_Pct,SD_Read_kBps,SD_Write_kBps,Marker" > "$LOG_FILE"
+          echo "Logging to RAM: $LOG_FILE (Ctrl+C to stop)"
+
           while true; do
-              TIMESTAMP=$(date +%H:%M:%S)
-              TEMP=$(vcgencmd measure_temp | egrep -o '[0-9]*\.[0-9]*')
-              FREQ=$(vcgencmd measure_clock arm | awk -F"=" '{print $2/1000000}')
-              RAM=$(free -m | awk 'NR==2{print $3}')
-              IOWAIT=$(top -bn1 | grep "Cpu(s)" | sed "s/.*, *\([0-9.]*\)%* wa.*/\1/")
-              IO_STATS=$(iostat -d -k mmcblk0 | awk 'NR==4 {print $3","$4}')
-              
-              echo "$TIMESTAMP,$TEMP,$FREQ,$RAM,$IOWAIT,$IO_STATS" >> $LOG_FILE
-              sleep 1
+            sleep 1
+            read -r _ u n s i w q sq st _ < /proc/stat
+            td=$(( (u+n+s+i+w+q+sq+st) - (pu+pn+ps+pi+pw+pq+psq+pst) ))
+            wd=$(( w - pw ))
+            iow=$(awk -v a="$wd" -v b="$td" 'BEGIN{ if (b>0) printf "%.1f", 100*a/b; else print "0.0" }')
+            pu=$u; pn=$n; ps=$s; pi=$i; pw=$w; pq=$q; psq=$sq; pst=$st
+
+            dstat=($(cat /sys/block/mmcblk0/stat))
+            rd=${dstat[2]}; wr=${dstat[6]}
+            rdk=$(( (rd - prd) / 2 )); wrk=$(( (wr - pwr) / 2 ))   # 512B sectors -> kB
+            prd=$rd; pwr=$wr
+
+            freq=$(awk '{printf "%.0f", $1/1000}' /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq)
+            ram=$(free -m | awk 'NR==2{print $3}')
+            marker=$(cat /dev/shm/run_marker 2>/dev/null || true)
+
+            echo "$(date +%H:%M:%S),$(date +%s),$(read_temp),$freq,$(read_throttled),$ram,$iow,$rdk,$wrk,$marker" >> "$LOG_FILE"
           done
-          
-          # Remind user where the file is when they stop the script
-          trap 'echo -e "\nSaved to: $LOG_FILE\nCopy this file to your home directory before rebooting!"' EXIT
 
   handlers:
     - name: restart docker

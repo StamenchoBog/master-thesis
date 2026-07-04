@@ -1,3 +1,7 @@
+import os
+import random
+
+import numpy as np
 import torch
 from flwr.client import ClientApp, NumPyClient
 from flwr.common import Context
@@ -6,6 +10,16 @@ from .data_loader import load_data
 from .model import IDSModel
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+SEED = int(os.getenv("SEED", "42"))
+CLIENT_MODE = os.getenv("CLIENT_MODE", "standard")  # standard (Arm A) | sisa (Arm B)
+RECOVERED_MODEL_PATH = os.getenv("RECOVERED_MODEL_PATH", "")
+
+
+def seed_everything(seed: int):
+    """Fix all RNGs for run-to-run comparability (MSc determinism requirement)."""
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
 
 
 class FlowerClient(NumPyClient):
@@ -27,13 +41,28 @@ class FlowerClient(NumPyClient):
         state_dict = {k: torch.tensor(v) for k, v in zip(self.model.state_dict().keys(), parameters)}
         self.model.load_state_dict(state_dict, strict=True)
 
+    def _apply_incoming(self, parameters):
+        """Adopt the broadcast global weights, or the recovered local model once.
+
+        After Phase-3 recovery the incoming global weights still carry poison
+        influence, so the first post-recovery fit starts from the recovered
+        model instead (one-time override, marked with a .used file).
+        """
+        marker = RECOVERED_MODEL_PATH + ".used" if RECOVERED_MODEL_PATH else ""
+        if RECOVERED_MODEL_PATH and os.path.exists(RECOVERED_MODEL_PATH) and not os.path.exists(marker):
+            self.model.load_state_dict(torch.load(RECOVERED_MODEL_PATH, map_location=DEVICE))
+            open(marker, "w").close()
+            print(f"[Client] Rejoin: starting from recovered model {RECOVERED_MODEL_PATH}")
+        else:
+            self.set_parameters(parameters)
+
     def fit(self, parameters, config):
         """Train on local data for one federation round and return updated weights.
 
         Reads `local_epochs` and `lr` from the server config each round so the
         server can adjust hyperparameters without rebuilding the client image.
         """
-        self.set_parameters(parameters)
+        self._apply_incoming(parameters)
         optimizer = torch.optim.Adam(self.model.parameters(), lr=float(config.get("lr", 0.001)))
         self.model.train()
         total_loss, batches = 0.0, 0
@@ -89,9 +118,17 @@ def client_fn(context: Context):
     """
     partition_id = int(context.node_config["partition-id"])
     num_partitions = int(context.node_config["num-partitions"])
+    seed_everything(SEED + partition_id)
     trainloader, valloader, input_dim = load_data(partition_id, num_partitions)
     model = IDSModel(input_dim=input_dim).to(DEVICE)
     return FlowerClient(model, trainloader, valloader).to_client()
 
 
-app = ClientApp(client_fn=client_fn)
+# Arm B swaps in the SISA client. The import sits below FlowerClient on purpose:
+# sisa_client imports FlowerClient back from this module.
+if CLIENT_MODE == "sisa":
+    from .sisa_client import client_fn as _selected_client_fn
+else:
+    _selected_client_fn = client_fn
+
+app = ClientApp(client_fn=_selected_client_fn)
