@@ -15,11 +15,17 @@ The FL system is built with [Flower](https://flower.ai) 1.29.0 and PyTorch on th
 | `edge_nodes/` | ClientApp — local training, model, data pipeline, poisoning, SISA |
 | `server/` | ServerApp — aggregation strategy and round configuration |
 | `ansible/` | Raspberry Pi 5 edge-node provisioning |
-| `experiments/` | MSc experiment: protocol, runbook, data prep, cooldown gate |
-| `analysis/` | Statistics and plots for experiment results |
+| `experiments/` | MSc experiment: pre-registered protocol + runbook, data prep, cooldown gate |
+| `analysis/` | Model evaluation and paired statistics for experiment results |
+| `tests/` | Verification of the unlearning guarantee (rollback correctness, determinism) |
 | `results/course/` | Course-phase results (FedAvg baseline + chaos, FedProx, Krum, TrimmedMean) |
 | `results/msc/` | MSc experiment outputs |
 | `docs/` | Architecture diagrams |
+
+The MSc experiment (Naive Retraining vs. SISA machine unlearning after data
+poisoning, measured on physical edge hardware) is fully specified in
+[`experiments/protocol.md`](experiments/protocol.md) — hypotheses, design,
+statistics, and the step-by-step runbook.
 
 ## Dataset
 
@@ -48,7 +54,7 @@ Set via environment variables in `docker-compose.yml`:
 
 | Variable | Default | Description |
 |---|---|---|
-| `FL_STRATEGY` | `fedavg` | Strategy: `fedavg`, `fedprox`, `krum`, `trimmedmean` |
+| `FL_STRATEGY` | `fedavg` | `fedavg` (weighted average), `fedprox` (proximal term for non-IID drift), `krum` (Byzantine-tolerant), `trimmedmean` (drops outliers) |
 | `NUM_ROUNDS` | `10` | Federation rounds |
 | `MIN_FIT_CLIENTS` | `3` | Clients required for training |
 | `MIN_EVAL_CLIENTS` | `3` | Clients required for evaluation |

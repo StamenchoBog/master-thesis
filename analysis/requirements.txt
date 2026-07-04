@@ -1,4 +1,0 @@
-pandas
-scipy
-numpy
-torch  # evaluate_model.py only

@@ -2,7 +2,7 @@
 
     python -m analysis.analyze [--runs results/msc/runs]
 
-Per run directory (see experiments/RUNBOOK.md) it reads:
+Per run directory (see the runbook in experiments/protocol.md) it reads:
   recovery_manifest.json      TTR, checkpoint I/O (SISA)
   hardware_telemetry_*.csv    temp/throttle/iowait/SD-I/O traces + phase markers
   sisa_timings.jsonl          Phase-1 SISA overhead (per-slice train + ckpt I/O)
