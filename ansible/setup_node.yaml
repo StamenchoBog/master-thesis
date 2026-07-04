@@ -1,0 +1,153 @@
+---
+- name: Provision Edge Node for SISA/FL Experiment (Optimized)
+  hosts: edge_nodes
+  become: yes
+  
+  tasks:
+    # ==========================================
+    # PHASE 1: NOISE REDUCTION & OPTIMIZATION
+    # ==========================================
+    
+    - name: 1. Stop background APT timers to prevent random CPU/IO spikes
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        state: stopped
+        enabled: no
+      loop:
+        - apt-daily.timer
+        - apt-daily-upgrade.timer
+      ignore_errors: yes
+
+    - name: 2. Disable any currently active swap (immediate effect)
+      ansible.builtin.command: swapoff -a
+      ignore_errors: yes
+
+    - name: 3. Remove legacy dphys-swapfile if present (pre-trixie Raspberry Pi OS)
+      ansible.builtin.apt:
+        name: dphys-swapfile
+        state: absent
+
+    # Debian 13 (trixie) replaced dphys-swapfile with rpi-swap (zram + writeback
+    # swap file). Without this, swap silently comes back on reboot and pollutes
+    # the SD card I/O metrics the experiment is measuring.
+    - name: 3b. Disable rpi-swap permanently so it doesn't regenerate swap at boot
+      ansible.builtin.copy:
+        dest: /etc/rpi/swap.conf
+        content: |
+          [Main]
+          Mechanism=none
+      register: rpi_swap_conf
+      failed_when: false
+
+    - name: 3c. Reload systemd generators to pick up the disabled swap config
+      ansible.builtin.systemd:
+        daemon_reload: yes
+      when: rpi_swap_conf is succeeded
+
+    - name: 4. Lock CPU Governor to 'Performance' (Prevents clock scaling variance)
+      ansible.builtin.shell: |
+        echo "performance" | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
+      ignore_errors: yes
+
+    # ==========================================
+    # PHASE 2: SYSTEM DEPENDENCIES & DOCKER
+    # ==========================================
+
+    - name: 5. Update and upgrade APT packages
+      ansible.builtin.apt:
+        update_cache: yes
+        upgrade: dist
+
+    - name: 6. Install core system and hardware monitoring dependencies
+      ansible.builtin.apt:
+        name:
+          - git
+          - curl
+          - python3-pip
+          - python3-venv
+          - sysstat
+          - htop
+          - jq
+        state: present
+
+    - name: 7. Check if Docker is already installed
+      ansible.builtin.command: which docker
+      register: docker_check
+      changed_when: false
+      failed_when: false
+
+    - name: 8. Download and execute Docker installation script
+      ansible.builtin.shell: curl -fsSL https://get.docker.com | sh
+      when: docker_check.rc != 0
+
+    - name: 9. Optimize Docker Logging (Prevents background SD card writes)
+      ansible.builtin.copy:
+        dest: /etc/docker/daemon.json
+        content: |
+          {
+            "log-driver": "local",
+            "log-opts": {
+              "max-size": "10m",
+              "max-file": "3"
+            }
+          }
+      notify: restart docker
+
+    - name: 10. Ensure Docker service is running and enabled
+      ansible.builtin.systemd:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: 11. Add user to the docker group
+      ansible.builtin.user:
+        name: "{{ ansible_user }}"
+        groups: docker
+        append: yes
+
+    # ==========================================
+    # PHASE 3: WORKSPACE & TELEMETRY
+    # ==========================================
+
+    - name: 12. Create experimental workspace directory
+      ansible.builtin.file:
+        path: "/home/{{ ansible_user }}/msc-experiment"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0755'
+
+    - name: 13. Deploy RAM-based hardware telemetry script
+      ansible.builtin.copy:
+        dest: "/home/{{ ansible_user }}/msc-experiment/monitor.sh"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0755'
+        content: |
+          #!/bin/bash
+          # Writing directly to RAM (/dev/shm) so telemetry doesn't use SD card IOPS
+          LOG_FILE="/dev/shm/hardware_telemetry_$(date +%Y%m%d_%H%M%S).csv"
+          
+          echo "Timestamp,Temp_C,CPU_Freq_MHz,RAM_Used_MB,CPU_Wait_Percent,SD_Read_kBps,SD_Write_kBps" > $LOG_FILE
+          echo "Logging hardware metrics to RAM: $LOG_FILE. Press Ctrl+C to stop."
+          
+          while true; do
+              TIMESTAMP=$(date +%H:%M:%S)
+              TEMP=$(vcgencmd measure_temp | egrep -o '[0-9]*\.[0-9]*')
+              FREQ=$(vcgencmd measure_clock arm | awk -F"=" '{print $2/1000000}')
+              RAM=$(free -m | awk 'NR==2{print $3}')
+              IOWAIT=$(top -bn1 | grep "Cpu(s)" | sed "s/.*, *\([0-9.]*\)%* wa.*/\1/")
+              IO_STATS=$(iostat -d -k mmcblk0 | awk 'NR==4 {print $3","$4}')
+              
+              echo "$TIMESTAMP,$TEMP,$FREQ,$RAM,$IOWAIT,$IO_STATS" >> $LOG_FILE
+              sleep 1
+          done
+          
+          # Remind user where the file is when they stop the script
+          trap 'echo -e "\nSaved to: $LOG_FILE\nCopy this file to your home directory before rebooting!"' EXIT
+
+  handlers:
+    - name: restart docker
+      ansible.builtin.systemd:
+        name: docker
+        state: restarted

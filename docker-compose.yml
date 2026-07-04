@@ -55,7 +55,7 @@ services:
       MIN_AVAILABLE_CLIENTS: "3"
       RESULTS_SUFFIX: ""       # set to e.g. _chaos to avoid overwriting baseline results
     volumes:
-      - ./results:/results
+      - ./results/course:/results
     depends_on:
       - superlink
     networks:
