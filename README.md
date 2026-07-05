@@ -4,9 +4,9 @@ MSc thesis on Federated Learning for intrusion detection across IoT edge nodes, 
 
 The FL system is built with [Flower](https://flower.ai) 1.29.0 and PyTorch on the [TON_IoT](https://research.unsw.edu.au/projects/toniot-datasets) dataset. The course-assignment phase of this work (simulation-only, all nodes in Docker) is preserved at the [`course-final`](../../releases/tag/course-final) git tag; its results live in `results/course/`.
 
-![Architecture](./docs/diagrams/msc-thesis-diagrams-course.png)
+**MSc hybrid topology** — three simulated edge nodes on the host, the Raspberry Pi joining over the LAN as the 4th edge node:
 
-![Architecture (detailed)](./docs/diagrams/msc-thesis-diagrams-course-detailed.drawio.png)
+![MSc architecture](./docs/diagrams/msc-thesis-diagrams-msc-thesis.drawio.png)
 
 ## Repository layout
 
@@ -32,6 +32,12 @@ statistics, and the step-by-step runbook.
 Download the **TON_IoT Network dataset** from [research.unsw.edu.au/projects/toniot-datasets](https://research.unsw.edu.au/projects/toniot-datasets) and place all 23 `Network_dataset_*.csv` files into `data/`. The CSVs are excluded from git (3.3 GB total).
 
 ## Quick start (all-local simulation)
+
+**Course-phase architecture** — all nodes simulated in Docker on one machine:
+
+![Course architecture](./docs/diagrams/msc-thesis-diagrams-course.png)
+
+![Course architecture (detailed)](./docs/diagrams/msc-thesis-diagrams-course-detailed.drawio.png)
 
 Requires Docker Desktop with at least 12 GB memory allocated (Settings > Resources > Memory).
 

@@ -35,6 +35,8 @@ recovering from data poisoning?
 | Cooldown gate | SoC ≤ 40°C stable 120 s before every measured phase sequence |
 | Statistics | Paired Wilcoxon signed-rank on TTR, energy, throttled time, bytes written; medians + IQR + Cliff's delta; utility mean ± 95% CI |
 
+![MSc hybrid topology](../docs/diagrams/msc-thesis-diagrams-msc-thesis.drawio.png)
+
 ## Guarantee scope (thesis must state this)
 
 Both arms give **exact local** unlearning (recovered client state provably free of
