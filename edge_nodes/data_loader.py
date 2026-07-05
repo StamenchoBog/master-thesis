@@ -64,18 +64,10 @@ def load_arrays(partition_id: int, num_partitions: int):
 
 
 def load_data(partition_id: int, num_partitions: int, batch_size: int = 512):
-    """Load a pre-built partition from the .npz cache and return train/val data loaders.
+    """Return (trainloader, valloader, input_dim) for one partition.
 
     With POISON_MODE=drop the poisoned rows are removed from the train loader
     (labels stay true for the retained rows); the val loader is always clean.
-
-    Args:
-        partition_id:   Index of this node (0-based).
-        num_partitions: Total number of nodes.
-        batch_size:     Mini-batch size for both loaders.
-
-    Returns:
-        Tuple of (trainloader, valloader, input_dim).
     """
     X, y, split, poison_idx = load_arrays(partition_id, num_partitions)
 

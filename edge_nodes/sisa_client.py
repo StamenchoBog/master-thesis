@@ -64,7 +64,7 @@ def slice_loader(X, y, idx, seed_key: int, batch_size: int = 512):
 
 
 def train_slice(model, optimizer, loader, criterion):
-    """One epoch over a single slice; returns (mean loss, batches)."""
+    """One epoch over a single slice; returns (summed loss, batch count)."""
     model.train()
     total, batches = 0.0, 0
     for Xb, yb in loader:

@@ -26,7 +26,7 @@ _results = {
 
 
 def _weighted_average(metrics):
-    """Compute a weighted average of per-client metrics."""
+    """Weighted by sample count; requires identical metric keys across clients."""
     total = sum(n for n, _ in metrics)
     keys = metrics[0][1].keys()
     return {k: sum(n * m[k] for n, m in metrics) / total for k in keys}
@@ -40,7 +40,6 @@ def _save_results():
 
 
 def aggregate_fit_metrics(metrics):
-    """Aggregate training metrics from all clients and append to results."""
     agg = _weighted_average(metrics)
     _results["train_loss"].append(round(agg.get("train_loss", 0), 6))
     _save_results()
@@ -48,7 +47,6 @@ def aggregate_fit_metrics(metrics):
 
 
 def aggregate_eval_metrics(metrics):
-    """Aggregate evaluation metrics from all clients and append to results."""
     agg = _weighted_average(metrics)
     for key in ("accuracy", "precision", "recall", "f1"):
         _results[key].append(round(agg.get(key, 0), 6))
@@ -57,7 +55,7 @@ def aggregate_eval_metrics(metrics):
 
 
 def fit_config(server_round: int) -> dict:
-    """Return hyperparameters sent to every client before each training round."""
+    """Hyperparameters live server-side so clients never need a rebuild to change them."""
     return {"local_epochs": 1, "lr": 0.001}
 
 
@@ -130,7 +128,6 @@ def build_strategy():
 
 
 def server_fn(context):
-    """Entry point called by Flower to create the server components for this run."""
     return ServerAppComponents(
         strategy=_with_global_checkpoints(build_strategy()),
         config=ServerConfig(num_rounds=NUM_ROUNDS),

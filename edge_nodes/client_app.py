@@ -26,18 +26,15 @@ class FlowerClient(NumPyClient):
     """Flower client that trains and evaluates the IDS model on a local data partition."""
 
     def __init__(self, model, trainloader, valloader):
-        """Store the model, data loaders, and shared loss criterion for this node."""
         self.model = model
         self.trainloader = trainloader
         self.valloader = valloader
         self.criterion = torch.nn.BCELoss()
 
     def get_parameters(self, config):
-        """Return current model weights as a list of NumPy arrays."""
         return [val.cpu().numpy() for val in self.model.state_dict().values()]
 
     def set_parameters(self, parameters):
-        """Load a list of NumPy arrays into the model as its new weights."""
         state_dict = {k: torch.tensor(v) for k, v in zip(self.model.state_dict().keys(), parameters)}
         self.model.load_state_dict(state_dict, strict=True)
 
@@ -57,11 +54,7 @@ class FlowerClient(NumPyClient):
             self.set_parameters(parameters)
 
     def fit(self, parameters, config):
-        """Train on local data for one federation round and return updated weights.
-
-        Reads `local_epochs` and `lr` from the server config each round so the
-        server can adjust hyperparameters without rebuilding the client image.
-        """
+        """Train locally for one round; hyperparameters come from the server config."""
         self._apply_incoming(parameters)
         optimizer = torch.optim.Adam(self.model.parameters(), lr=float(config.get("lr", 0.001)))
         self.model.train()
@@ -78,11 +71,7 @@ class FlowerClient(NumPyClient):
         return self.get_parameters({}), len(self.trainloader.dataset), {"train_loss": total_loss / max(batches, 1)}
 
     def evaluate(self, parameters, config):
-        """Evaluate the global model on the local validation set.
-
-        Returns BCE loss, sample count, and accuracy/precision/recall/F1.
-        F1 is the primary metric — accuracy is misleading on class-imbalanced data.
-        """
+        """Evaluate the global model on the local validation set (F1 over accuracy: imbalanced data)."""
         self.set_parameters(parameters)
         total_loss = 0.0
         tp = fp = fn = correct = 0
@@ -111,11 +100,7 @@ class FlowerClient(NumPyClient):
 
 
 def client_fn(context: Context):
-    """Instantiate a FlowerClient for this SuperNode.
-
-    Partition assignment comes from the --node-config flag on each SuperNode
-    in docker-compose, so each container trains on a different data slice.
-    """
+    """Instantiate a FlowerClient; the partition comes from the SuperNode's --node-config."""
     partition_id = int(context.node_config["partition-id"])
     num_partitions = int(context.node_config["num-partitions"])
     seed_everything(SEED + partition_id)
