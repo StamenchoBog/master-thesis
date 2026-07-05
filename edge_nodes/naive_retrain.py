@@ -24,8 +24,8 @@ from .sisa_client import CHECKPOINT_DIR, TELEMETRY_DIR, slice_loader, train_slic
 from .sisa_partition import TRAIN_FRACTION
 
 NUM_ROUNDS = int(os.getenv("NUM_ROUNDS", "10"))
-PARTITION_ID = int(os.getenv("PARTITION_ID", "2"))
-NUM_PARTITIONS = int(os.getenv("NUM_PARTITIONS", "3"))
+PARTITION_ID = int(os.getenv("PARTITION_ID", "3"))
+NUM_PARTITIONS = int(os.getenv("NUM_PARTITIONS", "4"))
 CACHE_DIR = os.getenv("CACHE_DIR", "/data/.cache/msc")
 LR = float(os.getenv("LR", "0.001"))
 RECOVERED_MODEL_PATH = os.getenv(

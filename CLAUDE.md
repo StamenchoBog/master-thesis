@@ -48,7 +48,7 @@ This uses Flower's **deployment engine** (not simulation), so the moving parts a
 
 `pyproject.toml`'s `[tool.flwr.app.components]` wires `serverapp = "server.server_app:app"` / `clientapp = "edge_nodes.client_app:app"` — this is how the Flower CLI/runtime finds the two `ClientApp`/`ServerApp` instances regardless of which container invokes them.
 
-For the MSc hybrid topology, `docker-compose.host.yml` runs superlink + serverapp + simulated nodes 1–2 with the Fleet API (9092) published to the LAN, and `docker-compose.edge.yml` (run on the Pi) starts supernode 3 + clientapp pointing at the host's LAN IP.
+For the MSc hybrid topology, `docker-compose.host.yml` runs superlink + serverapp + simulated nodes 1–3 with the Fleet API (9092) published to the LAN, and `docker-compose.edge.yml` (run on the Pi) starts supernode 4 (partition 3 of 4) + clientapp pointing at the host's LAN IP. The MSc federation therefore has 4 clients and needs its own 4-way caches (`NUM_PARTITIONS=4 docker compose run --rm preprocessor`); the course simulation keeps its 3-way caches.
 
 ### Data pipeline
 

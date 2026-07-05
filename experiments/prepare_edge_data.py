@@ -5,10 +5,10 @@ Run on the host after `docker compose run --rm preprocessor`:
     python experiments/prepare_edge_data.py --seed 42
 
 Outputs to data/.cache/msc/:
-  partition_{i}_of_3.npz  — equal-sized stratified subsamples (X, y, poison_idx)
+  partition_{i}_of_4.npz  — equal-sized stratified subsamples (X, y, poison_idx)
   test_global.npz         — clean held-out test set drawn disjointly from all partitions
 
-All three nodes get the SAME subsample size: FedAvg weights clients by sample
+All four nodes get the SAME subsample size: FedAvg weights clients by sample
 count, so unequal sizes would dilute the Pi's poisoned/cleaned contribution and
 confound the arms comparison.
 
@@ -28,8 +28,8 @@ import numpy as np
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from edge_nodes.sisa_partition import TRAIN_FRACTION, poison_indices, shard_slice_assignment
 
-PI_PARTITION = 2
-NUM_PARTITIONS = 3
+PI_PARTITION = 3
+NUM_PARTITIONS = 4
 
 
 def stratified_indices(y, k, rng):

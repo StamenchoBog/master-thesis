@@ -1,40 +1,43 @@
 name: fl-ids-msc-edge
 
 ### MSc hybrid topology — Raspberry Pi side.
-# Joins the host federation over the LAN as node 3. Requires HOST_IP in the
-# environment or a .env file next to this compose file on the Pi.
+# Joins the host federation over the LAN as the 4th node (partition 3).
+# Requires HOST_IP in the environment or a .env file next to this compose
+# file on the Pi.
 #
 # The Pi's data dir holds only its own partition cache, shipped from the host:
-#   data/.cache/msc/partition_2_of_3.npz
+#   data/.cache/msc/partition_3_of_4.npz
 # Checkpoints go to the SD card deliberately — checkpoint I/O is a measured
 # quantity, so they must NOT be moved to /dev/shm.
 
 services:
 
-  supernode-3:
+  supernode-4:
     image: flwr/supernode:1.29.0
-    container_name: msc-supernode-3
+    container_name: msc-supernode-4
     command:
       - --insecure
       - --superlink
       - ${HOST_IP:?set HOST_IP to the host machine LAN address}:9092
       - --clientappio-api-address
-      - 0.0.0.0:9096
+      - 0.0.0.0:9097
       - --isolation
       - process
       - --node-config
-      - "partition-id=2 num-partitions=3"
+      - "partition-id=3 num-partitions=4"
     network_mode: host
 
-  superexec-clientapp-3:
+  superexec-clientapp-4:
     build: ./edge_nodes
-    command: [--insecure, --plugin-type, clientapp, --appio-api-address, 127.0.0.1:9096]
+    command: [--insecure, --plugin-type, clientapp, --appio-api-address, 127.0.0.1:9097]
     environment:
       DATA_DIR: /data
       CACHE_DIR: /data/.cache/msc
       SEED: ${SEED:-42}
       CLIENT_MODE: ${CLIENT_MODE:-standard}    # standard (Arm A) | sisa (Arm B)
       POISON_MODE: ${POISON_MODE:-off}         # off | flip (Phase 1) | drop (Phase 4)
+      PARTITION_ID: "3"                        # for the recovery scripts (FL clients get it via node-config)
+      NUM_PARTITIONS: "4"
       NUM_SHARDS: ${NUM_SHARDS:-5}
       NUM_SLICES: ${NUM_SLICES:-5}
       CHECKPOINT_DIR: /checkpoints
@@ -46,4 +49,4 @@ services:
       - /dev/shm:/dev/shm    # telemetry to Pi RAM, never the SD card
     network_mode: host
     depends_on:
-      - supernode-3
+      - supernode-4

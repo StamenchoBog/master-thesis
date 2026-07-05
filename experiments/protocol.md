@@ -25,7 +25,8 @@ recovering from data poisoning?
 | Arms | A: naive local retrain-from-scratch · B: SISA rollback + partial replay |
 | SISA config | S=5 shards × R=5 slices, seeded permutation assignment |
 | Poison | Label flip attack→benign, fraction _[pilot: default 0.5]_ of attack samples in slices 3–4 of shard 1 |
-| Data per node | Stratified subsample _[pilot: default 1,000,000]_ rows; equal across all 3 nodes (FedAvg weighting) |
+| Topology | 4 clients: simulated nodes 1–3 on the host, the Raspberry Pi as the 4th node over the LAN |
+| Data per node | Stratified subsample _[pilot: default 1,000,000]_ rows; equal across all 4 nodes (FedAvg weighting) |
 | Clean test set | 100,000 rows, stratified, disjoint from all training subsamples, evaluated host-side |
 | Rounds | Phase 1: 10 · Phase 4 rejoin: 5 |
 | Recovery budget (naive) | 10 epochs on retained data (= Phase-1 local budget), fresh Adam per epoch |
@@ -78,7 +79,7 @@ machine's LAN address. Pi is reachable as `admin@rasp5node.local` with key
 ### One-time setup
 
 ```sh
-docker compose run --rm preprocessor          # full partition caches (host)
+NUM_PARTITIONS=4 docker compose run --rm preprocessor   # 4-way partition caches (host)
 ssh admin@rasp5node.local "cd master-thesis && docker compose -f docker-compose.edge.yml build"
 pip install pandas scipy torch                # host venv, for analysis/
 ```
@@ -87,7 +88,7 @@ pip install pandas scipy torch                # host venv, for analysis/
 
 ```sh
 python3 experiments/prepare_edge_data.py --seed SEED
-scp data/.cache/msc/partition_2_of_3.npz data/.cache/msc/manifest.json \
+scp data/.cache/msc/partition_3_of_4.npz data/.cache/msc/manifest.json \
     admin@rasp5node.local:master-thesis/data/.cache/msc/
 ssh admin@rasp5node.local "rm -rf msc-experiment/checkpoints/* /dev/shm/sisa_timings.jsonl /dev/shm/recovery_manifest.json /dev/shm/hardware_telemetry_*.csv"
 rm -rf results/msc/global_checkpoints
@@ -119,10 +120,10 @@ mv results/msc/global_checkpoints results/msc/runs/ARM_seedSEED/phase1_checkpoin
 ### 4. Phase 3 — recovery on the Pi (primary measurement window)
 
 ```sh
-ssh admin@rasp5node.local "cd master-thesis && docker compose -f docker-compose.edge.yml stop superexec-clientapp-3"
+ssh admin@rasp5node.local "cd master-thesis && docker compose -f docker-compose.edge.yml stop superexec-clientapp-4"
 ssh admin@rasp5node.local "echo phase3 > /dev/shm/run_marker"
 # naive -> edge_nodes.naive_retrain ; sisa -> edge_nodes.sisa_recover
-ssh admin@rasp5node.local "cd master-thesis && docker compose -f docker-compose.edge.yml run --rm -v \$PWD:/app -w /app --entrypoint python superexec-clientapp-3 -m edge_nodes.RECOVERY_MODULE"
+ssh admin@rasp5node.local "cd master-thesis && docker compose -f docker-compose.edge.yml run --rm -v \$PWD:/app -w /app --entrypoint python superexec-clientapp-4 -m edge_nodes.RECOVERY_MODULE"
 ssh admin@rasp5node.local "echo idle > /dev/shm/run_marker"
 ```
 
@@ -133,7 +134,7 @@ ssh admin@rasp5node.local "echo phase4 > /dev/shm/run_marker"
 cp results/msc/runs/ARM_seedSEED/phase1_checkpoints/round_10.npz results/msc/resume_from.npz
 SEED=SEED NUM_ROUNDS=5 RESULTS_SUFFIX=_p4 INIT_FROM_CHECKPOINT=/results/resume_from.npz \
     docker compose -f docker-compose.host.yml up -d superexec-serverapp
-ssh admin@rasp5node.local "cd master-thesis && HOST_IP=HOST_IP SEED=SEED CLIENT_MODE=ARM_CLIENT POISON_MODE=drop docker compose -f docker-compose.edge.yml up -d superexec-clientapp-3"
+ssh admin@rasp5node.local "cd master-thesis && HOST_IP=HOST_IP SEED=SEED CLIENT_MODE=ARM_CLIENT POISON_MODE=drop docker compose -f docker-compose.edge.yml up -d superexec-clientapp-4"
 docker compose -f docker-compose.host.yml run --rm runner
 ssh admin@rasp5node.local "echo done > /dev/shm/run_marker"
 ```

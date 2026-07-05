@@ -1,8 +1,8 @@
 name: fl-ids-msc-host
 
 ### MSc hybrid topology — host side.
-# Runs the coordinator, aggregator, and simulated nodes 1-2. The physical
-# Raspberry Pi joins over the LAN as node 3 (see docker-compose.edge.yml).
+# Runs the coordinator, aggregator, and simulated nodes 1-3. The physical
+# Raspberry Pi joins over the LAN as the 4th node (see docker-compose.edge.yml).
 # No toxiproxy: the LAN provides real network conditions.
 
 x-supernode: &supernode
@@ -38,9 +38,9 @@ services:
     environment:
       FL_STRATEGY: ${FL_STRATEGY:-fedavg}
       NUM_ROUNDS: ${NUM_ROUNDS:-10}
-      MIN_FIT_CLIENTS: "3"
-      MIN_EVAL_CLIENTS: "3"
-      MIN_AVAILABLE_CLIENTS: "3"
+      MIN_FIT_CLIENTS: "4"
+      MIN_EVAL_CLIENTS: "4"
+      MIN_AVAILABLE_CLIENTS: "4"
       RESULTS_SUFFIX: ${RESULTS_SUFFIX:-}
       SAVE_GLOBAL_CHECKPOINTS: "1"   # per-round global weights for round-resume logic
       INIT_FROM_CHECKPOINT: ${INIT_FROM_CHECKPOINT:-}   # Phase 4: /results/... .npz to resume from
@@ -63,7 +63,7 @@ services:
       - --isolation
       - process
       - --node-config
-      - "partition-id=0 num-partitions=3"
+      - "partition-id=0 num-partitions=4"
     depends_on:
       - superlink
 
@@ -85,7 +85,7 @@ services:
       - --isolation
       - process
       - --node-config
-      - "partition-id=1 num-partitions=3"
+      - "partition-id=1 num-partitions=4"
     depends_on:
       - superlink
 
@@ -94,6 +94,28 @@ services:
     command: [--insecure, --plugin-type, clientapp, --appio-api-address, supernode-2:9095]
     depends_on:
       - supernode-2
+
+  supernode-3:
+    <<: *supernode
+    container_name: msc-supernode-3
+    command:
+      - --insecure
+      - --superlink
+      - superlink:9092
+      - --clientappio-api-address
+      - 0.0.0.0:9096
+      - --isolation
+      - process
+      - --node-config
+      - "partition-id=2 num-partitions=4"
+    depends_on:
+      - superlink
+
+  superexec-clientapp-3:
+    <<: *clientapp
+    command: [--insecure, --plugin-type, clientapp, --appio-api-address, supernode-3:9096]
+    depends_on:
+      - supernode-3
 
   ### Job trigger — started explicitly by the run driver once the Pi is connected:
   #   docker compose -f docker-compose.host.yml run --rm runner

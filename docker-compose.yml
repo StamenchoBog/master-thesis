@@ -36,7 +36,8 @@ services:
     command: /src/preprocess.py
     environment:
       DATA_DIR: /data
-      NUM_PARTITIONS: "3"
+      # 3 for the course simulation; the MSc runs it again with NUM_PARTITIONS=4
+      NUM_PARTITIONS: ${NUM_PARTITIONS:-3}
     volumes:
       - ./edge_nodes:/src:ro
       - ./data:/data

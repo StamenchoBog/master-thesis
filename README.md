@@ -62,7 +62,7 @@ Set via environment variables in `docker-compose.yml`:
 
 ## Physical edge node (Raspberry Pi 5)
 
-The MSc experiment replaces simulated node 3 with a Raspberry Pi 5 (4 GB, fanless, A1 SD card) joining the federation over the LAN. Provisioning is automated with Ansible.
+The MSc experiment extends the federation with a Raspberry Pi 5 (4 GB, fanless, A1 SD card) joining over the LAN as a 4th node, alongside the three simulated nodes on the host. Provisioning is automated with Ansible.
 
 ### Bootstrap
 
