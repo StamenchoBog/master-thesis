@@ -13,6 +13,10 @@ CACHE_DIR = os.getenv("CACHE_DIR", os.path.join(DATA_DIR, ".cache"))
 # drop — poisoned rows removed (Phase 4: post-recovery rejoin on retained data)
 POISON_MODE = os.getenv("POISON_MODE", "off")
 
+# The deployment engine may call client_fn per message; keep the decompressed
+# arrays in memory so the ~160 MB npz isn't re-read from SD every round.
+_arrays_cache = {}
+
 
 def _cache_path(partition_id: int, num_partitions: int) -> str:
     return os.path.join(CACHE_DIR, f"partition_{partition_id}_of_{num_partitions}.npz")
@@ -30,6 +34,9 @@ def load_arrays(partition_id: int, num_partitions: int):
 
     Returns (X, y, split, poison_idx) where split is the train/val boundary.
     """
+    key = (partition_id, num_partitions)
+    if key in _arrays_cache:
+        return _arrays_cache[key]
     cache = _cache_path(partition_id, num_partitions)
     if not os.path.exists(cache):
         raise FileNotFoundError(
@@ -52,7 +59,8 @@ def load_arrays(partition_id: int, num_partitions: int):
         y[poison_idx] = 0
         print(f"[Node {partition_id}] POISON ACTIVE: {len(poison_idx)} labels flipped attack->benign")
 
-    return X, y, split, poison_idx
+    _arrays_cache[key] = (X, y, split, poison_idx)
+    return _arrays_cache[key]
 
 
 def load_data(partition_id: int, num_partitions: int, batch_size: int = 512):
