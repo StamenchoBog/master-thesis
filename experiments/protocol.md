@@ -33,6 +33,7 @@ recovering from data poisoning?
 | Seeds | N = 5 paired (42–46); extend to 10 if time allows |
 | Order | A/B counterbalanced across seeds (ABBA BAAB ...) |
 | Cooldown gate | SoC ≤ 40°C stable 120 s before every measured phase sequence |
+| Power | FNB58 inline on the Pi's supply for ALL runs (constant overhead); USB-logged host-side at ~100 sps; energy = trapezoidal ∫W dt per phase window; `PSU_MAX_CURRENT=5000` pinned in EEPROM |
 | Statistics | Paired Wilcoxon signed-rank on TTR, energy, throttled time, bytes written; medians + IQR + Cliff's delta; utility mean ± 95% CI |
 
 ![MSc hybrid topology](../docs/diagrams/msc-thesis-diagrams-msc-thesis.drawio.png)
@@ -78,23 +79,56 @@ machine's LAN address. Pi is reachable as `admin@rasp5node.local` with key
 `~/.ssh/rasp5node` (ssh-add it first if passphrase-protected), repo cloned at
 `~/master-thesis` on the Pi.
 
+### Power measurement (FNB58)
+
+Wiring — the meter sits inline on the Pi's power path for **every** run (both
+arms and the clean references), so its overhead is a constant, not a confound:
+
+```
+Wall PSU (official 27 W) ──USB-C──> FNB58 IN ──USB-C──> Pi 5 power port
+FNB58 data port ──USB cable──────> host machine (runs fnirsi_logger.py)
+Pi 5 ──Ethernet──> switch ────────> host machine
+```
+
+Data is pulled over the FNB58's USB data port, not Bluetooth: the open-source
+logger prints ~100 samples/s with **host-clock** UNIX timestamps — the same
+clock that issues the phase markers below, so power↔phase alignment needs no
+clock-skew correction. The device does not stream Wh; energy is integrated
+host-side per phase window. Both machines run NTP (Pi telemetry timestamps are
+only cross-referenced coarsely).
+
+The FNB58 sits in the USB-C CC line, which can silently break the Pi 5's 5 V/5 A
+PD negotiation (falling back to 3 A). The workload stays well under 15 W, but the
+negotiation outcome must not vary across runs — pin it once in the Pi's EEPROM.
+
 ### One-time setup
 
 ```sh
-NUM_PARTITIONS=4 docker compose run --rm preprocessor   # 4-way partition caches (host)
+# Host: 4-way partition caches + analysis deps + FNB58 logger
+NUM_PARTITIONS=4 docker compose run --rm preprocessor
+pip install pandas scipy torch pyusb crc
+brew install libusb
+git clone https://github.com/baryluk/fnirsi-usb-power-data-logger ~/fnirsi-logger
+git -C ~/fnirsi-logger checkout 746e4d38515a    # pinned for reproducibility
+python3 ~/fnirsi-logger/fnirsi_logger.py | head -3   # sanity check (meter plugged in)
+
+# Pi: build the client image + pin PD behavior (reboot afterwards)
 ssh admin@rasp5node.local "cd master-thesis && docker compose -f docker-compose.edge.yml build"
-pip install pandas scipy torch                # host venv, for analysis/
+ssh admin@rasp5node.local "sudo rpi-eeprom-config --edit"   # add: PSU_MAX_CURRENT=5000
+ssh admin@rasp5node.local "sudo reboot"
+ssh admin@rasp5node.local "vcgencmd get_config usb_max_current_enable"   # expect =1
 ```
 
 ### 1. Prepare (host)
 
 ```sh
+RUN=results/msc/runs/ARM_seedSEED   # used by every later step — keep the same shell
 python3 experiments/prepare_edge_data.py --seed SEED
 scp data/.cache/msc/partition_3_of_4.npz data/.cache/msc/manifest.json \
     admin@rasp5node.local:master-thesis/data/.cache/msc/
 ssh admin@rasp5node.local "rm -rf msc-experiment/checkpoints/* /dev/shm/sisa_timings.jsonl /dev/shm/recovery_manifest.json /dev/shm/hardware_telemetry_*.csv"
 rm -rf results/msc/global_checkpoints
-mkdir -p results/msc/runs/ARM_seedSEED
+mkdir -p "$RUN"
 ```
 
 ### 2. Cooldown gate + instruments
@@ -102,54 +136,60 @@ mkdir -p results/msc/runs/ARM_seedSEED
 ```sh
 experiments/cooldown_gate.sh                  # blocks until SoC <= 40°C for 2 min
 ssh admin@rasp5node.local "nohup ./msc-experiment/monitor.sh >/dev/null 2>&1 &"
+python3 ~/fnirsi-logger/fnirsi_logger.py > "$RUN/power_fnb58.csv" &
+LOGGER_PID=$!
 ```
 
-Record ambient temperature. Reset and start FNB58 logging.
+Record the ambient temperature in `$RUN/notes.txt`.
 
 ### 3. Phase 1 — poisoned federated training (10 rounds)
 
 ```sh
+echo "$(date +%s) phase1" >> "$RUN/phases.log"
 ssh admin@rasp5node.local "echo phase1 > /dev/shm/run_marker"
 SEED=SEED NUM_ROUNDS=10 RESULTS_SUFFIX=_p1 docker compose -f docker-compose.host.yml up -d
 # On the Pi (CLIENT_MODE=standard for naive, sisa for sisa):
 ssh admin@rasp5node.local "cd master-thesis && HOST_IP=HOST_IP SEED=SEED CLIENT_MODE=ARM_CLIENT POISON_MODE=flip docker compose -f docker-compose.edge.yml up -d"
 # Trigger the run (blocks until all 10 rounds finish):
 docker compose -f docker-compose.host.yml run --rm runner
+echo "$(date +%s) idle" >> "$RUN/phases.log"
 ssh admin@rasp5node.local "echo idle > /dev/shm/run_marker"
-mv results/msc/global_checkpoints results/msc/runs/ARM_seedSEED/phase1_checkpoints
+mv results/msc/global_checkpoints "$RUN/phase1_checkpoints"
 ```
 
 ### 4. Phase 3 — recovery on the Pi (primary measurement window)
 
 ```sh
 ssh admin@rasp5node.local "cd master-thesis && docker compose -f docker-compose.edge.yml stop superexec-clientapp-4"
+echo "$(date +%s) phase3" >> "$RUN/phases.log"
 ssh admin@rasp5node.local "echo phase3 > /dev/shm/run_marker"
 # naive -> edge_nodes.naive_retrain ; sisa -> edge_nodes.sisa_recover
 ssh admin@rasp5node.local "cd master-thesis && docker compose -f docker-compose.edge.yml run --rm -v \$PWD:/app -w /app --entrypoint python superexec-clientapp-4 -m edge_nodes.RECOVERY_MODULE"
+echo "$(date +%s) idle" >> "$RUN/phases.log"
 ssh admin@rasp5node.local "echo idle > /dev/shm/run_marker"
 ```
 
 ### 5. Phase 4 — rejoin (5 rounds, resumed from the poisoned global model)
 
 ```sh
+echo "$(date +%s) phase4" >> "$RUN/phases.log"
 ssh admin@rasp5node.local "echo phase4 > /dev/shm/run_marker"
-cp results/msc/runs/ARM_seedSEED/phase1_checkpoints/round_10.npz results/msc/resume_from.npz
+cp "$RUN/phase1_checkpoints/round_10.npz" results/msc/resume_from.npz
 SEED=SEED NUM_ROUNDS=5 RESULTS_SUFFIX=_p4 INIT_FROM_CHECKPOINT=/results/resume_from.npz \
     docker compose -f docker-compose.host.yml up -d superexec-serverapp
 ssh admin@rasp5node.local "cd master-thesis && HOST_IP=HOST_IP SEED=SEED CLIENT_MODE=ARM_CLIENT POISON_MODE=drop docker compose -f docker-compose.edge.yml up -d superexec-clientapp-4"
 docker compose -f docker-compose.host.yml run --rm runner
+echo "$(date +%s) done" >> "$RUN/phases.log"
 ssh admin@rasp5node.local "echo done > /dev/shm/run_marker"
 ```
-
-Stop FNB58 logging; export its CSV.
 
 ### 6. Teardown + collect
 
 ```sh
+kill $LOGGER_PID                              # stop the FNB58 power log
 ssh admin@rasp5node.local "cd master-thesis && docker compose -f docker-compose.edge.yml down; pkill -f monitor.sh"
 docker compose -f docker-compose.host.yml down
 
-RUN=results/msc/runs/ARM_seedSEED
 scp "admin@rasp5node.local:/dev/shm/hardware_telemetry_*.csv" \
     admin@rasp5node.local:/dev/shm/recovery_manifest.json \
     admin@rasp5node.local:msc-experiment/checkpoints/recovered_model.pt "$RUN/"
@@ -160,8 +200,9 @@ mv results/msc/global_checkpoints "$RUN/phase4_checkpoints"
 rm -f results/msc/resume_from.npz
 ```
 
-Copy the FNB58 export into `$RUN/power_fnb58.csv` and note the ambient
-temperature in a `$RUN/notes.txt`.
+The run directory now holds: `power_fnb58.csv`, `phases.log`, telemetry CSV,
+recovery manifest, recovered model, both results JSONs, both checkpoint sets,
+and `notes.txt` (ambient temperature).
 
 ### 7. Evaluate + analyze (after runs exist)
 
