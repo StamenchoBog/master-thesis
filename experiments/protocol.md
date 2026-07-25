@@ -116,11 +116,16 @@ machine's LAN address. Pi is reachable as `admin@rasp5node.local` with key
 Wiring — the meter sits inline on the Pi's power path for **every** run (both
 arms and the clean references), so its overhead is a constant, not a confound:
 
-```
-Wall PSU (official 27 W) ──USB-C──> FNB58 IN ──USB-C──> Pi 5 power port
+```text
+Wall PSU (official 27 W) ──USB-C──> FNB58 IN ──USB-C(5A cable)──> Pi 5 power port
 FNB58 data port ──USB cable──────> host machine (runs fnirsi_logger.py)
 Pi 5 ──Ethernet──> switch ────────> host machine
 ```
+
+> The meter→Pi output cable must be a short, thick **5 A / 100 W** USB-C cable.
+> A thin cable drops enough voltage to under-volt the Pi (chronic clock throttling
+> that confounds every physical metric) even while the meter reads 5.1 V — verified
+> in the pilot. Confirm `vcgencmd get_throttled` is `0x0` at idle before any run.
 
 Data is pulled over the FNB58's USB data port, not Bluetooth: the open-source
 logger prints ~100 samples/s with **host-clock** UNIX timestamps — the same
