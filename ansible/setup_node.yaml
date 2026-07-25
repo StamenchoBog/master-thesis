@@ -117,6 +117,15 @@
         group: "{{ ansible_user }}"
         mode: '0755'
 
+    - name: 12b. Create SISA checkpoint directory writable by the container user
+      # The flwr clientapp container runs as uid 49999 (app), not the host user,
+      # so the bind-mounted checkpoint dir must be world-writable or the SISA
+      # client cannot save checkpoints (PermissionError on every round).
+      ansible.builtin.file:
+        path: "/home/{{ ansible_user }}/msc-experiment/checkpoints"
+        state: directory
+        mode: '0777'
+
     - name: 13. Deploy RAM-based hardware telemetry script
       ansible.builtin.copy:
         dest: "/home/{{ ansible_user }}/msc-experiment/monitor.sh"
