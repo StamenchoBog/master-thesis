@@ -32,7 +32,7 @@ recovering from data poisoning?
 | Recovery budget (naive) | 10 epochs on retained data (= Phase-1 local budget), fresh Adam per epoch |
 | Seeds | N = 5 paired (42–46); extend to 10 if time allows |
 | Order | A/B counterbalanced across seeds (ABBA BAAB ...) |
-| Cooldown gate | SoC ≤ 40°C stable 120 s before every measured phase sequence |
+| Cooldown gate | Stable thermal plateau (range ≤ 2°C for 120 s) at the passive idle floor before every measured phase sequence — the fanless Pi never reaches a low absolute temperature, so runs are equalised on a *stable* start state, not a fixed number |
 | Power | FNB58 inline on the Pi's supply for ALL runs (constant overhead); USB-logged host-side at ~100 sps; energy = trapezoidal ∫W dt per phase window; `PSU_MAX_CURRENT=5000` pinned in EEPROM |
 | Statistics | Paired Wilcoxon signed-rank on TTR, energy, throttled time, bytes written; medians + IQR + Cliff's delta; utility mean ± 95% CI |
 
@@ -139,7 +139,7 @@ mkdir -p "$RUN"
 ### 2. Cooldown gate + instruments
 
 ```sh
-experiments/cooldown_gate.sh                  # blocks until SoC <= 40°C for 2 min
+experiments/cooldown_gate.sh                  # blocks until the SoC temperature plateaus (stable idle floor)
 # Telemetry as a transient systemd unit — survives SSH disconnect (a plain
 # nohup/setsid over SSH does not reliably persist).
 ssh admin@rasp5node.local "sudo systemctl reset-failed msc-monitor 2>/dev/null; \
