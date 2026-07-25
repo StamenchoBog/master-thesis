@@ -3,7 +3,13 @@ name: fl-ids-msc-host
 ### MSc hybrid topology — host side.
 # Runs the coordinator, aggregator, and simulated nodes 1-3. The physical
 # Raspberry Pi joins over the LAN as the 4th node (see docker-compose.edge.yml).
-# No toxiproxy: the LAN provides real network conditions.
+#
+# Realism knobs:
+# - The three simulated clients get *different* CPU/memory limits (below) to model
+#   a heterogeneous federation of edge devices, not identical datacenter workers.
+# - Network factor: the LAN is clean by default. For the "realistic WAN" condition
+#   start with `--profile wan` and point the Pi at :19092 (FLEET_PORT=19092); a
+#   toxiproxy latency toxic then sits on the Fleet API link.
 
 x-supernode: &supernode
   image: flwr/supernode:1.29.0
@@ -70,6 +76,8 @@ services:
   superexec-clientapp-1:
     <<: *clientapp
     command: [--insecure, --plugin-type, clientapp, --appio-api-address, supernode-1:9094]
+    cpus: ${CLIENT1_CPUS:-3.0}      # heterogeneous federation: capable edge gateway
+    mem_limit: ${CLIENT1_MEM:-3g}
     depends_on:
       - supernode-1
 
@@ -92,6 +100,8 @@ services:
   superexec-clientapp-2:
     <<: *clientapp
     command: [--insecure, --plugin-type, clientapp, --appio-api-address, supernode-2:9095]
+    cpus: ${CLIENT2_CPUS:-2.0}      # heterogeneous federation: mid-tier device
+    mem_limit: ${CLIENT2_MEM:-2g}
     depends_on:
       - supernode-2
 
@@ -114,6 +124,8 @@ services:
   superexec-clientapp-3:
     <<: *clientapp
     command: [--insecure, --plugin-type, clientapp, --appio-api-address, supernode-3:9096]
+    cpus: ${CLIENT3_CPUS:-1.5}      # heterogeneous federation: constrained device
+    mem_limit: ${CLIENT3_MEM:-1500m}
     depends_on:
       - supernode-3
 
@@ -128,6 +140,38 @@ services:
       FLWR_HOME: /app/.flwr
     volumes:
       - .:/app
+    networks:
+      - fl-network
+
+  ### Network factor — "realistic WAN" condition only (start with `--profile wan`).
+  # Proxies the Fleet API (superlink:9092 → published :19092) and injects latency.
+  # The Pi connects to :19092 instead of :9092 (set FLEET_PORT=19092 on the edge).
+  toxiproxy:
+    profiles: [wan]
+    image: ghcr.io/shopify/toxiproxy:latest
+    command: ["-host=0.0.0.0", "-config=/config/toxiproxy.json"]
+    ports:
+      - "8474:8474"
+      - "19092:19092"
+    volumes:
+      - ./toxiproxy.json:/config/toxiproxy.json:ro
+    depends_on:
+      - superlink
+    networks:
+      - fl-network
+
+  toxiproxy-setup:
+    profiles: [wan]
+    image: ghcr.io/shopify/toxiproxy:latest
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        until curl -sf http://toxiproxy:8474/version >/dev/null; do sleep 0.2; done
+        curl -sf -X POST http://toxiproxy:8474/proxies/superlink-fl/toxics \
+          -H 'Content-Type: application/json' \
+          -d "{\"name\":\"latency\",\"type\":\"latency\",\"stream\":\"upstream\",\"toxicity\":1.0,\"attributes\":{\"latency\":${WAN_LATENCY_MS:-40},\"jitter\":${WAN_JITTER_MS:-20}}}"
+    depends_on:
+      - toxiproxy
     networks:
       - fl-network
 
