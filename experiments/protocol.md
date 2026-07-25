@@ -104,13 +104,13 @@ negotiation outcome must not vary across runs — pin it once in the Pi's EEPROM
 ### One-time setup
 
 ```sh
-# Host: 4-way partition caches + analysis deps + FNB58 logger
+# Host: 4-way partition caches + analysis deps + FNB58 logger deps.
+# The logger lives in the repo (experiments/fnirsi_logger.py) — vendored from
+# baryluk/fnirsi-usb-power-data-logger @746e4d3 with macOS-robustness patches.
 NUM_PARTITIONS=4 docker compose run --rm preprocessor
 pip install pandas scipy torch pyusb crc
 brew install libusb
-git clone https://github.com/baryluk/fnirsi-usb-power-data-logger ~/fnirsi-logger
-git -C ~/fnirsi-logger checkout 746e4d38515a    # pinned for reproducibility
-python3 ~/fnirsi-logger/fnirsi_logger.py | head -3   # sanity check (meter plugged in)
+sudo python3 experiments/fnirsi_logger.py | head -3   # sanity check (meter plugged in)
 
 # Pi: build the client image + pin PD behavior (reboot afterwards)
 ssh admin@rasp5node.local "cd master-thesis && docker compose -f docker-compose.edge.yml build"
@@ -118,6 +118,11 @@ ssh admin@rasp5node.local "sudo rpi-eeprom-config --edit"   # add: PSU_MAX_CURRE
 ssh admin@rasp5node.local "sudo reboot"
 ssh admin@rasp5node.local "vcgencmd get_config usb_max_current_enable"   # expect =1
 ```
+
+> **Keep the Mac awake for the whole run.** If macOS sleeps, the FNB58's USB
+> endpoints wedge and the logger must be restarted (and the Pi may drop from the
+> federation). Run the measured sequence under `caffeinate -dimsu` or disable
+> sleep in Settings.
 
 ### 1. Prepare (host)
 
@@ -135,12 +140,18 @@ mkdir -p "$RUN"
 
 ```sh
 experiments/cooldown_gate.sh                  # blocks until SoC <= 40°C for 2 min
-ssh admin@rasp5node.local "nohup ./msc-experiment/monitor.sh >/dev/null 2>&1 &"
-python3 ~/fnirsi-logger/fnirsi_logger.py > "$RUN/power_fnb58.csv" &
+# Telemetry as a transient systemd unit — survives SSH disconnect (a plain
+# nohup/setsid over SSH does not reliably persist).
+ssh admin@rasp5node.local "sudo systemctl reset-failed msc-monitor 2>/dev/null; \
+  sudo systemd-run --unit=msc-monitor --working-directory=/home/admin \
+  /home/admin/msc-experiment/monitor.sh"
+sudo python3 -u experiments/fnirsi_logger.py > "$RUN/power_fnb58.csv" &
 LOGGER_PID=$!
 ```
 
-Record the ambient temperature in `$RUN/notes.txt`.
+The logger runs silently once streaming (a 5 s heartbeat prints to stderr); do
+not Ctrl-C it until teardown. Record the ambient temperature in `$RUN/notes.txt`.
+Stop telemetry at teardown with `ssh admin@rasp5node.local "sudo systemctl stop msc-monitor"`.
 
 ### 3. Phase 1 — poisoned federated training (10 rounds)
 
@@ -186,8 +197,8 @@ ssh admin@rasp5node.local "echo done > /dev/shm/run_marker"
 ### 6. Teardown + collect
 
 ```sh
-kill $LOGGER_PID                              # stop the FNB58 power log
-ssh admin@rasp5node.local "cd master-thesis && docker compose -f docker-compose.edge.yml down; pkill -f monitor.sh"
+sudo kill $LOGGER_PID                         # stop the FNB58 power log
+ssh admin@rasp5node.local "cd master-thesis && docker compose -f docker-compose.edge.yml down; sudo systemctl stop msc-monitor"
 docker compose -f docker-compose.host.yml down
 
 scp "admin@rasp5node.local:/dev/shm/hardware_telemetry_*.csv" \
