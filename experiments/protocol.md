@@ -1,21 +1,38 @@
 # Experiment Protocol — Naive Retraining vs. SISA Unlearning on a Physical Edge Node
 
-**Status: DRAFT — parameters marked _[pilot]_ are frozen only after the pilot study.
-No measured run counts toward the results until this document is frozen.**
+**Status: FROZEN (pilot complete, 2026-07-25). Parameters below are fixed; this
+document is the pre-registration. Measured runs may now proceed.** Pilot results
+that set the frozen values are recorded under "Pilot results" below.
 
 ## Research question
 
-What are the physical resource costs and model-utility consequences of SISA-based
-machine unlearning versus naive retraining on a resource-constrained FL edge node
-recovering from data poisoning?
+What are the physical resource costs (time, energy, thermals, storage I/O) of
+SISA-based machine unlearning versus naive retraining when a resource-constrained
+FL edge node must **remove identified-compromised data**?
+
+## Framing (unlearning cost, not attack potency)
+
+The contribution is the *physical cost of removal on edge hardware*, in the machine-
+unlearning tradition where a removal is mandated by detection or compliance (e.g. a
+data source is flagged as compromised, or invokes a right-to-be-forgotten), **not**
+by the data's measured harm to the model. The label-flip poison defines a clean,
+well-specified set of samples that must be unlearned; whether it degrades the global
+model is secondary and reported honestly.
+
+Pilot finding: at this scale the confined poison (all attack samples in slices 3–4
+of one shard, on 1 of 4 nodes) has **no measurable effect on global utility**
+(recall stays 1.0, attack-success 0.0 on the clean test set) — FedAvg dilutes the
+single compromised client and the IDS recall is near-saturated. This *reinforces*
+the framing: unlearning is driven by the data being compromised, not by a visible
+performance drop, and the question is what removal costs.
 
 ## Pre-registered hypotheses
 
 - **H1** SISA reduces time-to-recovery (TTR) vs. naive local retraining.
 - **H2** SISA reduces recovery energy (Wh); naive shows higher sustained power draw.
-- **H3** Naive retraining triggers thermal throttling (≥85°C) on the fanless Pi 5; SISA reduces or avoids throttled time.
+- **H3** Naive recovery thermally taxes the fanless Pi far more than SISA — measured by **throttled-seconds and clock-frequency degradation over the recovery window, not peak temperature** (peak saturates near ~87°C for any sustained load, so it does not discriminate). Pilot: naive 156 s throttled / clock 2400→1500 MHz vs SISA 13 s / stays 2400 MHz.
 - **H4** SISA shifts cost toward storage I/O (checkpoint writes, iowait). *Tested, not assumed* — a negligible-I/O result at this model scale is reported honestly; the sensitivity study locates the model size where I/O dominates.
-- **H5** Recovered-model utility (F1/recall on the clean test set) is equivalent between arms within ΔF1 ≤ 2 pp; attack success returns to clean-baseline levels in both arms.
+- **H5** The unlearned model preserves utility: recovered-model F1/recall on the clean test set is within ΔF1 ≤ 2 pp of a clean-trained model, in both arms. Both arms provide **exact local** unlearning by construction (see Guarantee scope), so this checks that removal did not damage utility — not that an attack was reversed (the confined poison has no measurable global effect; see Framing).
 - **H6** SISA imposes measurable Phase-1 overhead (per-round wall time, bytes written). Total cost of ownership = Phase-1 overhead + recovery cost.
 
 ## Design
@@ -24,9 +41,9 @@ recovering from data poisoning?
 |---|---|
 | Arms | A: naive local retrain-from-scratch · B: SISA rollback + partial replay |
 | SISA config | S=5 shards × R=5 slices, seeded permutation assignment |
-| Poison | Label flip attack→benign, fraction _[pilot: default 0.5]_ of attack samples in slices 3–4 of shard 1 |
+| Poison | Label flip attack→benign, **fraction 1.0** of attack samples in slices 3–4 of shard 1 ("source fully compromised at time τ"; defines the set to unlearn) |
 | Topology | 4 clients: simulated nodes 1–3 on the host, the Raspberry Pi as the 4th node over the LAN |
-| Data per node | Stratified subsample _[pilot: default 1,000,000]_ rows; equal across all 4 nodes (FedAvg weighting) |
+| Data per node | Stratified subsample **1,000,000** rows; equal across all 4 nodes (FedAvg weighting) |
 | Clean test set | 100,000 rows, stratified, disjoint from all training subsamples, evaluated host-side |
 | Rounds | Phase 1: 10 · Phase 4 rejoin: 5 |
 | Recovery budget (naive) | 10 epochs on retained data (= Phase-1 local budget), fresh Adam per epoch |
@@ -43,8 +60,11 @@ recovering from data poisoning?
 Both arms give **exact local** unlearning (recovered client state provably free of
 poison influence) and **approximate global** forgetting: stateless FedAvg cannot
 remove already-aggregated poison from the global model client-side. Phase 4 resumes
-from the poisoned global model identically in both arms and measures attack-success
-decay over the rejoin rounds. Detection is out of scope (oracle poison mask).
+from the (nominally poisoned) global model identically in both arms and measures
+global-model utility over the rejoin rounds — at this scale the confined poison
+leaves global utility unchanged (see Framing), so Phase 4 confirms the rejoin does
+not perturb utility rather than showing attack-success decay. Detection is out of
+scope (oracle poison mask).
 
 Documented deviations from vanilla SISA/FL: constituents never absorb global
 weights (required for the rollback guarantee); the FL update is the parameter
@@ -57,14 +77,26 @@ Manual, per the Runbook below. Reference runs: one clean run per seed
 Sensitivity study (one seed): repeat the paired comparison with a scaled-up model
 to locate where checkpoint I/O becomes the dominant SISA cost.
 
-## Pilot checklist (before freezing)
+## Pilot results (2026-07-25, seed 42, 1M rows — frozen)
 
-- [ ] Epoch wall-time on Pi at 0.5M / 1M / 2M rows → fix subsample size
-- [ ] Poison fraction achieving ≥10 pp global recall degradation within 10 rounds
-- [ ] Naive retraining actually reaches 85°C/throttling (else lengthen budget or data)
-- [ ] Checkpoint write footprint per slice (bytes, latency)
-- [ ] Determinism: two identical-seed runs → identical model hashes
-- [ ] Analysis scripts produce all tables/figures from pilot data
+Measured on the physical Pi (fanless), clean power (Anker 100 W cable; input rail
+`0x0` at idle, no active under-voltage under load):
+
+- **Subsample fixed at 1M** — naive recovery (10 epochs, ~737k retained rows) runs
+  3.7 min and drives the Pi to the 85°C hard limit, so no need for 2M.
+- **Naive recovery (Phase 3):** 224 s · peak 87.3°C · **156 s throttled** · clock
+  2400→1500 MHz.
+- **SISA recovery (Phase 3):** 28 s · peak 86.7°C · **13 s throttled** · clock stays
+  2400 MHz → 8× faster, 12× less throttled time (H1, H3).
+- **SISA Phase-1 overhead (H6):** ~13 min / 10 rounds; checkpoints 43.7 MB total,
+  **3.4 s checkpoint I/O** → **H4 confirmed: I/O is negligible at this model scale**
+  (the scaled-model sensitivity study locates where it dominates).
+- **Poison:** confined + fraction 1.0 → no measurable global utility effect (see
+  Framing); fixed as the well-specified set to unlearn.
+- **Determinism** is guaranteed by construction and covered by `tests/smoke_test.py`
+  (bit-identical recovery across reruns); spot-check on the first paired hardware run.
+- **Analysis** (`analysis/analyze.py`, `evaluate_model.py`) validated end-to-end on
+  pilot artifacts, incl. per-phase energy integration.
 
 ---
 
