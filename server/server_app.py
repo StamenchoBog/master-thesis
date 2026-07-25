@@ -70,9 +70,9 @@ class ResilientFedAvg(FedAvg):
         if len(results) < self.min_fit_clients:
             print(f"[Round {server_round}] Only {len(results)} clients responded — reusing previous weights.")
             return self._last_good_weights, {}
-        aggregated = super().aggregate_fit(server_round, results, failures)
-        self._last_good_weights = aggregated
-        return aggregated
+        parameters, metrics = super().aggregate_fit(server_round, results, failures)
+        self._last_good_weights = parameters  # store parameters only; the fallback re-wraps with {}
+        return parameters, metrics
 
 
 def _with_global_checkpoints(strategy):
