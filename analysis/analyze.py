@@ -5,13 +5,13 @@
 Per run directory (see the runbook in experiments/protocol.md) it reads:
   recovery_manifest.json      TTR, checkpoint I/O (SISA)
   hardware_telemetry_*.csv    temp/throttle/iowait/SD-I/O traces + phase markers
+  power_fnb58.csv + phases.log  FNB58 power samples, integrated per phase window
   sisa_timings.jsonl          Phase-1 SISA overhead (per-slice train + ckpt I/O)
   results_phase{1,4}.json     per-round global F1/recall
 
 Writes summary.csv and paired_stats.csv next to the runs. Wilcoxon signed-rank
 paired by seed + Cliff's delta; with N=5 pairs, effect sizes matter more than
-p-values — both are reported. FNB58 energy and thesis figures are added after
-the pilot, once real export formats exist.
+p-values — both are reported. Thesis figures are added once the campaign data exists.
 """
 
 import argparse
@@ -19,13 +19,14 @@ import glob
 import json
 import os
 import re
+import sys
 
 import numpy as np
 import pandas as pd
 from scipy.stats import wilcoxon
 
-METRICS = ["ttr_s", "throttled_s", "p3_iowait_mean_pct", "p3_sd_written_mb",
-           "p4_final_f1", "p4_final_recall"]
+METRICS = ["ttr_s", "p3_energy_wh", "throttled_s", "p3_iowait_mean_pct",
+           "p3_sd_written_mb", "p4_final_f1", "p4_final_recall"]
 
 
 def cliffs_delta(a, b) -> float:
@@ -34,6 +35,54 @@ def cliffs_delta(a, b) -> float:
     gt = sum((x > b).sum() for x in a)
     lt = sum((x < b).sum() for x in a)
     return (gt - lt) / (len(a) * len(b))
+
+
+def _phase_windows(run_dir: str) -> list:
+    """Read phases.log into [(label, start_epoch, end_epoch)] for the measured phases.
+
+    Each phase runs from its marker until the next marker of any kind (usually an
+    `idle`/`done`), so the window bounds the actual workload.
+    """
+    path = os.path.join(run_dir, "phases.log")
+    if not os.path.exists(path):
+        return []
+    marks = sorted((float(p[0]), p[1]) for line in open(path)
+                   if len(p := line.split()) == 2)
+    windows = []
+    for i, (ts, label) in enumerate(marks):
+        if label in ("phase1", "phase3", "phase4"):
+            end = marks[i + 1][0] if i + 1 < len(marks) else ts
+            windows.append((label, ts, end))
+    return windows
+
+
+def parse_power(run_dir: str, row: dict) -> None:
+    """Per-phase energy (Wh) and mean/peak power (W) from the FNB58 log.
+
+    Energy is the trapezoidal integral of instantaneous power (V*I) over each
+    phase window — self-contained, so a mid-run logger restart (which zeroes the
+    device's cumulative counter) cannot corrupt it. Phase 3 (recovery) energy is
+    the primary H2 outcome. Warns if the power log doesn't cover a phase window.
+    """
+    path = os.path.join(run_dir, "power_fnb58.csv")
+    windows = _phase_windows(run_dir)
+    if not os.path.exists(path) or not windows:
+        return
+    p = pd.read_csv(path, sep=r"\s+")  # blank line + header row handled by skip_blank_lines
+    if "timestamp" not in p.columns or len(p) < 2:
+        return
+    p["power_w"] = p["voltage_V"] * p["current_A"]
+    lo, hi = p["timestamp"].min(), p["timestamp"].max()
+    for label, start, end in windows:
+        n = label[-1]  # phase digit: 1 / 3 / 4
+        seg = p[(p["timestamp"] >= start) & (p["timestamp"] < end)]
+        if len(seg) < 2:
+            print(f"  [warn] {os.path.basename(run_dir)}: no power coverage for {label} "
+                  f"(window {start:.0f}-{end:.0f}, log spans {lo:.0f}-{hi:.0f})", file=sys.stderr)
+            continue
+        row[f"p{n}_energy_wh"] = round(float(np.trapezoid(seg["power_w"], seg["timestamp"]) / 3600.0), 4)
+        row[f"p{n}_mean_w"] = round(float(seg["power_w"].mean()), 3)
+        row[f"p{n}_peak_w"] = round(float(seg["power_w"].max()), 3)
 
 
 def parse_run(run_dir: str) -> dict:
@@ -77,6 +126,8 @@ def parse_run(run_dir: str) -> dict:
             if res["f1"]:
                 row[f"p{phase}_final_f1"] = res["f1"][-1]
                 row[f"p{phase}_final_recall"] = res["recall"][-1]
+
+    parse_power(run_dir, row)
     return row
 
 
