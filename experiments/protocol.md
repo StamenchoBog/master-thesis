@@ -47,11 +47,14 @@ performance drop, and the question is what removal costs.
 | Clean test set | 100,000 rows, stratified, disjoint from all training subsamples, evaluated host-side |
 | Rounds | Phase 1: 10 · Phase 4 rejoin: 5 |
 | Recovery budget (naive) | 10 epochs on retained data (= Phase-1 local budget), fresh Adam per epoch |
-| Seeds | N = 5 paired (42–46); extend to 10 if time allows |
+| Seeds | **N = 10 paired** (42–51). Justified below — pilot effect sizes are large, but N=10 tightens the bootstrap CIs and guards any marginal metric |
 | Order | A/B counterbalanced across seeds (ABBA BAAB ...) |
-| Cooldown gate | Stable thermal plateau (range ≤ 2°C for 120 s) at the passive idle floor before every measured phase sequence — the fanless Pi never reaches a low absolute temperature, so runs are equalised on a *stable* start state, not a fixed number |
-| Power | FNB58 inline on the Pi's supply for ALL runs (constant overhead); USB-logged host-side at ~100 sps; energy = trapezoidal ∫W dt per phase window; `PSU_MAX_CURRENT=5000` pinned in EEPROM |
-| Statistics | Paired Wilcoxon signed-rank on TTR, energy, throttled time, bytes written; medians + IQR + Cliff's delta; utility mean ± 95% CI |
+| Client heterogeneity | The 3 simulated clients get different CPU/memory limits (3.0/2.0/1.5 cores) to model a heterogeneous federation, fixed across runs |
+| Network conditions | Primary: clean LAN. Secondary factor (one seed both arms): "realistic WAN" via toxiproxy latency (`--profile wan`, 40 ms ± 20 ms on the Fleet API) |
+| Cooldown gate | Stable thermal plateau (range ≤ 2°C for 120 s) at the passive idle floor before every measured phase sequence — the fanless Pi never reaches a low absolute temperature, so runs are equalised on a *stable* start state, not a fixed number. The plateau temperature is logged and doubles as an ambient proxy |
+| Ambient | DS18B20 (TO-92, GPIO4, `dtoverlay=w1-gpio`) logged in the telemetry `Ambient_C` column; if absent, the cooldown plateau + a manual room-temp note in `notes.txt` stand in |
+| Power | FNB58 inline on the Pi's supply for ALL runs (constant overhead); USB-logged host-side at ~100 sps via `experiments/fnirsi_logger.py`; energy = trapezoidal ∫W dt per phase window, reported **net of the idle baseline**; `PSU_MAX_CURRENT=5000` pinned; **5 A meter→Pi cable** (thin cables under-volt the Pi — see runbook) |
+| Statistics | Paired Wilcoxon signed-rank + Cliff's delta + **bootstrap 95% CI on the median paired difference** for TTR, net energy, throttled-seconds, min clock, bytes written. Throttling counted from *live* flag bits only (occurred bits are sticky). Utility mean ± 95% CI |
 
 ![MSc hybrid topology](../docs/diagrams/msc-thesis-diagrams-msc-thesis.drawio.png)
 
@@ -72,10 +75,37 @@ average of constituents rather than a prediction ensemble.
 
 ## Per-run procedure
 
-Manual, per the Runbook below. Reference runs: one clean run per seed
-(`POISON_MODE=off`, standard client) for the gold-standard utility ceiling.
-Sensitivity study (one seed): repeat the paired comparison with a scaled-up model
-to locate where checkpoint I/O becomes the dominant SISA cost.
+Manual, per the Runbook below. Additional runs beyond the paired A/B campaign:
+- **Reference runs** — one clean run per seed (`POISON_MODE=off`, standard client)
+  for the gold-standard utility ceiling (H5).
+- **Sensitivity study** (one seed) — repeat the paired comparison with a scaled-up
+  model to locate where checkpoint I/O becomes the dominant SISA cost (H4).
+- **Network factor** (one seed, both arms) — repeat under the WAN condition
+  (`--profile wan`, `FLEET_PORT=19092`) to show the recovery-cost result holds
+  under realistic latency.
+- **Unlearning efficacy** — after each recovery, `analysis/unlearning_efficacy.py`
+  membership-inference probe confirms the recovered model treats the removed data as
+  unseen (reported honestly against its positive control; exact unlearning is
+  guaranteed by construction and verified bit-identically by `tests/smoke_test.py`).
+
+## Reproducibility & environment disclosure
+
+The thesis must report, and the artifact must pin:
+- **Hardware**: Raspberry Pi 5 rev, SD-card model + class (A1), official 27 W PSU,
+  the 5 A meter→Pi cable, FNB58 (firmware), DS18B20 ambient sensor, host machine.
+- **Software**: Flower 1.29.0, the pinned torch/numpy versions, and Docker **image
+  digests** (not just tags) for `flwr/{superlink,supernode,superexec,base}:1.29.0`.
+- **Determinism**: all seeds (torch/numpy/loader), the vendored logger commit, and
+  the `prepare_edge_data.py` manifest (subsample + poison provenance) per seed.
+- **Measurement**: FNB58 accuracy spec as instrument uncertainty; on-die thermal
+  sensor resolution; ambient per run; page cache dropped before each measured run
+  (runbook) so I/O and timing are comparable.
+
+**Sample size (why N=10).** The pilot effect sizes are large (recovery 8× faster,
+throttled-time 12× lower), so even N=5 would clear significance; N=10 is chosen to
+tighten the bootstrap CIs and protect any metric with a smaller effect (e.g. utility
+equivalence). With paired non-parametric tests the effect size + CI carry the claim,
+not the p-value — full per-seed data is disclosed.
 
 ## Pilot results (2026-07-25, seed 42, 1M rows — frozen)
 
@@ -176,6 +206,11 @@ mkdir -p "$RUN"
 ### 2. Cooldown gate + instruments
 
 ```sh
+# Verify power delivery is clean before spending a run (thin cable ⇒ under-volt).
+ssh admin@rasp5node.local "vcgencmd get_throttled"   # want 0x0
+# Drop the page cache so filesystem-cache state doesn't skew I/O/timing run-to-run.
+ssh admin@rasp5node.local "sync; sudo sh -c 'echo 3 > /proc/sys/vm/drop_caches'"
+
 experiments/cooldown_gate.sh                  # blocks until the SoC temperature plateaus (stable idle floor)
 # Telemetry as a transient systemd unit — survives SSH disconnect (a plain
 # nohup/setsid over SSH does not reliably persist).
@@ -185,6 +220,9 @@ ssh admin@rasp5node.local "sudo systemctl reset-failed msc-monitor 2>/dev/null; 
 sudo python3 -u experiments/fnirsi_logger.py > "$RUN/power_fnb58.csv" &
 LOGGER_PID=$!
 ```
+
+Record the ambient temperature (DS18B20 auto-logs it; otherwise note the room
+temperature) and the cooldown-plateau temperature in `$RUN/notes.txt`.
 
 The logger runs silently once streaming (a 5 s heartbeat prints to stderr); do
 not Ctrl-C it until teardown. Record the ambient temperature in `$RUN/notes.txt`.
@@ -255,7 +293,8 @@ and `notes.txt` (ambient temperature).
 ### 7. Evaluate + analyze (after runs exist)
 
 ```sh
-python3 -m analysis.evaluate_model "$RUN/recovered_model.pt"
+python3 -m analysis.evaluate_model "$RUN/recovered_model.pt"        # utility (H5)
 python3 -m analysis.evaluate_model "$RUN/phase4_checkpoints/round_5.npz"
-python3 -m analysis.analyze
+python3 -m analysis.unlearning_efficacy "$RUN/recovered_model.pt"   # forgetting probe
+python3 -m analysis.analyze                                         # summary.csv + paired_stats.csv
 ```
