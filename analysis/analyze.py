@@ -167,6 +167,10 @@ def parse_run(run_dir: str) -> dict:
             row["p3_iowait_mean_pct"] = round(p3["IOWait_Pct"].mean(), 2)
             row["p3_sd_written_mb"] = round(p3["SD_Write_kBps"].sum() / 1024, 1)
             row["p3_peak_temp_c"] = p3["Temp_C"].max()
+            if "Ambient_C" in p3:  # thermal results must be read against ambient
+                amb = pd.to_numeric(p3["Ambient_C"], errors="coerce").mean()
+                if amb == amb:  # not NaN (sensor present)
+                    row["p3_ambient_c"] = round(float(amb), 1)
 
     sisa_log = os.path.join(run_dir, "sisa_timings.jsonl")
     if os.path.exists(sisa_log):

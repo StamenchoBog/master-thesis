@@ -156,12 +156,25 @@
               echo "n/a"
             fi
           }
+          # Ambient temperature from a DS18B20 1-wire sensor placed next to the Pi
+          # (enable with dtoverlay=w1-gpio; reads via sysfs, no extra tools). "n/a"
+          # if no sensor is attached — thermal results must be read against ambient.
+          read_ambient() {
+            local f
+            for f in /sys/bus/w1/devices/28-*/temperature; do
+              [ -r "$f" ] && { awk '{printf "%.1f", $1/1000}' "$f"; return; }
+            done
+            for f in /sys/bus/w1/devices/28-*/w1_slave; do
+              [ -r "$f" ] && { awk -F't=' '/t=/{printf "%.1f", $2/1000}' "$f"; return; }
+            done
+            echo "n/a"
+          }
 
           read -r _ pu pn ps pi pw pq psq pst _ < /proc/stat
           pstat=($(cat /sys/block/mmcblk0/stat))
           prd=${pstat[2]}; pwr=${pstat[6]}
 
-          echo "Timestamp,Epoch_s,Temp_C,CPU_Freq_MHz,Throttled,RAM_Used_MB,IOWait_Pct,SD_Read_kBps,SD_Write_kBps,Marker" > "$LOG_FILE"
+          echo "Timestamp,Epoch_s,Temp_C,Ambient_C,CPU_Freq_MHz,Throttled,RAM_Used_MB,IOWait_Pct,SD_Read_kBps,SD_Write_kBps,Marker" > "$LOG_FILE"
           echo "Logging to RAM: $LOG_FILE (Ctrl+C to stop)"
 
           while true; do
@@ -181,7 +194,7 @@
             ram=$(free -m | awk 'NR==2{print $3}')
             marker=$(cat /dev/shm/run_marker 2>/dev/null || true)
 
-            echo "$(date +%H:%M:%S),$(date +%s),$(read_temp),$freq,$(read_throttled),$ram,$iow,$rdk,$wrk,$marker" >> "$LOG_FILE"
+            echo "$(date +%H:%M:%S),$(date +%s),$(read_temp),$(read_ambient),$freq,$(read_throttled),$ram,$iow,$rdk,$wrk,$marker" >> "$LOG_FILE"
           done
 
   handlers:
