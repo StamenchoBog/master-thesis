@@ -8,6 +8,9 @@ from flwr.server.strategy import FedAvg, FedProx, FedTrimmedAvg, Krum
 
 FL_STRATEGY = os.getenv("FL_STRATEGY", "fedavg")
 NUM_ROUNDS = int(os.getenv("NUM_ROUNDS", "10"))
+# Bound each round so a stalled straggler can't hang an unattended run forever.
+# On timeout ResilientFedAvg reuses the previous weights instead of crashing.
+ROUND_TIMEOUT = float(os.getenv("ROUND_TIMEOUT", "1200"))
 MIN_FIT_CLIENTS = int(os.getenv("MIN_FIT_CLIENTS", "2"))
 MIN_EVAL_CLIENTS = int(os.getenv("MIN_EVAL_CLIENTS", "2"))
 MIN_AVAILABLE_CLIENTS = int(os.getenv("MIN_AVAILABLE_CLIENTS", "2"))
@@ -130,7 +133,7 @@ def build_strategy():
 def server_fn(context):
     return ServerAppComponents(
         strategy=_with_global_checkpoints(build_strategy()),
-        config=ServerConfig(num_rounds=NUM_ROUNDS),
+        config=ServerConfig(num_rounds=NUM_ROUNDS, round_timeout=ROUND_TIMEOUT),
     )
 
 
