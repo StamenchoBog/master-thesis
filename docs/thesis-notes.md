@@ -23,8 +23,10 @@ data); the comparison is the *physical cost of reaching that same outcome*.
 | Recovered-model recall (H5) | 0.970 | 1.000 | SISA preserves recall |
 | Post-rejoin global recall | 0.927 | 1.000 | SISA more stable (see §3) |
 
-**N = 1 so far** — direction and magnitude are established, statistics require the
-full N=10 campaign.
+**N = 2 pairs so far** (seeds 42, 43). Cliff's δ = 1.0 on TTR / energy / throttled
+seconds (every SISA run beats every naive run); Wilcoxon p is floored at 0.5 until
+≥6 pairs. Recovery cost is highly reproducible: SISA 29/26 s, naive 230/239 s.
+The full N=10 campaign gives proper p-values.
 
 ## 2. The thermal metric (important framing point)
 
@@ -35,23 +37,24 @@ degradation***: naive sits frequency-capped for 225 s and its clock collapses to
 and never leaves 2400 MHz. Report throttled-seconds + the clock-frequency trace over
 the recovery window; put peak temperature in a footnote as "saturates for both".
 
-## 3. The naive utility decline (genuine finding + a caveat to pre-empt)
+## 3. Utility: SISA is *stable*, naive is *variable* (revised after seed 43)
 
-Naive's post-rejoin global recall drifts 1.0 → 0.927 while SISA holds 1.0. This is
-**real and explainable**: the naive recovered model lands *precision-biased*
-(recall 0.970 / precision 0.971), missing ~3 % of attacks, and that bias propagates
-through the federated rejoin. Since the thesis prioritises **recall > precision** for
-an IDS, naive is not only more expensive but produces a **worse model for the use
-case** — a stronger story than cost alone.
+Seed 42 suggested naive degrades recall (post-rejoin 1.0 → 0.927 vs. SISA's 1.0), and
+it looked like a clean "naive is worse" story. **Seed 43 overturned that**: naive
+recovered to recall 0.998 — essentially fine. So the robust claim is **not** "naive is
+always worse on recall"; it is:
 
-**Caveat a committee will raise:** the effective training budgets of naive-from-scratch
-(10 epochs on retained data) vs. SISA constituents (incremental over 10 rounds,
-partially rolled back) are not obviously equal, so the recall gap *could* be
-under-training rather than a fundamental property. Address it explicitly:
-- (a) confirm the pattern across seeds, and
-- (b) a one-seed control — naive recovery with a larger epoch budget; if recall still
-  lags → fundamental, if it catches up → frame as *"at equal wall-clock budget, naive
-  sacrifices recall."* Either way is a valid claim if worded carefully.
+> **SISA's recovery is deterministically stable (recall 1.0 on both seeds), whereas
+> naive's post-rejoin utility is seed-dependent and variable (0.927 vs. 0.998).**
+
+That is a *stronger and more honest* claim than "naive is worse" — SISA gives a
+predictable, reproducible outcome; naive's from-scratch retrain lands in different
+basins run to run. Report the *variance*, not a single-seed anomaly. (This is a
+textbook illustration of why N>1 matters, and good to state as such.)
+
+The training-budget caveat still stands as a discussion point (naive-from-scratch 10
+epochs vs. SISA's incremental constituents are not obviously equal budgets), but it is
+no longer needed to explain a decline — because the decline is not consistent.
 
 ## 4. Anticipated committee objections (and how to answer)
 
