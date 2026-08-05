@@ -14,8 +14,8 @@ __pycache__/
 # Docker
 .env
 
-# MSc experiment run outputs (raw artifacts live on disk, not in git)
-results/msc/runs/
+# MSc experiment run outputs — measured runs are versioned via Git LFS (see
+# .gitattributes); only the transient host-side scratch files stay ignored.
 results/msc/global_checkpoints/
 results/msc/*.json
 results/msc/resume_from.npz

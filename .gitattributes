@@ -1,0 +1,4 @@
+results/msc/runs/**/*.csv filter=lfs diff=lfs merge=lfs -text
+results/msc/runs/**/*.npz filter=lfs diff=lfs merge=lfs -text
+results/msc/runs/**/*.pt filter=lfs diff=lfs merge=lfs -text
+results/msc/runs/**/*.jsonl filter=lfs diff=lfs merge=lfs -text
