@@ -1,6 +1,6 @@
 # Pinned for reproducibility (versions validated in the built images). If the
 # arm64 Pi build cannot resolve a pin, relax that line and record the substitute.
-torch==2.11.0
+torch==2.13.0
 pandas==3.0.2
 scikit-learn==1.8.0
 numpy==2.4.4
