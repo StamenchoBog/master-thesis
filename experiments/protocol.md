@@ -213,7 +213,12 @@ ssh admin@rasp5node.local "sync; sudo sh -c 'echo 3 > /proc/sys/vm/drop_caches'"
 
 experiments/cooldown_gate.sh                  # blocks until the SoC temperature plateaus (stable idle floor)
 # Telemetry as a transient systemd unit — survives SSH disconnect (a plain
-# nohup/setsid over SSH does not reliably persist).
+# nohup/setsid over SSH does not reliably persist). ALWAYS (re)start it with the
+# reset-failed + systemd-run pair below, once per run. Do NOT use `systemctl start
+# msc-monitor` to restart it: a transient systemd-run unit is gone after `stop`, so
+# `systemctl start` silently no-ops and the run gets NO telemetry (analyze then reads
+# the previous run's stale file — caught on sisa-49, whose row was identical to
+# naive-49). After each run, verify a fresh hardware_telemetry_<timestamp>.csv exists.
 ssh admin@rasp5node.local "sudo systemctl reset-failed msc-monitor 2>/dev/null; \
   sudo systemd-run --unit=msc-monitor --working-directory=/home/admin \
   /home/admin/msc-experiment/monitor.sh"
