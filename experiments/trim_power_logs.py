@@ -34,11 +34,18 @@ def trim(run_dir, apply):
     lo, hi = bounds
     lines = open(csv).read().splitlines()
     # Preserve leading blank line + header (the logger prints a blank then a header row).
-    head, data = [], []
+    # Keep only the FIRST header: a logger restarted with `>>` re-emits its header
+    # mid-file, and two header rows make analyze.py read the second as data (string
+    # values → crash). Dedupe them here so the trimmed file has exactly one header.
+    head, data, seen_header = [], [], False
     for ln in lines:
         parts = ln.split()
         if parts and parts[0].replace(".", "", 1).isdigit():
             data.append(ln)
+        elif parts and parts[0] == "timestamp":
+            if not seen_header:
+                head.append(ln)
+                seen_header = True
         else:
             head.append(ln)
     kept = [ln for ln in data if lo <= float(ln.split()[0]) <= hi]

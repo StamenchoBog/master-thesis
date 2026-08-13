@@ -109,6 +109,29 @@ no longer needed to explain a decline — because the decline is not consistent.
   power-cycle the meter between runs.
 - **The small IDS model makes checkpoint I/O negligible** (H4 tested, not assumed) —
   hence the scaled-model sensitivity study to locate where I/O dominates.
+- **Cache-seed must match the runtime seed.** Poison is baked into the Pi's `.npz`
+  cache by `prepare_edge_data.py --seed N` (shard 1, slices 3+ under seed N's
+  shard/slice assignment), and the SISA client re-derives that assignment from the
+  same `SEED=N` at runtime — so a correctly-prepared seed always recovers as
+  `{shard 1: slice 3}`. Running seed 50 against a stale seed-49 cache scattered the
+  fixed poison rows into *slice 0 of two shards* under seed-50's assignment, leaving
+  "no clean checkpoint to roll back to" → a full 250-slice retrain (264 s, ≈ naive).
+  Caught because every valid seed prints `{1: 3}`; fixed by regenerating the cache.
+  Naive is immune (it flips/drops the same rows regardless of shard placement). *Per-
+  seed checklist item: verify `manifest.json` seed == run seed before Phase 1.*
+- **SISA's advantage is contingent on poison locality.** The seed-50 mishap is also a
+  genuine *finding*: SISA's speedup depends on the compromise being confined to late
+  slices of few shards. Poison in slice 0 (or spread across all shards) forces
+  near-full retraining and erases the advantage — the realistic "source compromised
+  at time τ" threat model (late slices, one shard) is precisely what SISA is built for,
+  and worth stating as a scope condition rather than hiding.
+- **A stale OrbStack virtiofs mount silently breaks writes.** After a long session of
+  many container recreations, the serverapp's `/results` bind mount went dangling:
+  `makedirs(exist_ok=True)` succeeded but `open(...,"w")` raised `FileNotFoundError`,
+  and container recreation / full `down`+`up` did not clear it (it also crashed
+  Finder on mount enumeration). Only restarting OrbStack — ultimately a host reboot —
+  fixed it. If unattended host writes start failing mid-campaign, suspect the mount
+  layer, not the app.
 
 ## 7. What remains
 
