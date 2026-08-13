@@ -6,27 +6,39 @@ recorded in `experiments/protocol.md`. Update as the campaign produces more seed
 
 ---
 
-## 1. Headline result (seed 42, first complete paired run — real measured data)
+## 1. Headline result (N=10 complete — seeds 42–51, real measured data)
 
 Both arms achieve the **same guarantee** (exact local unlearning of the compromised
-data); the comparison is the *physical cost of reaching that same outcome*.
+data); the comparison is the *physical cost of reaching that same outcome*. Figures
+below are medians over the 10 paired seeds; p is Wilcoxon signed-rank (paired), δ is
+Cliff's delta. **p = 0.0020 is the two-sided floor at N=10** — it cannot go lower, so
+every headline metric is at the maximum attainable significance.
 
-| Metric | Naive (retrain-from-scratch) | SISA (rollback + replay) | Ratio |
-|---|---|---|---|
-| Recovery time (H1) | 230 s | 29 s | **8× faster** |
-| Net recovery energy (H2) | 0.121 Wh | 0.017 Wh | **7× less** |
-| Throttled seconds (H3) | 225 s | 30 s | **7.5× less** |
-| Min clock during recovery (H3) | 1500 MHz | 2400 MHz | naive degrades −37 % |
-| Peak temperature | 87.3 °C | 87.8 °C | ≈ equal (see §2) |
-| SD written in recovery (H4) | 3.8 MB | 12.7 MB | I/O shifts to SISA |
-| Phase-1 checkpoint overhead (H6) | — | 65.5 MB / 7.3 s | SISA's cost of ownership |
-| Recovered-model recall (H5) | 0.970 | 1.000 | SISA preserves recall |
-| Post-rejoin global recall | 0.927 | 1.000 | SISA more stable (see §3) |
+| Metric | Naive (median) | SISA (median) | Effect | Wilcoxon p | Cliff's δ |
+|---|---|---|---|---|---|
+| Recovery time (H1) | 242.1 s | 29.5 s | **8.2× faster** | 0.0020 | +1.00 |
+| Net recovery energy (H2) | 0.093 Wh | 0.017 Wh | **5.5× less** | 0.0020 | +1.00 |
+| Throttled seconds (H3) | 233 s | 27.5 s | **8.5× less** | 0.0020 | +1.00 |
+| SD written in recovery (H4) | 2.75 MB | 12.05 MB | I/O shifts to SISA | 0.0020 | −1.00 |
+| Post-rejoin global recall (H5) | 0.961 | 1.000 | SISA stable (see §3) | 0.0020 | −1.00 |
+| Post-rejoin global F1 | 0.965 | 0.982 | SISA higher | 0.0059 | −0.80 |
+| Min clock during recovery (H3) | 2400 MHz | 2400 MHz | not discriminating* | 0.2500 | −0.22 |
 
-**N = 2 pairs so far** (seeds 42, 43). Cliff's δ = 1.0 on TTR / energy / throttled
-seconds (every SISA run beats every naive run); Wilcoxon p is floored at 0.5 until
-≥6 pairs. Recovery cost is highly reproducible: SISA 29/26 s, naive 230/239 s.
-The full N=10 campaign gives proper p-values.
+*Min-clock is **not** significant across the campaign: naive throttles its clock only
+when it heat-soaks (e.g. seeds 50/51 dropped to 1800 MHz at 90 °C), but not every
+seed does within the recovery window. The robust thermal signal is **throttled
+*duration*** (H3, p=0.0020, δ=+1.00), not the clock floor — report throttled-seconds,
+keep the clock trace as a per-seed illustration. See §2.
+
+**Every SISA run beat every naive run on TTR, energy, throttled-seconds, SD-written,
+and post-rejoin recall (δ = ±1.00 on all five).** Recovery cost is highly reproducible:
+SISA 26–44 s, naive 237–294 s across all 10 seeds. Confidence intervals are bootstrap
+95% (see `paired_stats.csv`); TTR diff CI [208.7, 219.6] s excludes zero by a wide
+margin. Counterbalanced A/B order (naive-first / sisa-first alternating per seed).
+
+Phase-1 checkpoint overhead (H6, SISA's cost of ownership): ~65.5 MB / 5–24 s of
+checkpoint I/O per run, measured alongside the recovery savings — see `p1_ckpt_*`
+columns in `summary.csv`.
 
 ## 2. The thermal metric (important framing point)
 
@@ -40,17 +52,20 @@ the recovery window; put peak temperature in a footnote as "saturates for both".
 ## 3. Utility: SISA is *stable*, naive is *variable* (revised after seed 43)
 
 Seed 42 suggested naive degrades recall (post-rejoin 1.0 → 0.927 vs. SISA's 1.0), and
-it looked like a clean "naive is worse" story. **Seed 43 overturned that**: naive
-recovered to recall 0.998 — essentially fine. So the robust claim is **not** "naive is
-always worse on recall"; it is:
+it looked like a clean "naive is worse" story. **Seed 43 overturned that** (naive 0.998).
+Across the full N=10 the pattern is unambiguous:
 
-> **SISA's recovery is deterministically stable (recall 1.0 on both seeds), whereas
-> naive's post-rejoin utility is seed-dependent and variable (0.927 vs. 0.998).**
+> **SISA's recovery is deterministically stable — post-rejoin recall = 1.000 on all 10
+> seeds — whereas naive's post-rejoin utility is seed-dependent and variable, ranging
+> 0.879 → 0.998 (median 0.961, IQR 0.056).**
 
-That is a *stronger and more honest* claim than "naive is worse" — SISA gives a
-predictable, reproducible outcome; naive's from-scratch retrain lands in different
-basins run to run. Report the *variance*, not a single-seed anomaly. (This is a
-textbook illustration of why N>1 matters, and good to state as such.)
+Concretely, naive post-rejoin recall by seed: 42→0.927, 43→0.998, 50→0.879 (worst,
+heat-soaked to 90 °C), 51→0.987, 49→0.994 — SISA is 1.000 every time. The paired test
+gives p=0.0020, δ=−1.00 (every SISA ≥ every naive). This is a *stronger and more
+honest* claim than "naive is worse": SISA gives a predictable, reproducible outcome;
+naive's from-scratch retrain lands in different basins run to run. **Report the
+variance** (a box/strip plot of the 10 naive points against SISA's flat 1.0 line is the
+figure), not a single-seed anomaly — a textbook illustration of why N>1 matters.
 
 The training-budget caveat still stands as a discussion point (naive-from-scratch 10
 epochs vs. SISA's incremental constituents are not obviously equal budgets), but it is
@@ -135,10 +150,18 @@ no longer needed to explain a decline — because the decline is not consistent.
 
 ## 7. What remains
 
-- **8 more paired seeds (43–51)** → statistics.
-- **Supporting runs**: 5 clean references (utility ceiling), 1 scaled-model sensitivity
-  study, 1 WAN-condition run.
-- **The naive-budget control** (§3) to settle the training-budget question.
-- Confirm the naive utility decline holds across seeds.
-- Figures once campaign data exists (throttle traces, energy bars with per-seed points,
-  recovery-time comparison, F1/recall curves).
+- ~~10 paired seeds (42–51)~~ **DONE** — N=10 complete, all core metrics p=0.0020,
+  δ=±1.00 (the two-sided Wilcoxon floor at N=10). Pushed via Git LFS.
+- **Supporting runs** (optional, strengthen but not required for the main claim):
+  5 clean references (utility ceiling), 1 scaled-model sensitivity study (locate where
+  SD I/O dominates — H4 shows it's negligible for the small IDS model), 1 WAN-condition
+  run (toxiproxy latency).
+- **The naive-budget control** (§3) to settle the training-budget question (naive 10
+  epochs vs. SISA incremental) — a discussion point, not needed for the headline.
+- **Figures to generate** from `summary.csv` / `paired_stats.csv`:
+  1. Recovery-time comparison (paired dumbbell or grouped bar, per-seed points).
+  2. Energy bars, idle-subtracted, with the 10 per-seed points overlaid.
+  3. Throttle-duration + clock trace over the recovery window (naive heat-soak vs. SISA).
+  4. **Post-rejoin recall strip plot**: 10 naive points (0.88–1.0 spread) vs. SISA's flat
+     1.0 — the §3 stability figure.
+  5. H6 cost-of-ownership: SISA Phase-1 checkpoint overhead vs. its recovery savings.
