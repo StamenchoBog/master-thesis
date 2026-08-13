@@ -198,6 +198,11 @@ RUN=results/msc/runs/ARM_seedSEED   # used by every later step — keep the same
 python3 experiments/prepare_edge_data.py --seed SEED
 scp data/.cache/msc/partition_3_of_4.npz data/.cache/msc/manifest.json \
     admin@rasp5node.local:master-thesis/data/.cache/msc/
+# GUARD: the Pi cache MUST match this run's seed. If it doesn't, the fixed poison
+# rows scatter under the client's runtime shard/slice assignment (poison in slice 0
+# of several shards) and SISA recovery degenerates to a full retrain — a valid seed
+# always recovers as {shard 1: slice 3}. Verify before Phase 1:
+ssh admin@rasp5node.local "python3 -c \"import json; s=json.load(open('/home/admin/master-thesis/data/.cache/msc/manifest.json'))['seed']; assert s==SEED, f'Pi cache seed {s} != run seed SEED'; print('cache seed OK:', s)\""
 ssh admin@rasp5node.local "rm -rf msc-experiment/checkpoints/* /dev/shm/sisa_timings.jsonl /dev/shm/recovery_manifest.json /dev/shm/hardware_telemetry_*.csv"
 rm -rf results/msc/global_checkpoints
 mkdir -p "$RUN"
