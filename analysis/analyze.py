@@ -39,6 +39,9 @@ from scipy.stats import wilcoxon
 METRICS = ["ttr_s", "p3_energy_net_wh", "p3_throttled_s", "p3_min_clock_mhz",
            "p3_sd_written_mb", "p1_ckpt_bytes", "p4_final_f1", "p4_final_recall"]
 
+PHASE1_ROUNDS = 10  # Phase-1 training rounds (frozen in protocol.md); rounds > this
+                    # in sisa_timings.jsonl belong to the Phase-4 rejoin, not H6.
+
 
 def cliffs_delta(a, b) -> float:
     """Cliff's delta effect size: P(a>b) - P(a<b) over all pairs."""
@@ -174,9 +177,17 @@ def parse_run(run_dir: str) -> dict:
 
     sisa_log = os.path.join(run_dir, "sisa_timings.jsonl")
     if os.path.exists(sisa_log):
+        # H6 = Phase-1 checkpoint overhead only. The jsonl is append-only in /dev/shm
+        # and logs every slice write across the whole run: rounds 1-10 are Phase 1,
+        # 11-15 are the Phase-4 rejoin (the SISA round counter continues because
+        # constituents persist), and a re-run of Phase 1 (e.g. a cache-fix redo) leaves
+        # stale duplicates behind. Isolate Phase 1 and keep one entry per (round,shard,
+        # slice) so the overhead is the true 250-checkpoint cost, not an accumulation.
         entries = [json.loads(line) for line in open(sisa_log)]
-        row["p1_ckpt_io_s"] = round(sum(e["ckpt_s"] for e in entries), 2)
-        row["p1_ckpt_bytes"] = sum(e["ckpt_bytes"] for e in entries)
+        p1 = {(e["round"], e["shard"], e["slice"]): e
+              for e in entries if e["round"] <= PHASE1_ROUNDS}
+        row["p1_ckpt_io_s"] = round(sum(e["ckpt_s"] for e in p1.values()), 2)
+        row["p1_ckpt_bytes"] = sum(e["ckpt_bytes"] for e in p1.values())
 
     for phase in (1, 4):
         path = os.path.join(run_dir, f"results_phase{phase}.json")
