@@ -111,8 +111,12 @@ no longer needed to explain a decline — because the decline is not consistent.
 
 - **Power delivery is a hidden confound.** A thin meter→Pi cable dropped ~0.4 V and
   chronically under-volted the Pi (clock throttling unrelated to the workload),
-  invisible on the meter's own 5.1 V reading. Fixed with a 5 A cable; verify
-  `vcgencmd get_throttled == 0x0` before every run. *(Pilot caught this.)*
+  invisible on the meter's own 5.1 V reading. Mitigated with a 5 A cable + EEPROM
+  `PSU_MAX_CURRENT=5000`; check `vcgencmd get_throttled` before every run. *(Pilot
+  caught this.)* Note the 5 A cable **reduced but did not eliminate** transient
+  under-voltage under peak load through the inline meter — see the residual-undervoltage
+  disclosure in §8. It is not a clean 0x0; report it honestly and show it doesn't move
+  the result.
 - **The 40 °C cooldown gate was physically unreachable** on a fanless Pi (idle floor
   ~60–79 °C, ambient-dependent). Replaced with a *stability plateau* gate.
 - **Sticky throttle bits** — the analysis must count only the *live* flag bits; the
@@ -165,3 +169,68 @@ no longer needed to explain a decline — because the decline is not consistent.
   4. **Post-rejoin recall strip plot**: 10 naive points (0.88–1.0 spread) vs. SISA's flat
      1.0 — the §3 stability figure.
   5. H6 cost-of-ownership: SISA Phase-1 checkpoint overhead vs. its recovery savings.
+
+## 8. Data validation & threats to validity (audit of the N=10 dataset)
+
+A full audit of the 20 committed runs (2026-08-13). No result needed redoing; the
+effect is robust to every confound found. Disclose these proactively — they are the
+questions a committee will ask, and each has an evidence-based answer.
+
+- **Completeness.** 20 runs = 10 seeds × 2 arms, zero missing values in the six core
+  metrics (ttr, throttled, energy, SD, recall, F1). Counterbalancing verified: 5
+  naive-first (42,44,46,47,49), 5 sisa-first (43,45,48,50,51).
+
+- **Cross-session pairs (the main threat).** 4 of 10 pairs had their two arms run in
+  different sessions, up to ~6 days apart (seed 44: 140 h; 47: 66 h; 43: 48 h; 45: 20 h);
+  the other 6 pairs were same-session (< 3 h). Ambient therefore varied *within* those 4
+  pairs. **Robustness check settles it:** split the campaign and the effect is identical —
+  same-session (n=6): naive 251.6 s vs SISA 31.3 s, 7.9×, δ=±1.00, no overlap, p=0.031;
+  cross-session (n=4): naive 240.5 s vs SISA 27.3 s, 8.8×, δ=±1.00, no overlap, p=0.125
+  (the N=4 floor). The **cooldown gate** (each run starts from a stabilised idle plateau)
+  is the actual ambient control; same-session pairing is a bonus where it exists. The
+  ~210 s TTR gap dwarfs any tens-of-seconds ambient thermal swing, so no reordering can
+  flip it. *Recommendation: report both subsets; optionally re-run seed 44 same-session
+  to remove the single 6-day pair, but the data already proves it doesn't matter.*
+
+- **Residual under-voltage (correcting the "must be 0" claim).** The 5 A cable did not
+  fully eliminate transient under-voltage through the inline meter. Non-zero live
+  under-voltage bits appear in ~half the runs, but **concentrated in Phase 1/Phase 4**
+  (training/rejoin, high sustained load); only 1–9 s ever fall in the Phase-3 recovery
+  window (max naive-49 = 9 s / 237 s ≈ 4%). Crucially it does **not** drive the H3
+  clock-degradation metric: naive-42 and naive-45 dropped to 1500 MHz with *zero*
+  under-voltage — the clock drops are **thermal**, not power-delivery. Under-voltage is
+  bit 0; the throttle metric counts bits 1–3 (thermal), so it isn't inflated either.
+  Disclose as a minor, quantified limitation.
+
+- **`throttled_s` definition.** Monitor samples at 1 Hz; `throttled_s` = throttled
+  samples within the **phase-3 marker window**, which brackets the recovery *invocation*
+  (container spin-up + compute + teardown) and is a few seconds longer than the pure
+  compute `ttr_s`. Hence sisa-50/51 show 47–49 throttled-s against a 43 s TTR — plus
+  those two ran in a warm room (idle plateau ~84–89 °C), so nearly the whole recovery was
+  at the soft-temp limit. State the metric precisely as "seconds throttled over the
+  recovery window" and note absolute thermal values are ambient-dependent (the paired
+  *difference* is not).
+
+- **Wall-time is not bit-deterministic — computation is.** Re-runs of the deterministic
+  recovery gave identical training loss (e.g. naive-51 loss 0.014226 both times) but
+  slightly different wall times (263.4 → 261.5 s), because TTR is a physical measurement
+  sensitive to instantaneous thermal/clock state. "Determinism" in the protocol means
+  reproducible *computation* (seeds fix model + data + poison), not a reproducible
+  stopwatch. Expected and correct.
+
+- **H6 corrected during this audit.** `analyze.py` was summing the append-only
+  `sisa_timings.jsonl` wholesale, conflating Phase-1 (rounds 1–10), Phase-4 rejoin
+  (rounds 11–15), and duplicate entries from Phase-1 re-runs → inflated, inconsistent
+  checkpoint overhead (65–175 MB). Fixed to dedup Phase-1 slices only: now a consistent
+  **250 checkpoints / 43.67 MB / 3.1–5.9 s** across all 10 seeds. Core paired stats
+  unaffected (H6 is SISA-only, descriptive).
+
+- **`naive_seed45` Phase-1 power gap** (benign). Its phase-1 markers predate the power
+  log by ~20 h (a cross-day run); `analyze.py` warns and skips that window. Phase-1
+  energy is descriptive (not in the paired stats) and Phase-3 coverage is intact, so no
+  metric is affected.
+
+**Bottom line:** every core metric separates the arms with **no overlap** (naive TTR
+230–294 s vs SISA 26–44 s; SD 2.7–3.8 vs 11.4–12.7 MB; recall SISA flat 1.000 vs naive
+0.879–0.998), δ=±1.00, p at the N=10 floor. The findings above are honesty items and
+robustness evidence, not corrections that change the conclusion.
