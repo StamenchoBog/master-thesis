@@ -19,3 +19,6 @@ __pycache__/
 results/msc/global_checkpoints/
 results/msc/*.json
 results/msc/resume_from.npz
+
+# Thesis figures/tables — regenerable from analysis/make_figures.py; live in Overleaf.
+docs/thesis/
