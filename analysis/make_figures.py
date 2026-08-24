@@ -126,49 +126,55 @@ ax.set_ylabel("Однос на време (Наивно / SISA)"); ax.set_ylim(0
 save(fig, "fig_robustness_session")
 
 
-# --- LaTeX tables ---
+# --- LaTeX tables (Macedonian decimal comma; CI values separated by ; to avoid
+#     ambiguity with the decimal comma; sensible rounding, no false precision) ---
 def w_row(m):
-    r = stats[stats.metric == m].iloc[0]
-    return r
+    return stats[stats.metric == m].iloc[0]
+
+
+def mk(x, dec):
+    """Format a number with a Macedonian decimal comma."""
+    return f"{x:.{dec}f}".replace(".", ",")
 
 
 MK = {"ttr_s": "Време на закрепнување (s)", "p3_energy_net_wh": "Нето енергија (Wh)",
       "p3_throttled_s": "Термичко забавување (s)", "p3_sd_written_mb": "Запишано на SD (MB)"}
-lines = [r"\begin{table}[t]", r"\centering",
+DEC = {"ttr_s": 1, "p3_energy_net_wh": 3, "p3_throttled_s": 1, "p3_sd_written_mb": 2}
+lines = [r"\begin{table}[htbp]", r"\centering",
          r"\caption{Спарена статистика за физичките трошоци на закрепнување (N=10 семиња, "
          r"42--51). Медијани по пристап, разлика со 95\% bootstrap интервал на доверба, "
-         r"Wilcoxon signed-rank $p$ и Cliff's $\delta$. $p=0.0020$ е долната граница при N=10.}",
+         r"Wilcoxon signed-rank $p$ и Cliff's $\delta$. $p=0{,}0020$ е долната граница при N=10.}",
          r"\label{tab:paired-cost}",
          r"\begin{tabular}{lrrrrr}", r"\toprule",
-         r"Метрика & Наивно & SISA & Разлика [95\% CI] & $p$ & $\delta$ \\", r"\midrule"]
+         r"Метрика & Наивно & SISA & Разлика [95\% ИД] & $p$ & $\delta$ \\", r"\midrule"]
 for m in ["ttr_s", "p3_energy_net_wh", "p3_throttled_s", "p3_sd_written_mb"]:
-    r = w_row(m)
-    lines.append(f"{MK[m]} & {r.naive_median:g} & {r.sisa_median:g} & "
-                 f"{r.diff_median:g} [{r.diff_ci95_lo:g}, {r.diff_ci95_hi:g}] & "
-                 f"{r.wilcoxon_p:.4f} & {r.cliffs_delta:+.2f} \\\\")
+    r = w_row(m); d = DEC[m]
+    lines.append(f"{MK[m]} & {mk(r.naive_median, d)} & {mk(r.sisa_median, d)} & "
+                 f"{mk(r.diff_median, d)} [{mk(r.diff_ci95_lo, d)}; {mk(r.diff_ci95_hi, d)}] & "
+                 f"{mk(r.wilcoxon_p, 4)} & {mk(r.cliffs_delta, 2) if r.cliffs_delta < 0 else '+' + mk(r.cliffs_delta, 2)} \\\\")
 lines += [r"\bottomrule", r"\end{tabular}", r"\end{table}"]
 open(f"{TAB}/tab_paired_cost.tex", "w").write("\n".join(lines))
 print("  wrote tab_paired_cost.tex")
 
 pm = util[util.phase == "p4"].groupby("arm")[
     ["recall", "specificity", "balanced_acc", "mcc", "roc_auc"]].median()
-lines = [r"\begin{table}[t]", r"\centering",
+lines = [r"\begin{table}[htbp]", r"\centering",
          r"\caption{Повторна евалуација на глобалниот модел по закрепнување (Фаза 4) врз "
-         r"издвоеното глобално тест-множество (100k примери, 96.5\% напади). Медијани по "
-         r"пристап. Recall/F1 се тривијални при таков дисбаланс; \emph{избалансираната "
-         r"точност}, специфичноста и MCC ја откриваат вистината: SISA колабира во "
-         r"мнозинската класа (сè предвидува како напад), додека наивното повторно "
-         r"тренирање задржува детекција на бенигни. ROC-AUC е споредлив, па дефектот е "
-         r"во калибрацијата, не во информацијата.}",
+         r"издвоеното глобално тест-множество (100k примери, 96,5\% напади). Медијани по "
+         r"пристап. Recall и F1 се тривијални при ваков дисбаланс; \emph{избалансираната "
+         r"точност}, специфичноста и MCC покажуваат дека SISA колабира во мнозинската класа "
+         r"(сè предвидува како напад), додека наивното повторно тренирање задржува детекција "
+         r"на бенигни. ROC-AUC е споредлив, што укажува дека дефектот е во калибрацијата, а "
+         r"не во информацијата.}",
          r"\label{tab:utility}",
          r"\begin{tabular}{lrrrrr}", r"\toprule",
          r"Пристап & Recall & Специфичност & Изб.\ точност & MCC & ROC-AUC \\", r"\midrule"]
 for arm, lab in [("naive", "Наивно"), ("sisa", "SISA")]:
     r = pm.loc[arm]
-    lines.append(f"{lab} & {r.recall:.3f} & {r.specificity:.3f} & {r.balanced_acc:.3f} & "
-                 f"{r.mcc:.3f} & {r.roc_auc:.3f} \\\\")
+    lines.append(f"{lab} & {mk(r.recall, 3)} & {mk(r.specificity, 3)} & {mk(r.balanced_acc, 3)} & "
+                 f"{mk(r.mcc, 3)} & {mk(r.roc_auc, 3)} \\\\")
 lines.append(r"\midrule")
-lines.append(r"Мнозинска класа & 1.000 & 0.000 & 0.500 & 0.000 & 0.500 \\")
+lines.append(r"Мнозинска класа & 1,000 & 0,000 & 0,500 & 0,000 & 0,500 \\")
 lines += [r"\bottomrule", r"\end{tabular}", r"\end{table}"]
 open(f"{TAB}/tab_utility.tex", "w").write("\n".join(lines))
 print("  wrote tab_utility.tex")
