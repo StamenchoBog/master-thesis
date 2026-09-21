@@ -1,0 +1,61 @@
+% ===================================================================
+% ABSTRACT (ENGLISH)
+% ===================================================================
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+
+\textbf{Background.} Federated learning allows intrusion detection systems for Internet-of-Things
+networks to be trained without moving raw traffic off the devices that observe it, but it
+raises a maintenance problem: when a node is identified as compromised, or when a right to
+erasure is exercised, the influence of its data must be removed from the model. Deleting the
+raw records is not sufficient, because the model retains what it learned from them in its
+weights. The federated unlearning literature expresses the cost of removal in epochs and
+communication rounds, and measures it in simulation. On a real edge device --- constrained
+simultaneously by compute, heat, storage and power delivery --- that abstraction is not
+enough. This thesis measures the \textbf{physical cost of unlearning} on real hardware.
+
+\textbf{Methods.} A hybrid four-client federation was built on Flower 1.29 in deployment mode,
+with the aggregator and three simulated nodes running on a host machine and the fourth node
+being a physical Raspberry Pi 5 (4 GB) joining over the local network. The device is
+deliberately constrained: its fan is unplugged, which forces thermal throttling, and its
+storage is a class A1 SD card. Power is measured with an external FNIRSI FNB58 meter placed
+inline on the supply. Using the TON\_IoT dataset with 1,000,000 rows per node, two approaches
+to exact local unlearning are compared: \textbf{naive retraining} from scratch on the retained
+data, and \textbf{SISA unlearning} ($S = 5$ shards × $R = 5$ slices) with rollback and replay of
+only the affected slices. Removal is triggered by a label-flipping poison confined to slices
+3–4 of a single shard, which defines a well-specified set of roughly 63,000 samples that must
+be forgotten. The design was pre-registered and frozen before measurement, paired by seed,
+with $N = 10$ pairs (seeds 42–51) and counterbalanced arm order. Statistics are
+non-parametric: Wilcoxon signed-rank tests, Cliff's $\delta$ and bootstrap 95\,\% confidence
+intervals.
+
+\textbf{Results.} SISA reduces time-to-recovery from a median of 242.1 s to 29.5 s (\textbf{8.2×}), net
+recovery energy from 0.093 Wh to 0.017 Wh (\textbf{5.4×}), and time spent thermally throttled from
+233 s to 27.5 s (\textbf{8.5×}). All three reach $p = 0.0020$ --- the two-sided floor at $N = 10$ --- with Cliff's $\delta = +1.00$, that is, complete separation: no SISA run overlaps any naive
+run. Cost does shift toward storage (12.05 MB written versus 2.75 MB), but the absolute
+magnitude is negligible for a 12,865-parameter model. SISA's training-phase overhead is
+43.67 MB and a median of 5.6 s of checkpoint I/O, which a single recovery repays more than
+thirtyfold. \textbf{Utility requires careful reading.} Re-scoring every saved global model on a
+held-out 100,000-sample test set that is 96.5\,\% attack shows that at the deployed 0.5
+threshold the SISA-recovered model predicts every flow as an attack: specificity 0.000,
+balanced accuracy 0.500 (chance) and MCC 0.017, against 0.237, 0.598 and 0.177 for naive
+retraining; its recall of 1.000 and $F_1$ of 0.982 are trivial artefacts of class imbalance.
+The collapse is, however, \textbf{a matter of calibration}: with the threshold tuned, SISA reaches
+a balanced accuracy of \textbf{0.709 against 0.671} for naive retraining, better on 9 of 10 seeds
+and better on specificity and MCC alike. It precedes recovery and localises to the parameter
+averaging of the constituent models --- individually they discriminate, the average of their
+weights does not.
+
+\textbf{Conclusion.} SISA makes unlearning on an edge device eightfold cheaper, at a negligible
+standing cost and \textbf{without sacrificing utility --- provided the decision threshold is
+calibrated}. Left uncalibrated it delivers a detector that labels everything an attack: a
+failure the conventional recall and $F_1$ metrics conceal entirely under severe class
+imbalance, and one that originates in the aggregation rather than in the unlearning. The
+contribution of this thesis is a methodology for measuring the physical cost of unlearning,
+and an empirical basis for choosing between the two approaches, expressed in the quantities a
+systems designer actually pays.
+
+\textbf{Keywords:} federated learning, machine unlearning, SISA, intrusion detection, Internet of
+Things, edge computing, energy consumption, thermal throttling, class imbalance, right to be
+forgotten.
+

@@ -11,6 +11,18 @@ __pycache__/
 *.egg-info/
 .venv/
 
+# OS
+.DS_Store
+
+# Claude Code assistant config/tooling — not part of the thesis or the codebase.
+.claude/
+
+# Working notes for writing the thesis text — internal, not for distribution.
+docs/thesis-notes.md
+
+# Overleaf-paper-only tooling (figure/table generation) — not part of the experiment.
+analysis/make_figures.py
+
 # Docker
 .env
 
@@ -21,4 +33,9 @@ results/msc/*.json
 results/msc/resume_from.npz
 
 # Thesis figures/tables — regenerable from analysis/make_figures.py; live in Overleaf.
-docs/thesis/
+# The hand-written chapter text and bibliography are NOT regenerable, so they stay tracked.
+# Note: ignore the *contents* (`/*`), not the directory itself — git does not descend into
+# an ignored directory, so a `!` negation under `docs/thesis/` would never take effect.
+docs/thesis/*
+!docs/thesis/sections/
+!docs/thesis/references.bib

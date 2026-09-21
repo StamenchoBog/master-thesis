@@ -149,9 +149,7 @@ def decode(data, calculate_crc, time_interval, alpha):
 
     packet_type = data[1]
     if packet_type != 0x04:
-        # ignore all non-data packets
-        # print("Ignoring")
-        return
+        return  # ignore all non-data packets
 
     if calculate_crc:
         actual_checksum = data[-1]
@@ -182,11 +180,7 @@ def decode(data, calculate_crc, time_interval, alpha):
         ) / 100000
         dp = (data[offset + 8] + data[offset + 9] * 256) / 1000
         dn = (data[offset + 10] + data[offset + 11] * 256) / 1000
-        # unknown12 = data[offset + 12]  # ? constant 1  # some PD info?
-        # It does not look to be a sign of current. I tried reversing
-        # USB-C-In and USB-C-Out, which does reversed orientation of the
-        # blue arrow for current on device screen, but unknown12 remains 1.
-        # print(f"unknown{offset+12} {unknown12:02x}")
+        # data[offset+12]: constant 1, purpose unreverse-engineered (not a current sign bit)
         temp_C = (data[offset + 13] + data[offset + 14] * 256) / 10.0
         if temp_ema is not None:
             temp_ema = temp_C * (1.0 - alpha) + temp_ema * alpha
@@ -203,9 +197,6 @@ def decode(data, calculate_crc, time_interval, alpha):
             f"{t:.3f} {i} {voltage:7.5f} {current:7.5f} {dp:5.3f} {dn:5.3f} "
             f"{temp_ema:6.3f} {energy:.6f} {capacity:.6f}"
         )
-    # unknown62 = data[62]  # data[-2]
-    # print(f"unknown62 {unknown:02x}")
-    # print()
 
 
 def request_data(is_fnb58_or_fnb48s, ep_out):
@@ -284,15 +275,9 @@ def main():
         print(f"Ensuring all interfaces not busy and detaching kernel driver, if needed …", file=sys.stderr)
     ensure_all_interfaces_not_busy(dev)
 
-    # if args.verbose:
-    #     print(f"Claining interface …", file=sys.stderr)
-    # usb.util.claim_interface(dev, 0)
-
     if args.verbose:
         print(f"Setting configuration …", file=sys.stderr)
-    # Set the active configuration. With no arguments, the first
-    # configuration will be the active one
-    dev.set_configuration()
+    dev.set_configuration()  # no args: first configuration becomes active
 
     # Get an endpoint instance
     cfg = dev.get_active_configuration()
@@ -334,9 +319,6 @@ def main():
     while not stop:
         try:
             data = ep_in.read(size_or_buffer=64, timeout=5000)
-
-            # print("".join([f"{x:02x}" for x in data]))
-
             decode(data, crc_calculator, time_interval, alpha)
             timeouts = 0
 

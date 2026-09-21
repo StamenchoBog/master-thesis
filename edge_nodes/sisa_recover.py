@@ -52,8 +52,8 @@ RECOVERED_MODEL_PATH = os.getenv(
 
 
 def main():
-    # Dropout draws from the global torch RNG — seed here so recovery is
-    # deterministic regardless of prior RNG consumption in this process.
+    # Dropout uses the global torch RNG; seed here so recovery is deterministic
+    # regardless of prior RNG consumption in this process.
     torch.manual_seed(SEED * 6271)
     cache = os.path.join(CACHE_DIR, f"partition_{PARTITION_ID}_of_{NUM_PARTITIONS}.npz")
     data = np.load(cache)

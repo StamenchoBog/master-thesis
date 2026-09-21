@@ -9,12 +9,10 @@ Per run directory (see the runbook in experiments/protocol.md) it reads:
   sisa_timings.jsonl          Phase-1 SISA overhead (per-slice train + ckpt I/O)
   results_phase{1,4}.json     per-round global F1/recall
 
-Writes summary.csv and paired_stats.csv next to the runs. Per metric: medians +
-IQR, Wilcoxon signed-rank p, Cliff's delta, and a bootstrap 95% CI on the median
-paired difference — with small N the effect size and CI carry the argument, not p.
-Throttling is counted from the *live* flag bits only (the occurred bits are sticky);
-energy is reported net of the idle baseline. Thesis figures are added once the
-campaign data exists.
+Writes summary.csv and paired_stats.csv next to the runs. Per metric: medians + IQR,
+Wilcoxon signed-rank p, Cliff's delta, and a bootstrap 95% CI on the paired difference
+— with small N the effect size and CI carry the argument, not p. Throttling counts only
+the *live* flag bits (the "occurred" bits are sticky); energy is net of the idle baseline.
 """
 
 import argparse
@@ -41,6 +39,9 @@ METRICS = ["ttr_s", "p3_energy_net_wh", "p3_throttled_s", "p3_min_clock_mhz",
 
 PHASE1_ROUNDS = 10  # Phase-1 training rounds (frozen in protocol.md); rounds > this
                     # in sisa_timings.jsonl belong to the Phase-4 rejoin, not H6.
+NUM_SHARDS = NUM_SLICES = 5   # frozen in protocol.md
+POISON_FROM_SLICE = 3         # slices >= this in the target shard carry the poison, so
+                              # after cleaning they are nearly empty and replay fast
 
 
 def cliffs_delta(a, b) -> float:
@@ -54,10 +55,9 @@ def cliffs_delta(a, b) -> float:
 def active_throttle(hexflag) -> tuple:
     """(thermal_now, undervoltage_now) from a vcgencmd get_throttled hex string.
 
-    Bits 1/2/3 = arm-freq-capped / throttled / soft-temp-limit *now*; bit 0 =
-    under-voltage *now*. The 16–19 "occurred" bits are sticky (stay set for the
-    rest of the boot after one event), so counting anything != 0x0 over-reports
-    throttling massively — we look only at the live bits.
+    Bits 1/2/3 = capped/throttled/soft-limit *now*; bit 0 = under-voltage *now*.
+    Bits 16-19 are sticky "occurred since boot" flags — ignored, or throttling
+    would be massively over-reported.
     """
     try:
         v = int(str(hexflag), 16)
@@ -104,11 +104,9 @@ def _idle_power_w(p: pd.DataFrame, run_dir: str):
 def parse_power(run_dir: str, row: dict) -> None:
     """Per-phase energy (Wh, gross and idle-subtracted net) and power (W) from the FNB58 log.
 
-    Energy is the trapezoidal integral of instantaneous power (V*I) over each phase
-    window — self-contained, so a mid-run logger restart (which zeroes the device's
-    cumulative counter) cannot corrupt it. Net energy subtracts the idle baseline so
-    H2 reports the *marginal* cost of recovery, not the whole idling board. Warns if
-    the power log doesn't cover a phase window.
+    Energy is the trapezoidal integral of V*I over each phase window (not the device's
+    cumulative counter, which a mid-run logger restart would zero). Net energy subtracts
+    the idle baseline so H2 reports the *marginal* cost, not the whole idling board.
     """
     path = os.path.join(run_dir, "power_fnb58.csv")
     windows = _phase_windows(run_dir)
@@ -153,6 +151,15 @@ def parse_run(run_dir: str) -> dict:
         row["ttr_s"] = man["total_s"]
         row["recovery_ckpt_io_s"] = man.get("ckpt_io_s", 0.0)
         row["recovery_ckpt_bytes"] = man.get("ckpt_bytes", 0)
+        row["poisoned_samples"] = man.get("poisoned_samples")
+        row["retained_samples"] = man.get("retained_samples")   # naive only
+        row["epochs"] = man.get("epochs")                       # naive only
+        row["retrained_slices"] = man.get("retrained_slices")   # sisa only
+        if "slices" in man:  # sisa: split replayed slices into full vs. depleted.
+            # No leading underscore — itertuples() renames those, breaking the lookup below.
+            row["depleted_slices"] = sum(1 for s in man["slices"]
+                                         if s["slice"] >= POISON_FROM_SLICE)
+            row["full_slices"] = len(man["slices"]) - row["depleted_slices"]
 
     telemetry = sorted(glob.glob(os.path.join(run_dir, "hardware_telemetry_*.csv")))
     if telemetry:
@@ -177,12 +184,9 @@ def parse_run(run_dir: str) -> dict:
 
     sisa_log = os.path.join(run_dir, "sisa_timings.jsonl")
     if os.path.exists(sisa_log):
-        # H6 = Phase-1 checkpoint overhead only. The jsonl is append-only in /dev/shm
-        # and logs every slice write across the whole run: rounds 1-10 are Phase 1,
-        # 11-15 are the Phase-4 rejoin (the SISA round counter continues because
-        # constituents persist), and a re-run of Phase 1 (e.g. a cache-fix redo) leaves
-        # stale duplicates behind. Isolate Phase 1 and keep one entry per (round,shard,
-        # slice) so the overhead is the true 250-checkpoint cost, not an accumulation.
+        # H6 = Phase-1 overhead only. The append-only jsonl also holds Phase-4 rounds
+        # (11-15, since the SISA round counter continues) and stale re-run duplicates;
+        # dedupe by (round, shard, slice) so the cost isn't double-counted.
         entries = [json.loads(line) for line in open(sisa_log)]
         p1 = {(e["round"], e["shard"], e["slice"]): e
               for e in entries if e["round"] <= PHASE1_ROUNDS}
@@ -212,6 +216,36 @@ def _bootstrap_ci(diffs, n=10000, seed=0) -> tuple:
     rng = np.random.default_rng(seed)
     meds = np.median(rng.choice(diffs, size=(n, len(diffs)), replace=True), axis=1)
     return float(np.percentile(meds, 2.5)), float(np.percentile(meds, 97.5))
+
+
+def add_work_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """Sample-updates performed during recovery, and the resulting throughput.
+
+    Quantifies "SISA is faster because it does less work" (H1): if the time ratio
+    exceeds the work ratio, the surplus is a physical (thermal) effect a FLOP count
+    would miss. naive = retained rows x epochs; sisa = full replayed slices x slice
+    size, plus depleted (poisoned) slices at whatever survived in them — these recur
+    every round, so at S=R=5 with 47 replayed slices it's 27 full + 20 depleted.
+    """
+    pools = {r.seed: r.retained_samples + r.poisoned_samples
+             for r in df.itertuples() if r.arm == "naive"
+             and pd.notna(r.retained_samples) and pd.notna(r.poisoned_samples)}
+
+    def work(r):
+        pool = pools.get(r.seed)
+        if pool is None or pd.isna(r.poisoned_samples):
+            return np.nan
+        if r.arm == "naive":
+            return r.retained_samples * r.epochs
+        slice_rows = pool / (NUM_SHARDS * NUM_SLICES)
+        n_poisoned_slices = NUM_SLICES - POISON_FROM_SLICE      # 2 of 5, per shard
+        survived = n_poisoned_slices * slice_rows - r.poisoned_samples
+        return (r.full_slices * slice_rows
+                + r.depleted_slices * survived / n_poisoned_slices)
+
+    df["recovery_sample_updates"] = [work(r) for r in df.itertuples()]
+    df["recovery_rows_per_s"] = (df["recovery_sample_updates"] / df["ttr_s"]).round(0)
+    return df.drop(columns=[c for c in ("full_slices", "depleted_slices") if c in df])
 
 
 def paired_stats(df: pd.DataFrame, metric: str) -> dict | None:
@@ -247,9 +281,17 @@ def main():
     rows = [r for d in sorted(glob.glob(os.path.join(args.runs, "*"))) if (r := parse_run(d))]
     if not rows:
         raise SystemExit(f"No runs found under {args.runs}")
-    df = pd.DataFrame(rows)
+    df = add_work_columns(pd.DataFrame(rows))
     df.to_csv(os.path.join(args.runs, "summary.csv"), index=False)
     print(df.to_string(index=False))
+
+    # The treatment must be identical across seeds; flag it loudly if it is not.
+    poisoned = df.groupby("seed")["poisoned_samples"].first().dropna()
+    if len(poisoned) and poisoned.max() / poisoned.min() > 1.1:
+        print(f"\nWARNING: poisoned-set size is not constant across seeds "
+              f"({poisoned.min():.0f}..{poisoned.max():.0f}). The paired contrasts stay "
+              f"valid (both arms of a seed share its poison set), but the treatment is "
+              f"heterogeneous and must be disclosed. Per seed:\n{poisoned.to_string()}")
 
     stats = [s for m in METRICS if m in df.columns and (s := paired_stats(df, m))]
     if stats:

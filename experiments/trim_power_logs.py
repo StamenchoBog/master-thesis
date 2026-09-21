@@ -33,10 +33,9 @@ def trim(run_dir, apply):
         return
     lo, hi = bounds
     lines = open(csv).read().splitlines()
-    # Preserve leading blank line + header (the logger prints a blank then a header row).
-    # Keep only the FIRST header: a logger restarted with `>>` re-emits its header
-    # mid-file, and two header rows make analyze.py read the second as data (string
-    # values → crash). Dedupe them here so the trimmed file has exactly one header.
+    # Preserve the leading blank line + header. Keep only the FIRST header — a logger
+    # restarted with `>>` re-emits its header mid-file, and two headers would make
+    # analyze.py read the second as data (string values -> crash).
     head, data, seen_header = [], [], False
     for ln in lines:
         parts = ln.split()

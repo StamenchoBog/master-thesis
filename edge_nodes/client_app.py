@@ -41,9 +41,9 @@ class FlowerClient(NumPyClient):
     def _apply_incoming(self, parameters):
         """Adopt the broadcast global weights, or the recovered local model once.
 
-        After Phase-3 recovery the incoming global weights still carry poison
-        influence, so the first post-recovery fit starts from the recovered
-        model instead (one-time override, marked with a .used file).
+        Post-recovery, incoming global weights still carry poison influence, so
+        the first fit after rejoin starts from the recovered model instead
+        (one-time override, tracked with a .used marker file).
         """
         marker = RECOVERED_MODEL_PATH + ".used" if RECOVERED_MODEL_PATH else ""
         if RECOVERED_MODEL_PATH and os.path.exists(RECOVERED_MODEL_PATH) and not os.path.exists(marker):
@@ -109,8 +109,7 @@ def client_fn(context: Context):
     return FlowerClient(model, trainloader, valloader).to_client()
 
 
-# Arm B swaps in the SISA client. The import sits below FlowerClient on purpose:
-# sisa_client imports FlowerClient back from this module.
+# Imported here, not at top: sisa_client imports FlowerClient back from this module.
 if CLIENT_MODE == "sisa":
     from .sisa_client import client_fn as _selected_client_fn
 else:

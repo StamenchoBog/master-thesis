@@ -77,7 +77,13 @@ average of constituents rather than a prediction ensemble.
 
 Manual, per the Runbook below. Additional runs beyond the paired A/B campaign:
 - **Reference runs** — one clean run per seed (`POISON_MODE=off`, standard client)
-  for the gold-standard utility ceiling (H5).
+  for the gold-standard utility ceiling (H5). Procedure in Runbook step 8; these are
+  Phase-1 only and need no instrumentation, so they are cheap.
+- **Constituent diagnostic** (one run, SISA arm) — `analysis/constituent_diagnostic.py`
+  scores each shard's constituent individually against their parameter average, to
+  establish whether the majority-class collapse is caused by the averaging (the claim
+  the Discussion makes) or is already present in the isolated shards. Must run against
+  a `CHECKPOINT_DIR` that has not yet been wiped by the next run's step 1.
 - **Sensitivity study** (one seed) — repeat the paired comparison with a scaled-up
   model to locate where checkpoint I/O becomes the dominant SISA cost (H4).
 - **Network factor** (one seed, both arms) — repeat under the WAN condition
@@ -308,3 +314,58 @@ python3 -m analysis.evaluate_model "$RUN/phase4_checkpoints/round_5.npz"
 python3 -m analysis.unlearning_efficacy "$RUN/recovered_model.pt"   # forgetting probe
 python3 -m analysis.analyze                                         # summary.csv + paired_stats.csv
 ```
+
+Utility must be read with imbalance-robust metrics, not recall/F1 — on a 96.5%-attack
+test set a majority-class model scores recall 1.0 / F1 0.98 with zero benign detection.
+Build one test set per seed (they are seed-specific and `prepare_edge_data.py` overwrites
+the same filename), then re-score every saved global model:
+
+```sh
+for S in 42 43 44 45 46 47 48 49 50 51; do
+  python3 experiments/prepare_edge_data.py --seed $S
+  cp data/.cache/msc/test_global.npz data/.cache/msc/test_seed$S.npz
+done
+python3 -m analysis.reeval_utility --phase1 \
+        --test-template data/.cache/msc/test_seed{seed}.npz    # utility_reeval.csv
+```
+
+The `*_tuned` columns give the best attainable balanced accuracy over the decision
+threshold — the gap to the 0.5-threshold column is how much of any collapse is merely
+calibration.
+
+### 8. Clean reference runs (utility ceiling for H5)
+
+H5 as pre-registered compares the recovered model against a **clean-trained** model, so
+one reference run per seed is required. A reference run is much cheaper than a measured
+run: Phase 1 only, no recovery, no Phase 4, and no power/telemetry instrumentation —
+nothing physical is being measured, only the utility ceiling.
+
+```sh
+RUN=results/msc/runs/clean_seedSEED && mkdir -p "$RUN"
+python3 experiments/prepare_edge_data.py --seed SEED
+scp data/.cache/msc/partition_3_of_4.npz data/.cache/msc/manifest.json PI:~/msc-experiment/data/.cache/msc/
+rm -rf results/msc/global_checkpoints
+
+# host: same as a measured run
+SEED=SEED NUM_ROUNDS=10 RESULTS_SUFFIX=_clean docker compose -f docker-compose.host.yml up -d
+# Pi: standard client, poison OFF — this is the only difference that matters
+CLIENT_MODE=standard POISON_MODE=off docker compose -f docker-compose.edge.yml up -d
+docker compose -f docker-compose.host.yml run --rm runner
+
+mv results/msc/global_checkpoints "$RUN/phase1_checkpoints"
+mv results/msc/fedavg_clean.json "$RUN/results_phase1.json"
+```
+
+Then score the round-10 model against that seed's own test set. `--phase1` is required:
+a clean run has no Phase-4 checkpoint, so without it the run contributes no rows.
+`analyze.py` ignores `clean_*` directories (its regex only matches `naive|sisa`), so
+these runs cannot contaminate the paired statistics:
+
+```sh
+python3 -m analysis.reeval_utility --phase1 --runs results/msc/runs \
+        --test-template data/.cache/msc/test_seed{seed}.npz
+```
+
+Report H5 as the gap between each arm's recovered model and the clean ceiling for the
+same seed. Note the cooldown gate is **not** needed here — no timing or thermal quantity
+is being measured — which is why five reference runs cost roughly one afternoon.

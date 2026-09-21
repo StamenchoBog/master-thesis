@@ -1,18 +1,16 @@
 """SISA client (Arm B): sharded, isolated, sliced training with checkpoint rollback.
 
 Adaptation of SISA (Bourtoule et al., 2021) to a federated client:
-- The local train set is split into S shards x R slices (seeded, shared with
+- Local train set split into S shards x R slices (seeded, shared with
   prepare_edge_data.py via sisa_partition.py).
-- One constituent model per shard, trained ONLY on its shard — constituents
-  never absorb the broadcast global weights, otherwise the rollback checkpoints
-  would inherit poison influence via the global model and the local unlearning
-  guarantee would be lost. Documented deviation from vanilla FL.
-- The FL update is the parameter average of the constituents (deviation from
-  vanilla SISA's prediction ensembling, required to fit FedAvg).
-- After every slice, the constituent + optimizer state is checkpointed to the
-  SD card with fsync — checkpoint I/O is a measured experimental quantity.
-- Rounds are counted locally (state.json) because Phase 4 is a separate
-  `flwr run` whose server_round restarts at 1.
+- One constituent per shard, trained ONLY on its shard. Constituents never absorb
+  the broadcast global weights — otherwise rollback checkpoints would inherit
+  poison via the global model, breaking the local unlearning guarantee.
+- FL update = parameter average of constituents, not vanilla SISA's prediction
+  ensembling (required to fit FedAvg). Both deviations are documented.
+- Checkpoint after every slice with fsync — I/O is a measured quantity.
+- Rounds are counted locally (state.json): Phase 4 is a separate `flwr run`
+  whose server_round restarts at 1.
 
 Timings go to TELEMETRY_DIR (RAM) as JSONL; FL fit metrics carry only
 train_loss because the server's _weighted_average requires identical metric

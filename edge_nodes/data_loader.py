@@ -13,8 +13,8 @@ CACHE_DIR = os.getenv("CACHE_DIR", os.path.join(DATA_DIR, ".cache"))
 # drop — poisoned rows removed (Phase 4: post-recovery rejoin on retained data)
 POISON_MODE = os.getenv("POISON_MODE", "off")
 
-# The deployment engine may call client_fn per message; keep the decompressed
-# arrays in memory so the ~160 MB npz isn't re-read from SD every round.
+# client_fn may run per message; cache decompressed arrays so the ~160 MB
+# npz isn't re-read from SD every round.
 _arrays_cache = {}
 
 
@@ -25,14 +25,12 @@ def _cache_path(partition_id: int, num_partitions: int) -> str:
 def load_arrays(partition_id: int, num_partitions: int):
     """Load a partition's raw arrays, applying POISON_MODE=flip if set.
 
-    Poison indices are embedded in the cache by experiments/prepare_edge_data.py
-    (seeded, confined to the later slices of one SISA shard) so the poisoned
-    dataset is bit-identical across experiment arms. Only the train region is
-    ever poisoned; the val split stays clean. Row dropping (POISON_MODE=drop)
-    is left to consumers because the SISA shard/slice assignment is positional
-    and must keep the original indexing.
+    Poison indices come from experiments/prepare_edge_data.py (seeded, confined
+    to one SISA shard's later slices) so the poisoned dataset is bit-identical
+    across arms. Row dropping (POISON_MODE=drop) is left to callers since the
+    SISA shard/slice assignment is positional and must keep original indexing.
 
-    Returns (X, y, split, poison_idx) where split is the train/val boundary.
+    Returns (X, y, split, poison_idx); split is the train/val boundary.
     """
     key = (partition_id, num_partitions)
     if key in _arrays_cache:
