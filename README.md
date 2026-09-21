@@ -1,10 +1,10 @@
 # Master Thesis — Distributed AI for IoT Network Attack Detection
 
-MSc thesis on Federated Learning for intrusion detection across IoT edge nodes, extended with a physical-edge experiment comparing **Naive Retraining** vs. **SISA machine unlearning** after a data-poisoning attack.
+MSc thesis on Federated Learning for intrusion detection across IoT edge nodes. Extended with a physical-edge experiment comparing Naive Retraining against SISA machine unlearning after a data-poisoning attack.
 
-The FL system is built with [Flower](https://flower.ai) 1.29.0 and PyTorch on the [TON_IoT](https://research.unsw.edu.au/projects/toniot-datasets) dataset. The course-assignment phase of this work (simulation-only, all nodes in Docker) is preserved at the [`course-final`](../../releases/tag/course-final) git tag; its results live in `results/course/`.
+The FL system is built with [Flower](https://flower.ai) 1.29.0 and PyTorch, trained on the [TON_IoT](https://research.unsw.edu.au/projects/toniot-datasets) dataset. The original course-assignment work (simulation only, everything in Docker) is kept as-is under [`results/course/`](results/course/); the MSc work builds on top of that.
 
-**MSc hybrid topology** — three simulated edge nodes on the host, the Raspberry Pi joining over the LAN as the 4th edge node:
+Topology for the MSc part: three simulated edge nodes on the host, plus a real Raspberry Pi joining over the LAN as the 4th node.
 
 ![MSc architecture](./docs/diagrams/msc-thesis-diagrams-msc-thesis.drawio.png)
 
@@ -12,20 +12,17 @@ The FL system is built with [Flower](https://flower.ai) 1.29.0 and PyTorch on th
 
 | Directory | Description |
 |---|---|
-| `edge_nodes/` | ClientApp — local training, model, data pipeline, poisoning, SISA |
-| `server/` | ServerApp — aggregation strategy and round configuration |
-| `ansible/` | Raspberry Pi 5 edge-node provisioning |
-| `experiments/` | MSc experiment: pre-registered protocol + runbook, data prep, cooldown gate |
-| `analysis/` | Model evaluation and paired statistics for experiment results |
-| `tests/` | Verification of the unlearning guarantee (rollback correctness, determinism) |
-| `results/course/` | Course-phase results (FedAvg baseline + chaos, FedProx, Krum, TrimmedMean) |
+| `edge_nodes/` | ClientApp: local training, model, data pipeline, poisoning, SISA |
+| `server/` | ServerApp: aggregation strategy and round config |
+| `ansible/` | Provisioning for the Pi |
+| `experiments/` | Data prep, power + thermal logging for the MSc experiment |
+| `analysis/` | Stats, utility scoring, unlearning verification |
+| `tests/` | Checks the unlearning guarantee (rollback, determinism) |
+| `results/course/` | Course-phase results (FedAvg, FedProx, Krum, TrimmedMean) |
 | `results/msc/` | MSc experiment outputs |
-| `docs/` | Architecture diagrams |
+| `docs/diagrams/` | Architecture diagrams |
 
-The MSc experiment (Naive Retraining vs. SISA machine unlearning after data
-poisoning, measured on physical edge hardware) is fully specified in
-[`experiments/protocol.md`](experiments/protocol.md) — hypotheses, design,
-statistics, and the step-by-step runbook.
+Full design and results for the MSc experiment are written up in the thesis itself (`docs/thesis/sections/`). The N=10 paired runs are done; raw output is under [`results/msc/runs/`](results/msc/runs/) (`summary.csv`, `paired_stats.csv`, `utility_evaluation.csv`).
 
 ## Dataset
 
@@ -33,7 +30,7 @@ Download the **TON_IoT Network dataset** from [research.unsw.edu.au/projects/ton
 
 ## Quick start (all-local simulation)
 
-**Course-phase architecture** — all nodes simulated in Docker on one machine:
+Course-phase architecture, everything simulated in Docker on one machine:
 
 ![Course architecture](./docs/diagrams/msc-thesis-diagrams-course.png)
 
@@ -68,7 +65,7 @@ Set via environment variables in `docker-compose.yml`:
 
 ## Physical edge node (Raspberry Pi 5)
 
-The MSc experiment extends the federation with a Raspberry Pi 5 (4 GB, fanless, A1 SD card) joining over the LAN as a 4th node, alongside the three simulated nodes on the host. Provisioning is automated with Ansible.
+For the MSc experiment the federation gets a real Raspberry Pi 5 (4 GB, fan unplugged on purpose, A1 SD card) as a 4th node over the LAN, alongside the three simulated nodes. Provisioning is handled by Ansible.
 
 ### Bootstrap
 
@@ -86,6 +83,6 @@ The MSc experiment extends the federation with a Raspberry Pi 5 (4 GB, fanless, 
    ansible-playbook -i inventory.ini setup_node.yaml --ask-become-pass
    ```
 
-> **Passphrase-protected key?** Ansible connects over SSH non-interactively, so it can't prompt for a private key passphrase. If your key has one, run `ssh-add ~/.ssh/<generated-private-ssh-key>` first (once per shell session/agent restart) so `ssh-agent` holds the decrypted key — otherwise the playbook fails with `Permission denied (publickey)` even though the key is correctly authorized on the Pi.
+> If your SSH key has a passphrase, Ansible can't prompt for it (non-interactive). Run `ssh-add ~/.ssh/<generated-private-ssh-key>` first, once per shell session, so the agent already holds the decrypted key. Otherwise the playbook fails with `Permission denied (publickey)` even though the key is fine on the Pi side.
 
-The playbook applies experiment-specific tuning: APT timers stopped, swap disabled permanently (Debian 13's `rpi-swap` set to `Mechanism=none`), CPU governor locked to `performance`, Docker with local log rotation, and a RAM-based telemetry script (`~/msc-experiment/monitor.sh`) that logs to `/dev/shm` so telemetry never touches SD-card I/O metrics.
+The playbook does the usual experiment prep: stops APT timers, disables swap for good (Debian 13's `rpi-swap` set to `Mechanism=none`), locks the CPU governor to `performance`, sets up Docker with local log rotation, and drops a small telemetry script (`~/msc-experiment/monitor.sh`) that writes to `/dev/shm` so its own I/O doesn't pollute the SD-card metrics we're trying to measure.

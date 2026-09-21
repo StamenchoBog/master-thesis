@@ -1,6 +1,6 @@
 """Re-score saved global models with balanced, imbalance-aware metrics (H5).
 
-    python -m analysis.reeval_utility            # needs torch+sklearn; run in the
+    python -m analysis.evaluate_utility           # needs torch+sklearn; run in the
                                                  # clientapp image, see the runbook
 
 Recall/F1 are near-trivial on the 96.5%-attack test set (predicting all-attack scores
@@ -10,7 +10,7 @@ chance) while naive retraining keeps benign discrimination (~0.60) — even thou
 ROC-AUC is comparable, so it's a *calibration* failure, not lost information.
 
 Loads each run's Phase-4 model (and, with --phase1, the Phase-1 model, to show the
-collapse predates recovery). Writes utility_reeval.csv next to the runs.
+collapse predates recovery). Writes utility_evaluation.csv next to the runs.
 
 Threshold sweep: reports the best attainable balanced accuracy per model (the
 `*_tuned` columns), turning "ROC-AUC survives" into a measurement of how much
@@ -25,7 +25,7 @@ skew optimistic). Use --test-template for a clean per-seed comparison:
       python3 experiments/prepare_edge_data.py --seed $S
       cp data/.cache/msc/test_global.npz data/.cache/msc/test_seed$S.npz
     done
-    python -m analysis.reeval_utility --phase1 \
+    python -m analysis.evaluate_utility --phase1 \
       --test-template data/.cache/msc/test_seed{seed}.npz
 """
 
@@ -155,7 +155,7 @@ def main():
                              **score_model(ckpt, X, y)})
 
     df = pd.DataFrame(rows).round(4)
-    df.to_csv(os.path.join(args.runs, "utility_reeval.csv"), index=False)
+    df.to_csv(os.path.join(args.runs, "utility_evaluation.csv"), index=False)
     print(df.to_string(index=False))
     for phase in df["phase"].unique():
         print(f"\n[{phase}] medians by arm:")

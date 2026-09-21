@@ -4,7 +4,7 @@
 
 The FNB58 logger runs continuously, so most of a run's power CSV is idle pre-roll
 (before Phase 1) and post-tail (after `done`) — pure noise that bloats the file to
-100+ MB. `analysis/analyze.py` only reads samples inside the phase-marker windows
+100+ MB. `analysis/analyze_runs.py` only reads samples inside the phase-marker windows
 (phase1/idle/phase3/idle/phase4 → done). This keeps exactly that span
 [first marker − 1 s, last marker + 1 s] and drops the rest, so the analysis output is
 unchanged while the file shrinks dramatically — small enough to version in git.
@@ -35,7 +35,7 @@ def trim(run_dir, apply):
     lines = open(csv).read().splitlines()
     # Preserve the leading blank line + header. Keep only the FIRST header — a logger
     # restarted with `>>` re-emits its header mid-file, and two headers would make
-    # analyze.py read the second as data (string values -> crash).
+    # analyze_runs.py read the second as data (string values -> crash).
     head, data, seen_header = [], [], False
     for ln in lines:
         parts = ln.split()

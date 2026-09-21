@@ -1,24 +1,14 @@
 # Experiment Results
 
-Dataset: [TON_IoT](https://research.unsw.edu.au/projects/toniot-datasets) (23 CSV files, ~22M rows, 15 features) | Nodes: 3 | Rounds: 10
+Dataset: [TON_IoT](https://research.unsw.edu.au/projects/toniot-datasets), 23 CSV files, ~22M rows, 15 features. 3 nodes, 10 rounds.
 
-Each node trains locally for **1 epoch per round** using **Adam (lr=0.001, batch size 512)**. The learning rate is sent by the server each round so it can be adjusted without rebuilding the client image.
-
----
+Each node trains locally for 1 epoch per round with Adam (lr=0.001, batch size 512). The learning rate comes from the server each round, so it can be changed without rebuilding the client image.
 
 ## Metrics
 
-| Metric | Why it matters |
-|---|---|
-| **Train Loss** (BCE) | Tracks learning speed; spikes signal client drift or convergence stall |
-| **Accuracy** | Overall correctness — misleading on imbalanced data, included for full picture |
-| **Precision** | Low → false alarms (alert fatigue) |
-| **Recall** | Low → missed attacks (primary failure mode for an IDS) |
-| **F1** | Harmonic mean of precision and recall |
+Train loss (BCE) shows how fast training is converging — spikes usually mean a client drifted or something stalled. Accuracy is reported for completeness but isn't very informative here since the classes are imbalanced. Precision and recall matter more: low precision means more false alarms, low recall means missed attacks, which for an IDS is the worse failure. F1 is just the harmonic mean of the two.
 
-Priority order: **Recall › Precision › F1.** Missing an attack is unacceptable; false alarms are costly but recoverable.
-
----
+Recall is the metric we care about most, then precision, then F1 — a missed attack is worse than an extra alert.
 
 ## FedAvg — 10 rounds
 
@@ -35,11 +25,9 @@ Priority order: **Recall › Precision › F1.** Missing an attack is unacceptab
 | 9 | 0.0258 | 87.4% | 92.9% | 93.4% | 93.6% |
 | **10** | **0.0252** | **93.2%** | **96.3%** | **93.4%** | **99.7%** |
 
----
+## FedAvg with chaos engineering — 10 rounds
 
-## FedAvg with Chaos Engineering — 10 rounds
-
-Network conditions: 5ms ± 3ms latency injected via toxiproxy to simulate inter-VLAN routing on a wired LAN. If fewer than `min_fit_clients` respond in a round, the server keeps the previous round's weights rather than aggregating an incomplete update.
+Same setup, but with 5ms ± 3ms latency injected via toxiproxy (simulating inter-VLAN routing on a wired LAN). If fewer than `min_fit_clients` respond in a round, the server just keeps the previous round's weights instead of aggregating an incomplete update.
 
 | Round | Train Loss | Accuracy | F1 | Precision | Recall |
 |---|---|---|---|---|---|
@@ -54,7 +42,7 @@ Network conditions: 5ms ± 3ms latency injected via toxiproxy to simulate inter-
 | 9 | 0.0272 | 85.4% | 91.7% | 93.3% | 91.5% |
 | **10** | **0.0271** | **93.3%** | **96.3%** | **93.2%** | **100.0%** |
 
-### Baseline vs Chaos
+### Baseline vs chaos
 
 | | Baseline | Chaos |
 |---|---|---|
@@ -63,4 +51,4 @@ Network conditions: 5ms ± 3ms latency injected via toxiproxy to simulate inter-
 | Final round F1 | 96.3% | 96.3% |
 | Final round Recall | 99.7% | 100.0% |
 
-The system ends at the same quality as the baseline despite realistic network noise. Rounds 3, 6, and 7 show drops (~68–74% F1) where the fallback held the previous weights — the model recovered each time.
+Ends up at basically the same quality despite the added network noise. Rounds 3, 6 and 7 dip (~68-74% F1) where the fallback kicked in and held the previous weights, but the model recovers every time.

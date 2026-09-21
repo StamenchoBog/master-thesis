@@ -20,6 +20,10 @@ __pycache__/
 # Working notes for writing the thesis text — internal, not for distribution.
 docs/thesis-notes.md
 
+# Working doc used to draft the thesis methodology/results chapters — superseded
+# by docs/thesis/sections/, kept locally only.
+experiments/protocol.md
+
 # Overleaf-paper-only tooling (figure/table generation) — not part of the experiment.
 analysis/make_figures.py
 

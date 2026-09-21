@@ -1,6 +1,6 @@
 """Aggregate MSc experiment runs into a summary table and paired statistics.
 
-    python -m analysis.analyze [--runs results/msc/runs]
+    python -m analysis.analyze_runs [--runs results/msc/runs]
 
 Per run directory (see the runbook in experiments/protocol.md) it reads:
   recovery_manifest.json      TTR, checkpoint I/O (SISA)

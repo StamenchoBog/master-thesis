@@ -1,9 +1,9 @@
 """Is the SISA majority-class collapse caused by averaging, or already in the shards?
 
-    python -m analysis.constituent_diagnostic --checkpoints ~/msc-experiment/checkpoints
+    python -m analysis.evaluate_constituents --checkpoints ~/msc-experiment/checkpoints
 
 The thesis attributes the collapse (specificity ~0, balanced accuracy ~0.50 — see
-reeval_utility.py) to the documented deviation from vanilla SISA: the client sends the
+evaluate_utility.py) to the documented deviation from vanilla SISA: the client sends the
 *parameter average* of its S constituents, not an ensemble of predictions. That's an
 inference, not a measurement — each constituent also only ever sees pool/S rows in
 isolation, so the shards themselves could be the degenerate part instead.

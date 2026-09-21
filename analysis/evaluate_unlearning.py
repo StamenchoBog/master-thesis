@@ -1,6 +1,6 @@
 """Empirically verify machine unlearning: has the recovered model *forgotten* the removed data?
 
-    python -m analysis.unlearning_efficacy <model.pt|round.npz> [--cache data/.cache/msc/partition_3_of_4.npz]
+    python -m analysis.evaluate_unlearning <model.pt|round.npz> [--cache data/.cache/msc/partition_3_of_4.npz]
 
 Exact unlearning is guaranteed by construction (the recovered SISA constituents never
 trained on the removed samples), but a reviewer wants that *demonstrated*, not just
