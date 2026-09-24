@@ -1,0 +1,4 @@
+external-sources=true
+source-path=SCRIPTDIR
+# ssh command strings are built on this machine on purpose.
+disable=SC2029

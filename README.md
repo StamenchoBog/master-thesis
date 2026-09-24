@@ -74,7 +74,7 @@ Settings are environment variables on `superexec-serverapp` in `docker-compose.y
 
 ## Reproducing the MSc experiment
 
-This is done by hand on purpose: someone has to be there for the power meter and the cooldown wait anyway. One run = one arm (`naive` or `sisa`) for one seed.
+One run is one arm (`naive` or `sisa`) for one seed. Someone has to be there for the power meter and the cooldown wait, so it isn't fully automated, but each step is a script in `experiments/run/`.
 
 ### One-time
 
@@ -83,79 +83,28 @@ NUM_PARTITIONS=4 docker compose run --rm preprocessor     # 4-way caches (3 sim 
 ssh admin@rasp5node.local "cd master-thesis && HOST_IP=<host LAN IP> docker compose -f docker-compose.edge.yml build"
 ```
 
-Provision the Pi with Ansible first (see below) and keep its checkout of this repo up to date. An old `docker-compose.edge.yml` on the Pi fails quietly (it just ignores `FLEET_PORT`).
-
-Every `docker-compose.edge.yml` command, including `stop` and `down`, needs `HOST_IP` set.
+Provision the Pi with Ansible first (see below) and keep its checkout of this repo up to date. An old `docker-compose.edge.yml` on the Pi quietly ignores `FLEET_PORT`.
 
 ### Per run
 
 ```sh
-SEED=42; ARM=naive                        # or sisa
-RUN=results/msc/runs/${ARM}_seed$SEED     # keep the same shell for the whole run
-HOST_IP=<host LAN IP>
-
-# 1. Data prep, then check the Pi has the matching seed. A mismatched cache
-#    scatters the poison and SISA degrades to a full retrain.
-python3 experiments/prepare_edge_data.py --seed $SEED
-scp data/.cache/msc/partition_3_of_4.npz data/.cache/msc/manifest.json \
-    admin@rasp5node.local:master-thesis/data/.cache/msc/
-ssh admin@rasp5node.local "python3 -c \"import json; print(json.load(open('master-thesis/data/.cache/msc/manifest.json'))['seed'])\""
-ssh admin@rasp5node.local "sudo rm -rf msc-experiment/checkpoints/* /dev/shm/sisa_timings.jsonl /dev/shm/recovery_manifest.json /dev/shm/hardware_telemetry_*.csv"
-rm -rf results/msc/global_checkpoints && mkdir -p "$RUN"
-
-# 2. Clean start: power check (want 0x0; reboot the Pi if sticky bits are set),
-#    drop caches, wait for a thermal plateau, start telemetry and the power logger.
-ssh admin@rasp5node.local "vcgencmd get_throttled"
-ssh admin@rasp5node.local "sync; sudo sh -c 'echo 3 > /proc/sys/vm/drop_caches'"
-experiments/cooldown_gate.sh
-ssh admin@rasp5node.local "sudo systemctl reset-failed msc-monitor 2>/dev/null; \
-  sudo systemd-run --unit=msc-monitor --working-directory=/home/admin /home/admin/msc-experiment/monitor.sh"
-ssh admin@rasp5node.local "sudo systemctl status msc-monitor --no-pager | head -3"   # must be active
-sudo python3 -u experiments/fnirsi_logger.py > "$RUN/power_fnb58.csv" &
-LOGGER_PID=$!
-
-# 3. Phase 1: 10 poisoned federated rounds.
-CLIENT_MODE=$([ $ARM = naive ] && echo standard || echo sisa)
-echo "$(date +%s) phase1" >> "$RUN/phases.log"; ssh admin@rasp5node.local "echo phase1 > /dev/shm/run_marker"
-SEED=$SEED NUM_ROUNDS=10 RESULTS_SUFFIX=_p1 docker compose -f docker-compose.host.yml up -d
-ssh admin@rasp5node.local "cd master-thesis && HOST_IP=$HOST_IP SEED=$SEED CLIENT_MODE=$CLIENT_MODE POISON_MODE=flip \
-  docker compose -f docker-compose.edge.yml up -d"
-docker compose -f docker-compose.host.yml run --rm runner
-echo "$(date +%s) idle" >> "$RUN/phases.log"; ssh admin@rasp5node.local "echo idle > /dev/shm/run_marker"
-mv results/msc/global_checkpoints "$RUN/phase1_checkpoints"
-
-# 4. Phase 3: recovery on the Pi (the measured window).
-MODULE=$([ $ARM = naive ] && echo naive_retrain || echo sisa_recover)
-ssh admin@rasp5node.local "cd master-thesis && HOST_IP=$HOST_IP docker compose -f docker-compose.edge.yml stop superexec-clientapp-4"
-echo "$(date +%s) phase3" >> "$RUN/phases.log"; ssh admin@rasp5node.local "echo phase3 > /dev/shm/run_marker"
-ssh admin@rasp5node.local "cd master-thesis && HOST_IP=$HOST_IP SEED=$SEED docker compose -f docker-compose.edge.yml run --rm \
-  -v \$PWD:/app -w /app --entrypoint python superexec-clientapp-4 -m edge_nodes.$MODULE"
-echo "$(date +%s) idle" >> "$RUN/phases.log"; ssh admin@rasp5node.local "echo idle > /dev/shm/run_marker"
-
-# 5. Phase 4: 5 rejoin rounds, resumed from the Phase-1 global model.
-cp "$RUN/phase1_checkpoints/round_10.npz" results/msc/resume_from.npz
-SEED=$SEED NUM_ROUNDS=5 RESULTS_SUFFIX=_p4 INIT_FROM_CHECKPOINT=/results/resume_from.npz \
-  docker compose -f docker-compose.host.yml up -d superexec-serverapp
-ssh admin@rasp5node.local "cd master-thesis && HOST_IP=$HOST_IP SEED=$SEED CLIENT_MODE=$CLIENT_MODE POISON_MODE=drop \
-  docker compose -f docker-compose.edge.yml up -d superexec-clientapp-4"
-echo "$(date +%s) phase4" >> "$RUN/phases.log"; ssh admin@rasp5node.local "echo phase4 > /dev/shm/run_marker"
-docker compose -f docker-compose.host.yml run --rm runner
-echo "$(date +%s) done" >> "$RUN/phases.log"; ssh admin@rasp5node.local "echo done > /dev/shm/run_marker"
-
-# 6. Teardown and collect.
-sudo kill $LOGGER_PID
-ssh admin@rasp5node.local "cd master-thesis && HOST_IP=$HOST_IP docker compose -f docker-compose.edge.yml down; sudo systemctl stop msc-monitor"
-docker compose -f docker-compose.host.yml down
-scp "admin@rasp5node.local:/dev/shm/hardware_telemetry_*.csv" admin@rasp5node.local:/dev/shm/recovery_manifest.json \
-    admin@rasp5node.local:msc-experiment/checkpoints/recovered_model.pt "$RUN/"
-[ $ARM = sisa ] && scp admin@rasp5node.local:/dev/shm/sisa_timings.jsonl "$RUN/"
-mv results/msc/fedavg_p1.json "$RUN/results_phase1.json"
-mv results/msc/fedavg_p4.json "$RUN/results_phase4.json"
-mv results/msc/global_checkpoints "$RUN/phase4_checkpoints"
-rm -f results/msc/resume_from.npz
+experiments/run/run_all.sh naive 42          # or sisa; add --wan for the WAN condition
 ```
 
-**WAN condition.** Name the run folder `wan_${ARM}_seed$SEED`, add `--profile wan` to the host `up`/`down` commands, and add `FLEET_PORT=19092` to the Pi's `up` commands so its traffic goes through the 40 ms ± 20 ms toxiproxy link. Nodes 1–3 always go through a separate 5 ms ± 3 ms proxy, standing in for three separate devices.
+or step by step, with the same arguments:
+
+| Script | What it does |
+|---|---|
+| `01_prepare.sh` | Builds the seed's data, copies the Pi's partition over, checks the seed matches, clears old Pi state |
+| `02_instruments.sh` | Checks power (`throttled=0x0`), drops caches, waits for the cooldown plateau, starts telemetry and the power logger |
+| `03_train.sh` | Phase 1: 10 federated rounds with poisoned labels |
+| `04_recover.sh` | Phase 3: `naive_retrain` or `sisa_recover` on the Pi (the measured window) |
+| `05_rejoin.sh` | Phase 4: 5 rejoin rounds from the Phase-1 global model |
+| `06_collect.sh` | Stops everything and moves the results into the run folder |
+
+Results land in `results/msc/runs/<arm>_seed<N>/` (`wan_<arm>_seed<N>/` with `--wan`). `HOST_IP` is detected from `en0`; set it yourself if that's wrong. If `02_instruments.sh` reports sticky throttle bits, reboot the Pi and run it again. If a run stops halfway, stop the power logger and the containers by hand (the first lines of `06_collect.sh`), then delete the run folder before starting over.
+
+With `--wan`, the Pi's traffic goes through a 40 ms ± 20 ms toxiproxy link. Nodes 1–3 always go through a separate 5 ms ± 3 ms proxy, standing in for three separate devices.
 
 ## Analysis
 
@@ -182,13 +131,13 @@ docker run --rm -v "$PWD":/app -w /app --entrypoint python fl-ids-preprocessor:l
 
 Uses synthetic data (no dataset needed). Checks that poison placement is deterministic and confined, that label flipping only happens in memory, that SISA writes one checkpoint per round/shard/slice, and that recovery rolls back to a clean checkpoint and is bit-identical across reruns.
 
-Linting (config in `.flake8` and `.yamllint`):
+Linting (config in `.flake8`, `.yamllint` and `.shellcheckrc`):
 
 ```sh
 pip install -e ".[dev]"
 flake8 .
 yamllint .
-shellcheck experiments/cooldown_gate.sh
+shellcheck experiments/*.sh experiments/run/*.sh
 ```
 
 ## Raspberry Pi provisioning

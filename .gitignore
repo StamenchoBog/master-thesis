@@ -36,6 +36,7 @@ analysis/make_figures.py
 results/msc/global_checkpoints/
 results/msc/*.json
 results/msc/resume_from.npz
+results/msc/runs/*/.logger.pid
 
 # Thesis figures/tables — regenerable from analysis/make_figures.py; live in Overleaf.
 # The hand-written chapter text and bibliography are NOT regenerable, so they stay tracked.
