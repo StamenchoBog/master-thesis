@@ -1,15 +1,9 @@
 name: fl-ids-msc-host
 
-### MSc hybrid topology — host side.
-# Runs the coordinator, aggregator, and simulated nodes 1-3. The physical
-# Raspberry Pi joins over the LAN as the 4th node (see docker-compose.edge.yml).
-#
-# Realism knobs:
-# - The three simulated clients get *different* CPU/memory limits (below) to model
-#   a heterogeneous federation of edge devices, not identical datacenter workers.
-# - Network factor: the LAN is clean by default. For the "realistic WAN" condition
-#   start with `--profile wan` and point the Pi at :19092 (FLEET_PORT=19092); a
-#   toxiproxy latency toxic then sits on the Fleet API link.
+# Host side of the MSc hybrid topology — coordinator, aggregator, simulated nodes 1-3.
+# The Pi joins over the LAN as the 4th node (see docker-compose.edge.yml).
+# Phase 3, the measured recovery window, is local-only on the Pi and untouched by
+# either toxiproxy knob below.
 
 x-supernode: &supernode
   image: flwr/supernode:1.29.0
@@ -63,7 +57,7 @@ services:
     command:
       - --insecure
       - --superlink
-      - superlink:9092
+      - toxiproxy:19094
       - --clientappio-api-address
       - 0.0.0.0:9094
       - --isolation
@@ -71,7 +65,8 @@ services:
       - --node-config
       - "partition-id=0 num-partitions=4"
     depends_on:
-      - superlink
+      toxiproxy-setup-sim:
+        condition: service_completed_successfully
 
   superexec-clientapp-1:
     <<: *clientapp
@@ -87,7 +82,7 @@ services:
     command:
       - --insecure
       - --superlink
-      - superlink:9092
+      - toxiproxy:19094
       - --clientappio-api-address
       - 0.0.0.0:9095
       - --isolation
@@ -95,7 +90,8 @@ services:
       - --node-config
       - "partition-id=1 num-partitions=4"
     depends_on:
-      - superlink
+      toxiproxy-setup-sim:
+        condition: service_completed_successfully
 
   superexec-clientapp-2:
     <<: *clientapp
@@ -111,7 +107,7 @@ services:
     command:
       - --insecure
       - --superlink
-      - superlink:9092
+      - toxiproxy:19094
       - --clientappio-api-address
       - 0.0.0.0:9096
       - --isolation
@@ -119,7 +115,8 @@ services:
       - --node-config
       - "partition-id=2 num-partitions=4"
     depends_on:
-      - superlink
+      toxiproxy-setup-sim:
+        condition: service_completed_successfully
 
   superexec-clientapp-3:
     <<: *clientapp
@@ -129,8 +126,7 @@ services:
     depends_on:
       - supernode-3
 
-  ### Job trigger — started explicitly by the run driver once the Pi is connected:
-  #   docker compose -f docker-compose.host.yml run --rm runner
+  # Started explicitly once the Pi is connected: docker compose -f docker-compose.host.yml run --rm runner
   runner:
     profiles: [trigger]
     image: flwr/base:1.29.0-py3.13-ubuntu24.04
@@ -143,26 +139,42 @@ services:
     networks:
       - fl-network
 
-  ### Network factor — "realistic WAN" condition only (start with `--profile wan`).
-  # Proxies the Fleet API (superlink:9092 → published :19092) and injects latency.
-  # The Pi connects to :19092 instead of :9092 (set FLEET_PORT=19092 on the edge).
+  # Hosts two proxies: superlink-sim (nodes 1-3, always on) and superlink-fl (the
+  # Pi's optional --profile wan link). Always running — nodes 1-3 route through it.
   toxiproxy:
-    profiles: [wan]
     image: ghcr.io/shopify/toxiproxy:latest
     command: ["-host=0.0.0.0", "-config=/config/toxiproxy.json"]
     ports:
       - "8474:8474"
-      - "19092:19092"
+      - "19092:19092"   # superlink-fl — published to the LAN for the Pi (wan profile only)
     volumes:
-      - ./toxiproxy.json:/config/toxiproxy.json:ro
+      - ./toxiproxy.msc.json:/config/toxiproxy.json:ro
     depends_on:
       - superlink
     networks:
       - fl-network
 
+  # Node realism, always on: same 5ms ± 3ms toxic as the course simulation, standing
+  # in for nodes 1-3 being separate devices instead of same-host containers.
+  toxiproxy-setup-sim:
+    image: curlimages/curl:latest
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        until curl -sf http://toxiproxy:8474/version >/dev/null; do sleep 0.2; done
+        curl -sf -X POST http://toxiproxy:8474/proxies/superlink-sim/toxics \
+          -H 'Content-Type: application/json' \
+          -d '{"name":"latency","type":"latency","stream":"upstream","toxicity":1.0,"attributes":{"latency":5,"jitter":3}}'
+    depends_on:
+      - toxiproxy
+    networks:
+      - fl-network
+
+  # WAN condition, secondary/tested (start with --profile wan). Harsher toxic on the
+  # Pi's own link; Pi routes through it via FLEET_PORT=19092.
   toxiproxy-setup:
     profiles: [wan]
-    image: ghcr.io/shopify/toxiproxy:latest
+    image: curlimages/curl:latest
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |

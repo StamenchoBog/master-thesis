@@ -1,0 +1,3 @@
+vcgencmd get_throttled: 0xf0000 (sticky bits from naive's run; live undervolt=0 verified in naive's telemetry, Pi not rebooted between arms)
+cooldown plateau: ~80C
+ambient: not recorded

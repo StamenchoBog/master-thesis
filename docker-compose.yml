@@ -1,6 +1,5 @@
 name: fl-ids
 
-### Shared templates
 x-supernode: &supernode
   image: flwr/supernode:1.29.0
   depends_on:
@@ -20,7 +19,6 @@ x-clientapp: &clientapp
 
 services:
 
-  ### Central Flower coordinator
   superlink:
     image: flwr/superlink:1.29.0
     command: [--insecure, --isolation, process]
@@ -29,7 +27,6 @@ services:
     networks:
       - fl-network
 
-  ### Pre-processor (splits CSVs into per-node .npz caches — runs once, then exits)
   preprocessor:
     build: ./edge_nodes
     entrypoint: python
@@ -44,7 +41,6 @@ services:
     networks:
       - fl-network
 
-  ### FL central server (Aggregator)
   superexec-serverapp:
     image: flwr/superexec:1.29.0
     command: [--insecure, --plugin-type, serverapp, --appio-api-address, superlink:9091]
@@ -62,15 +58,14 @@ services:
     networks:
       - fl-network
 
-  ### Chaos engineering — 5ms ± 3ms latency via toxiproxy to simulate inter-VLAN routing.
-  # Proxy is declared in toxiproxy.json; the toxic is added at runtime since
-  # toxiproxy's config format can't express toxics.
+  # 5ms ± 3ms latency to simulate inter-VLAN routing; the toxic is added at runtime
+  # in toxiproxy-setup since toxiproxy's static config can't express toxics.
   toxiproxy:
     image: ghcr.io/shopify/toxiproxy:latest
     command: ["-host=0.0.0.0", "-config=/config/toxiproxy.json"]
     ports:
       - "8474:8474"    # REST API
-      - "19092:19092"  # Proxied FL traffic (supernode → superlink)
+      - "19092:19092"  # supernode → superlink
     volumes:
       - ./toxiproxy.json:/config/toxiproxy.json:ro
     depends_on:
@@ -92,7 +87,6 @@ services:
     networks:
       - fl-network
 
-  ### Edge Nodes
   supernode-1:
     <<: *supernode
     container_name: supernode-1
@@ -178,7 +172,6 @@ services:
     networks:
       - fl-network
 
-### Network
 networks:
   fl-network:
     driver: bridge
