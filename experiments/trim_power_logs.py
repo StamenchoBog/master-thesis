@@ -33,9 +33,8 @@ def trim(run_dir, apply):
         return
     lo, hi = bounds
     lines = open(csv).read().splitlines()
-    # Preserve the leading blank line + header. Keep only the FIRST header — a logger
-    # restarted with `>>` re-emits its header mid-file, and two headers would make
-    # analyze_runs.py read the second as data (string values -> crash).
+    # Keep only the first header: a logger restarted with `>>` writes it again mid-file,
+    # and analyze_runs.py would then read that second header as data.
     head, data, seen_header = [], [], False
     for ln in lines:
         parts = ln.split()
@@ -48,7 +47,7 @@ def trim(run_dir, apply):
         else:
             head.append(ln)
     kept = [ln for ln in data if lo <= float(ln.split()[0]) <= hi]
-    if not kept:  # markers don't overlap the log (e.g. the rehearsal) — leave it alone
+    if not kept:  # markers don't overlap the log, so leave the file alone
         print(f"  {os.path.basename(run_dir):16s} SKIP (no samples in marker window)")
         return
     before = os.path.getsize(csv)

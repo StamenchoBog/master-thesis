@@ -1,0 +1,15 @@
+extends: default
+
+rules:
+  document-start: disable
+  truthy:
+    check-keys: false
+  # Long lines are inline JSON payloads and the embedded monitor.sh script.
+  line-length:
+    max: 120
+    level: warning
+
+ignore: |
+  data/
+  results/
+  docs/

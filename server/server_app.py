@@ -10,8 +10,7 @@ from flwr.server.strategy import FedAvg, FedProx, FedTrimmedAvg, Krum
 
 FL_STRATEGY = os.getenv("FL_STRATEGY", "fedavg")
 NUM_ROUNDS = int(os.getenv("NUM_ROUNDS", "10"))
-# Bound each round so a stalled straggler can't hang an unattended run forever.
-# On timeout ResilientFedAvg reuses the previous weights instead of crashing.
+# Stops a stalled client from hanging the run; ResilientFedAvg then reuses the last weights.
 ROUND_TIMEOUT = float(os.getenv("ROUND_TIMEOUT", "1200"))
 MIN_FIT_CLIENTS = int(os.getenv("MIN_FIT_CLIENTS", "2"))
 MIN_EVAL_CLIENTS = int(os.getenv("MIN_EVAL_CLIENTS", "2"))
@@ -73,10 +72,11 @@ class ResilientFedAvg(FedAvg):
 
     def aggregate_fit(self, server_round, results, failures):
         if len(results) < self.min_fit_clients:
-            print(f"[Round {server_round}] Only {len(results)} clients responded — reusing previous weights.")
+            print(f"[Round {server_round}] Only {len(results)} clients responded, "
+                  "reusing previous weights.")
             return self._last_good_weights, {}
         parameters, metrics = super().aggregate_fit(server_round, results, failures)
-        self._last_good_weights = parameters  # store parameters only; the fallback re-wraps with {}
+        self._last_good_weights = parameters
         return parameters, metrics
 
 
@@ -115,8 +115,7 @@ def build_strategy():
         fit_metrics_aggregation_fn=aggregate_fit_metrics,
         evaluate_metrics_aggregation_fn=aggregate_eval_metrics,
     )
-    # Phase-4 rejoin (MSc): resume from the Phase-1 global model instead of a
-    # fresh random init — global forgetting-by-dilution is measured from there.
+    # Phase 4 resumes from the Phase-1 global model instead of a random init.
     init_ckpt = os.getenv("INIT_FROM_CHECKPOINT", "")
     if init_ckpt:
         z = np.load(init_ckpt)

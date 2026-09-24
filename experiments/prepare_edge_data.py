@@ -26,7 +26,8 @@ import sys
 import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from edge_nodes.sisa_partition import TRAIN_FRACTION, poison_indices, shard_slice_assignment
+from edge_nodes.sisa_partition import (  # noqa: E402
+    TRAIN_FRACTION, poison_indices, shard_slice_assignment)
 
 PI_PARTITION = 3
 NUM_PARTITIONS = 4

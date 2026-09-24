@@ -182,6 +182,15 @@ docker run --rm -v "$PWD":/app -w /app --entrypoint python fl-ids-preprocessor:l
 
 Uses synthetic data (no dataset needed). Checks that poison placement is deterministic and confined, that label flipping only happens in memory, that SISA writes one checkpoint per round/shard/slice, and that recovery rolls back to a clean checkpoint and is bit-identical across reruns.
 
+Linting (config in `.flake8` and `.yamllint`):
+
+```sh
+pip install -e ".[dev]"
+flake8 .
+yamllint .
+shellcheck experiments/cooldown_gate.sh
+```
+
 ## Raspberry Pi provisioning
 
 1. Flash Raspberry Pi OS Lite with your SSH public key.

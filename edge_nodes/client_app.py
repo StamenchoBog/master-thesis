@@ -13,7 +13,7 @@ from .model import IDSModel
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 SEED = int(os.getenv("SEED", "42"))
-CLIENT_MODE = os.getenv("CLIENT_MODE", "standard")  # standard (Arm A) | sisa (Arm B)
+CLIENT_MODE = os.getenv("CLIENT_MODE", "standard")  # standard | sisa
 RECOVERED_MODEL_PATH = os.getenv("RECOVERED_MODEL_PATH", "")
 
 
@@ -37,7 +37,8 @@ class FlowerClient(NumPyClient):
         return [val.cpu().numpy() for val in self.model.state_dict().values()]
 
     def set_parameters(self, parameters):
-        state_dict = {k: torch.tensor(v) for k, v in zip(self.model.state_dict().keys(), parameters)}
+        keys = self.model.state_dict().keys()
+        state_dict = {k: torch.tensor(v) for k, v in zip(keys, parameters)}
         self.model.load_state_dict(state_dict, strict=True)
 
     def _apply_incoming(self, parameters):
@@ -48,7 +49,9 @@ class FlowerClient(NumPyClient):
         (one-time override, tracked with a .used marker file).
         """
         marker = RECOVERED_MODEL_PATH + ".used" if RECOVERED_MODEL_PATH else ""
-        if RECOVERED_MODEL_PATH and os.path.exists(RECOVERED_MODEL_PATH) and not os.path.exists(marker):
+        use_recovered = (RECOVERED_MODEL_PATH and os.path.exists(RECOVERED_MODEL_PATH)
+                         and not os.path.exists(marker))
+        if use_recovered:
             self.model.load_state_dict(torch.load(RECOVERED_MODEL_PATH, map_location=DEVICE))
             open(marker, "w").close()
             print(f"[Client] Rejoin: starting from recovered model {RECOVERED_MODEL_PATH}")
@@ -70,10 +73,11 @@ class FlowerClient(NumPyClient):
                 optimizer.step()
                 total_loss += loss.item()
                 batches += 1
-        return self.get_parameters({}), len(self.trainloader.dataset), {"train_loss": total_loss / max(batches, 1)}
+        metrics = {"train_loss": total_loss / max(batches, 1)}
+        return self.get_parameters({}), len(self.trainloader.dataset), metrics
 
     def evaluate(self, parameters, config):
-        """Evaluate the global model on the local validation set (F1 over accuracy: imbalanced data)."""
+        """Evaluate the global model on the local validation set."""
         self.set_parameters(parameters)
         total_loss = 0.0
         tp = fp = fn = correct = 0

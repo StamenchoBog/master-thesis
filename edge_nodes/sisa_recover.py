@@ -52,8 +52,7 @@ RECOVERED_MODEL_PATH = os.getenv(
 
 
 def main():
-    # Dropout uses the global torch RNG; seed here so recovery is deterministic
-    # regardless of prior RNG consumption in this process.
+    # Dropout uses the global torch RNG; seed it so recovery is deterministic.
     torch.manual_seed(SEED * 6271)
     cache = os.path.join(CACHE_DIR, f"partition_{PARTITION_ID}_of_{NUM_PARTITIONS}.npz")
     data = np.load(cache)
@@ -66,7 +65,6 @@ def main():
     assignment = shard_slice_assignment(len(X), SEED, NUM_SHARDS, NUM_SLICES)
     poison_set = set(poison_idx.tolist())
 
-    # Locate affected shards and their earliest poisoned slice.
     affected = {}
     for shard in range(NUM_SHARDS):
         for slc, idx in enumerate(assignment[shard]):
@@ -98,21 +96,21 @@ def main():
 
         for rnd in range(1, NUM_ROUNDS + 1):
             if rnd > 1:
-                optimizer = torch.optim.Adam(model.parameters(), lr=LR)  # fresh per round, as in training
+                optimizer = torch.optim.Adam(model.parameters(), lr=LR)
             start_slice = from_slice if rnd == 1 else 0
             for slc in range(start_slice, NUM_SLICES):
                 loader = slice_loader(X, y, clean[slc], batch_seed(SEED, rnd, shard, slc))
                 t0 = time.perf_counter()
                 train_slice(model, optimizer, loader, criterion)
                 train_s = time.perf_counter() - t0
-                ckpt_s, ckpt_bytes = save_checkpoint(ckpt_path(shard, rnd, slc), model, optimizer, rnd, slc)
+                ckpt_s, ckpt_bytes = save_checkpoint(ckpt_path(shard, rnd, slc),
+                                                     model, optimizer, rnd, slc)
                 slice_log.append({"shard": shard, "round": rnd, "slice": slc,
                                   "train_s": round(train_s, 4), "ckpt_s": round(ckpt_s, 4),
                                   "ckpt_bytes": ckpt_bytes})
 
     total_s = time.perf_counter() - t_start
 
-    # Recovered model = parameter average of every constituent's final state.
     states = []
     for shard in range(NUM_SHARDS):
         ckpt = torch.load(ckpt_path(shard, NUM_ROUNDS, NUM_SLICES - 1), map_location=DEVICE)

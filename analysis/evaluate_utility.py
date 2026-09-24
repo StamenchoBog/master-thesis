@@ -31,6 +31,7 @@ skew optimistic). Use --test-template for a clean per-seed comparison:
 import argparse
 import glob
 import os
+import re
 
 import numpy as np
 import pandas as pd
@@ -47,13 +48,15 @@ def load_model(npz_path, input_dim):
     model = IDSModel(input_dim)
     keys = model.state_dict().keys()
     model.load_state_dict({k: torch.tensor(v) for k, v in zip(keys, arrays)}, strict=True)
-    model.eval()  # BatchNorm uses running stats, Dropout off — must match inference
+    model.eval()
     return model
 
 
 def _counts(pred, y):
-    tp = int(((pred == 1) & (y == 1)).sum()); fp = int(((pred == 1) & (y == 0)).sum())
-    tn = int(((pred == 0) & (y == 0)).sum()); fn = int(((pred == 0) & (y == 1)).sum())
+    tp = int(((pred == 1) & (y == 1)).sum())
+    fp = int(((pred == 1) & (y == 0)).sum())
+    tn = int(((pred == 0) & (y == 0)).sum())
+    fn = int(((pred == 0) & (y == 1)).sum())
     return tp, fp, tn, fn
 
 
@@ -68,9 +71,12 @@ def best_threshold(prob, y):
     fpr, tpr, thr = roc_curve(y, prob)
     bacc = (tpr + (1.0 - fpr)) / 2.0
     i = int(np.argmax(bacc))
-    P = int((y == 1).sum()); N = int((y == 0).sum())
-    tp = tpr[i] * P; fn = P - tp
-    fp = fpr[i] * N; tn = N - fp
+    n_pos = int((y == 1).sum())
+    n_neg = int((y == 0).sum())
+    tp = tpr[i] * n_pos
+    fn = n_pos - tp
+    fp = fpr[i] * n_neg
+    tn = n_neg - fp
     denom = np.sqrt((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn))
     return {
         # roc_curve prepends an unreachable threshold (max(prob)+1) for the all-negative
@@ -89,19 +95,18 @@ def score_model(npz_path, X, y):
         prob = load_model(npz_path, X.shape[1])(X).squeeze().numpy()
     pred = (prob > 0.5).astype(int)
     tp, fp, tn, fn = _counts(pred, y)
-    recall = tp / max(tp + fn, 1)              # = sensitivity (attack caught)
-    specificity = tn / max(tn + fp, 1)         # benign correctly identified
+    recall = tp / max(tp + fn, 1)
+    specificity = tn / max(tn + fp, 1)
     precision = tp / max(tp + fp, 1)
     return {
         "recall": recall, "specificity": specificity, "precision": precision,
         "f1": 2 * precision * recall / max(precision + recall, 1e-9),
-        "balanced_acc": (recall + specificity) / 2,   # the fair headline under imbalance
-        "mcc": matthews_corrcoef(y, pred),            # 0 = chance, robust to imbalance
-        "roc_auc": roc_auc_score(y, prob),            # threshold-independent ranking
-        "pr_auc": average_precision_score(y, prob),   # attack-class PR (baseline = base rate)
-        "pred_pos_rate": float(pred.mean()),          # 1.0 => predicts everything attack
+        "balanced_acc": (recall + specificity) / 2,
+        "mcc": matthews_corrcoef(y, pred),
+        "roc_auc": roc_auc_score(y, prob),
+        "pr_auc": average_precision_score(y, prob),
+        "pred_pos_rate": float(pred.mean()),
         "tn": tn, "fp": fp,
-        # How much of the collapse is merely a misplaced threshold?
         **best_threshold(prob, y),
     }
 
@@ -140,9 +145,10 @@ def main():
     rows = []
     for run in sorted(glob.glob(os.path.join(args.runs, "*_seed*"))):
         b = os.path.basename(run)
-        if b.startswith("rehearsal"):
+        m = re.fullmatch(r"(naive|sisa)_seed(\d+)", b)
+        if not m:
             continue
-        arm, seed = b.split("_seed")
+        arm, seed = m.group(1), m.group(2)
         X, y, test_name = test_set(int(seed))
         checkpoints = {"p4": os.path.join(run, "phase4_checkpoints", "round_5.npz")}
         if args.phase1:
@@ -150,7 +156,7 @@ def main():
         for phase, ckpt in checkpoints.items():
             if os.path.exists(ckpt):
                 rows.append({"run": b, "arm": arm, "seed": int(seed), "phase": phase,
-                             "test_set": test_name,       # keeps the above auditable
+                             "test_set": test_name,
                              **score_model(ckpt, X, y)})
 
     df = pd.DataFrame(rows).round(4)

@@ -57,7 +57,8 @@ def main():
         loss, batches = train_slice(model, optimizer, loader, criterion)
         epoch_log.append({"epoch": epoch, "train_s": round(time.perf_counter() - t0, 4),
                           "loss": round(loss / max(batches, 1), 6)})
-        print(f"[epoch {epoch}/{NUM_ROUNDS}] loss={epoch_log[-1]['loss']} in {epoch_log[-1]['train_s']}s")
+        last = epoch_log[-1]
+        print(f"[epoch {epoch}/{NUM_ROUNDS}] loss={last['loss']} in {last['train_s']}s")
     total_s = time.perf_counter() - t_start
 
     os.makedirs(os.path.dirname(RECOVERED_MODEL_PATH), exist_ok=True)

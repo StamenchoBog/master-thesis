@@ -35,7 +35,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import numpy as np  # noqa: E402
 import torch  # noqa: E402
 
-from edge_nodes.sisa_partition import TRAIN_FRACTION, poison_indices, shard_slice_assignment  # noqa: E402
+from edge_nodes.sisa_partition import (  # noqa: E402
+    TRAIN_FRACTION, poison_indices, shard_slice_assignment)
 
 SEED, S, R = 7, 3, 4
 N, D = 2000, 10
@@ -81,7 +82,8 @@ for _ in range(2):
     trainer.train_round(0.001, telemetry_log.append)
 assert trainer.round == 2
 assert len(telemetry_log) == 2 * S * R, "one telemetry entry per slice"
-assert all(os.path.exists(ckpt_path(s, r, l)) for s in range(S) for r in (1, 2) for l in range(R))
+assert all(os.path.exists(ckpt_path(s, r, sl))
+           for s in range(S) for r in (1, 2) for sl in range(R))
 print(f"[3] SISA trained 2 rounds, {len(telemetry_log)} slice checkpoints OK")
 
 # ---- 4. Recovery: rollback predates poison; recovery is deterministic

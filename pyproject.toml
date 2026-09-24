@@ -18,6 +18,7 @@ dependencies = [
 [project.optional-dependencies]
 analysis = ["scipy"]
 power = ["pyusb", "crc"]
+dev = ["flake8", "yamllint"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["server", "edge_nodes"]

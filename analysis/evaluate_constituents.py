@@ -53,12 +53,14 @@ def final_constituents(ckpt_dir: str) -> dict:
 def score(state, X, y, input_dim):
     model = IDSModel(input_dim)
     model.load_state_dict({k: v.float() for k, v in state.items()}, strict=True)
-    model.eval()   # BatchNorm uses running stats — the averaged ones, which is the point
+    model.eval()   # use the (averaged) BatchNorm running stats, which is what's being tested
     with torch.no_grad():
         prob = model(X).squeeze().numpy()
     pred = (prob > 0.5).astype(int)
-    tp = int(((pred == 1) & (y == 1)).sum()); fp = int(((pred == 1) & (y == 0)).sum())
-    tn = int(((pred == 0) & (y == 0)).sum()); fn = int(((pred == 0) & (y == 1)).sum())
+    tp = int(((pred == 1) & (y == 1)).sum())
+    fp = int(((pred == 1) & (y == 0)).sum())
+    tn = int(((pred == 0) & (y == 0)).sum())
+    fn = int(((pred == 0) & (y == 1)).sum())
     recall = tp / max(tp + fn, 1)
     specificity = tn / max(tn + fp, 1)
     return {"recall": recall, "specificity": specificity,
@@ -99,18 +101,18 @@ def main():
                          f"directory is wiped before each run, so only the last run's survive.")
 
     states = {}
-    hdr = f"{'model':<16}{'recall':>8}{'specif.':>9}{'bal.acc':>9}{'MCC':>8}{'ROC-AUC':>9}{'pred+':>8}{'tn':>7}"
-    print(hdr); print("-" * len(hdr))
+    hdr = (f"{'model':<16}{'recall':>8}{'specif.':>9}{'bal.acc':>9}{'MCC':>8}"
+           f"{'ROC-AUC':>9}{'pred+':>8}{'tn':>7}")
+    print(hdr)
+    print("-" * len(hdr))
     for shard, path in paths.items():
-        # weights_only=True: checkpoints hold only tensors/ints, so the unpickling
-        # restriction costs nothing here.
         states[shard] = torch.load(path, map_location="cpu", weights_only=True)["model"]
         m = score(states[shard], X, y, X.shape[1])
         print(f"{'constituent ' + str(shard):<16}{m['recall']:>8.4f}{m['specificity']:>9.4f}"
               f"{m['balanced_acc']:>9.4f}{m['mcc']:>8.4f}{m['roc_auc']:>9.4f}"
               f"{m['pred_pos_rate']:>8.4f}{m['tn']:>7d}")
 
-    # Exactly the aggregation the client performs (sisa_client.averaged_parameters).
+    # Same aggregation as sisa_client.averaged_parameters.
     keys = next(iter(states.values())).keys()
     averaged = {k: torch.stack([s[k].float() for s in states.values()]).mean(0) for k in keys}
     a = score(averaged, X, y, X.shape[1])
@@ -128,7 +130,6 @@ def main():
         print("=> Constituents are degenerate on their own; averaging is NOT the cause. "
               "The Discussion's explanation needs revising.")
 
-    # Secondary clue: how far apart are the BatchNorm running statistics being averaged?
     bn = [k for k in keys if "running_mean" in k]
     if bn and len(states) > 1:
         spread = np.mean([float(torch.stack([s[k].float() for s in states.values()]).std(0).mean())

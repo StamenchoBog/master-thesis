@@ -10,13 +10,11 @@ from .sisa_partition import TRAIN_FRACTION
 
 DATA_DIR = os.getenv("DATA_DIR", "/app/data")
 CACHE_DIR = os.getenv("CACHE_DIR", os.path.join(DATA_DIR, ".cache"))
-# off  — clean data (course sim, clean reference runs)
-# flip — poisoned labels active (Phase 1: attack in progress, undetected)
-# drop — poisoned rows removed (Phase 4: post-recovery rejoin on retained data)
+# off: clean data. flip: poisoned labels (Phase 1). drop: poisoned rows removed (Phase 4).
 POISON_MODE = os.getenv("POISON_MODE", "off")
 
-# client_fn may run per message; cache decompressed arrays so the ~160 MB
-# npz isn't re-read from SD every round.
+# client_fn can run once per message, so cache the arrays instead of re-reading
+# the ~160 MB npz from the SD card every round.
 _arrays_cache = {}
 
 
@@ -57,7 +55,8 @@ def load_arrays(partition_id: int, num_partitions: int):
         assert poison_idx.max() < split, "Poison must stay within the train region."
         y = y.copy()
         y[poison_idx] = 0
-        print(f"[Node {partition_id}] POISON ACTIVE: {len(poison_idx)} labels flipped attack->benign")
+        print(f"[Node {partition_id}] POISON ACTIVE: "
+              f"{len(poison_idx)} labels flipped attack->benign")
 
     _arrays_cache[key] = (X, y, split, poison_idx)
     return _arrays_cache[key]
@@ -74,7 +73,8 @@ def load_data(partition_id: int, num_partitions: int, batch_size: int = 512):
     train_idx = np.arange(split)
     if POISON_MODE == "drop":
         train_idx = np.setdiff1d(train_idx, poison_idx)
-        print(f"[Node {partition_id}] POISON DROPPED: training on {len(train_idx)}/{split} retained rows")
+        print(f"[Node {partition_id}] POISON DROPPED: "
+              f"training on {len(train_idx)}/{split} retained rows")
 
     def make_loader(Xa, ya, shuffle):
         return DataLoader(
@@ -83,4 +83,6 @@ def load_data(partition_id: int, num_partitions: int, batch_size: int = 512):
             shuffle=shuffle,
         )
 
-    return make_loader(X[train_idx], y[train_idx], True), make_loader(X[split:], y[split:], False), X.shape[1]
+    trainloader = make_loader(X[train_idx], y[train_idx], True)
+    valloader = make_loader(X[split:], y[split:], False)
+    return trainloader, valloader, X.shape[1]

@@ -53,7 +53,7 @@ def save_checkpoint(path: str, model, optimizer, rnd: int, slc: int) -> tuple[fl
 
 
 def slice_loader(X, y, idx, seed_key: int, batch_size: int = 512):
-    """Deterministic shuffled loader over one slice; seed_key fixes batch order so replay is exact."""
+    """Shuffled loader over one slice; seed_key fixes the batch order so replay is exact."""
     gen = torch.Generator().manual_seed(seed_key)
     return DataLoader(
         TensorDataset(torch.from_numpy(X[idx]), torch.from_numpy(y[idx])),
@@ -77,7 +77,7 @@ def train_slice(model, optimizer, loader, criterion):
 
 
 def batch_seed(seed: int, rnd: int, shard: int, slc: int) -> int:
-    """Unique deterministic seed per (round, shard, slice) — replay must reproduce batches exactly."""
+    """Unique seed per (round, shard, slice), so replay reproduces the same batches."""
     return seed * 1_000_000 + rnd * 10_000 + shard * 100 + slc
 
 
@@ -89,7 +89,7 @@ class SISATrainer:
         self.X, self.y = X[:split], y[:split]
         self.assignment = shard_slice_assignment(len(self.X), SEED, NUM_SHARDS, NUM_SLICES)
         if os.getenv("POISON_MODE", "off") == "drop":
-            # Phase 4 rejoin: keep positional indexing, remove poisoned rows per slice.
+            # Drop poisoned rows per slice rather than from X, so indices stay positional.
             self.assignment = [[np.setdiff1d(idx, poison_idx) for idx in shard]
                                for shard in self.assignment]
             print(f"[SISA] POISON DROPPED from slice assignment ({len(poison_idx)} rows)")
@@ -118,18 +118,19 @@ class SISATrainer:
     def train_round(self, lr: float, telemetry) -> float:
         """Train every constituent one epoch over its shard, checkpointing per slice."""
         rnd = self.round + 1
-        # Dropout draws from the global torch RNG; re-seed per round so results
-        # don't depend on process lifetime / prior RNG consumption.
+        # Dropout uses the global torch RNG; re-seed per round so results don't
+        # depend on how long the process has been running.
         torch.manual_seed(SEED * 7919 + rnd)
         losses, batches = 0.0, 0
         for shard, model in enumerate(self.models):
-            optimizer = torch.optim.Adam(model.parameters(), lr=lr)  # fresh per round, like the standard client
+            optimizer = torch.optim.Adam(model.parameters(), lr=lr)  # fresh per round
             for slc, idx in enumerate(self.assignment[shard]):
                 loader = slice_loader(self.X, self.y, idx, batch_seed(SEED, rnd, shard, slc))
                 t0 = time.perf_counter()
                 loss, n_batches = train_slice(model, optimizer, loader, self.criterion)
                 train_s = time.perf_counter() - t0
-                ckpt_s, ckpt_bytes = save_checkpoint(ckpt_path(shard, rnd, slc), model, optimizer, rnd, slc)
+                ckpt_s, ckpt_bytes = save_checkpoint(ckpt_path(shard, rnd, slc),
+                                                     model, optimizer, rnd, slc)
                 telemetry({"round": rnd, "shard": shard, "slice": slc,
                            "train_s": round(train_s, 4), "ckpt_s": round(ckpt_s, 4),
                            "ckpt_bytes": ckpt_bytes})
@@ -143,7 +144,8 @@ class SISATrainer:
     def averaged_parameters(self):
         """Parameter average of all constituents — the client's FL update."""
         keys = self.models[0].state_dict().keys()
-        stacked = {k: torch.stack([m.state_dict()[k].float() for m in self.models]).mean(0) for k in keys}
+        stacked = {k: torch.stack([m.state_dict()[k].float() for m in self.models]).mean(0)
+                   for k in keys}
         return [v.cpu().numpy() for v in stacked.values()]
 
     @property
@@ -155,10 +157,10 @@ _trainer = None
 
 
 class SISAClient(FlowerClient):
-    """FL client whose fit trains isolated constituents; evaluate is inherited (global model on local val)."""
+    """FL client whose fit trains the isolated constituents; evaluate is inherited."""
 
     def __init__(self, trainer, eval_model, valloader):
-        super().__init__(eval_model, None, valloader)  # trainloader unused: fit is overridden
+        super().__init__(eval_model, None, valloader)  # no trainloader: fit is overridden
         self.trainer = trainer
         self.telemetry_file = os.path.join(TELEMETRY_DIR, "sisa_timings.jsonl")
 
@@ -169,7 +171,8 @@ class SISAClient(FlowerClient):
 
     def fit(self, parameters, config):
         train_loss = self.trainer.train_round(float(config.get("lr", 0.001)), self._log)
-        return self.trainer.averaged_parameters(), self.trainer.n_samples, {"train_loss": train_loss}
+        metrics = {"train_loss": train_loss}
+        return self.trainer.averaged_parameters(), self.trainer.n_samples, metrics
 
 
 def client_fn(context: Context):

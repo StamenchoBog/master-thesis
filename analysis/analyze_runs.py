@@ -26,22 +26,12 @@ import numpy as np
 import pandas as pd
 from scipy.stats import wilcoxon
 
-# The outcomes carried into paired statistics, one per hypothesis:
-#   ttr_s              recovery wall time            (H1)
-#   p3_energy_net_wh   recovery energy, idle-subtracted (H2)
-#   p3_throttled_s     seconds thermally throttled during recovery (H3)
-#   p3_min_clock_mhz   worst clock during recovery — degradation   (H3)
-#   p3_sd_written_mb   SD bytes written during recovery            (H4)
-#   p1_ckpt_bytes      SISA Phase-1 checkpoint overhead            (H6)
-#   p4_final_f1/recall recovered-model utility                     (H5)
 METRICS = ["ttr_s", "p3_energy_net_wh", "p3_throttled_s", "p3_min_clock_mhz",
            "p3_sd_written_mb", "p1_ckpt_bytes", "p4_final_f1", "p4_final_recall"]
 
-PHASE1_ROUNDS = 10  # fixed for all runs; rounds > this in sisa_timings.jsonl belong
-                    # to the Phase-4 rejoin, not H6.
-NUM_SHARDS = NUM_SLICES = 5   # fixed for all runs
-POISON_FROM_SLICE = 3         # slices >= this in the target shard carry the poison, so
-                              # after cleaning they are nearly empty and replay fast
+PHASE1_ROUNDS = 10  # rounds above this in sisa_timings.jsonl belong to the Phase-4 rejoin
+NUM_SHARDS = NUM_SLICES = 5
+POISON_FROM_SLICE = 3
 
 
 def cliffs_delta(a, b) -> float:
@@ -112,7 +102,7 @@ def parse_power(run_dir: str, row: dict) -> None:
     windows = _phase_windows(run_dir)
     if not os.path.exists(path) or not windows:
         return
-    p = pd.read_csv(path, sep=r"\s+")  # blank line + header row handled by skip_blank_lines
+    p = pd.read_csv(path, sep=r"\s+")  # the log starts with a blank line; read_csv skips it
     if "timestamp" not in p.columns or len(p) < 2:
         return
     p["power_w"] = p["voltage_V"] * p["current_A"]
@@ -121,7 +111,7 @@ def parse_power(run_dir: str, row: dict) -> None:
     if idle_w is not None:
         row["idle_power_w"] = round(idle_w, 3)
     for label, start, end in windows:
-        n = label[-1]  # phase digit: 1 / 3 / 4
+        n = label[-1]
         seg = p[(p["timestamp"] >= start) & (p["timestamp"] < end)]
         if len(seg) < 2:
             print(f"  [warn] {os.path.basename(run_dir)}: no power coverage for {label} "
@@ -152,11 +142,11 @@ def parse_run(run_dir: str) -> dict:
         row["recovery_ckpt_io_s"] = man.get("ckpt_io_s", 0.0)
         row["recovery_ckpt_bytes"] = man.get("ckpt_bytes", 0)
         row["poisoned_samples"] = man.get("poisoned_samples")
-        row["retained_samples"] = man.get("retained_samples")   # naive only
-        row["epochs"] = man.get("epochs")                       # naive only
-        row["retrained_slices"] = man.get("retrained_slices")   # sisa only
-        if "slices" in man:  # sisa: split replayed slices into full vs. depleted.
-            # No leading underscore — itertuples() renames those, breaking the lookup below.
+        row["retained_samples"] = man.get("retained_samples")
+        row["epochs"] = man.get("epochs")
+        row["retrained_slices"] = man.get("retrained_slices")
+        if "slices" in man:
+            # No leading underscore: itertuples() renames those columns.
             row["depleted_slices"] = sum(1 for s in man["slices"]
                                          if s["slice"] >= POISON_FROM_SLICE)
             row["full_slices"] = len(man["slices"]) - row["depleted_slices"]
@@ -168,25 +158,24 @@ def parse_run(run_dir: str) -> dict:
         t["_thermal"] = flags.map(lambda x: x[0])
         t["_undervolt"] = flags.map(lambda x: x[1])
         row["peak_temp_c"] = t["Temp_C"].max()
-        row["undervolt_s"] = int(t["_undervolt"].sum())  # data-quality guard: must be 0 with the 5A cable
+        row["undervolt_s"] = int(t["_undervolt"].sum())  # should be 0 with the 5 A cable
         p3 = t[t["Marker"].astype(str).str.startswith("phase3")]
         if len(p3):
-            row["p3_throttled_s"] = int(p3["_thermal"].sum())        # H3: seconds actively throttled
-            row["p3_min_clock_mhz"] = int(p3["CPU_Freq_MHz"].min())  # H3: worst clock (degradation)
+            row["p3_throttled_s"] = int(p3["_thermal"].sum())
+            row["p3_min_clock_mhz"] = int(p3["CPU_Freq_MHz"].min())
             row["p3_mean_clock_mhz"] = int(round(p3["CPU_Freq_MHz"].mean()))
             row["p3_iowait_mean_pct"] = round(p3["IOWait_Pct"].mean(), 2)
             row["p3_sd_written_mb"] = round(p3["SD_Write_kBps"].sum() / 1024, 1)
             row["p3_peak_temp_c"] = p3["Temp_C"].max()
-            if "Ambient_C" in p3:  # thermal results must be read against ambient
+            if "Ambient_C" in p3:
                 amb = pd.to_numeric(p3["Ambient_C"], errors="coerce").mean()
-                if amb == amb:  # not NaN (sensor present)
+                if pd.notna(amb):
                     row["p3_ambient_c"] = round(float(amb), 1)
 
     sisa_log = os.path.join(run_dir, "sisa_timings.jsonl")
     if os.path.exists(sisa_log):
-        # H6 = Phase-1 overhead only. The append-only jsonl also holds Phase-4 rounds
-        # (11-15, since the SISA round counter continues) and stale re-run duplicates;
-        # dedupe by (round, shard, slice) so the cost isn't double-counted.
+        # The jsonl is append-only: it also holds Phase-4 rounds (11-15) and duplicates
+        # from re-runs. Keep Phase 1 only, deduped by (round, shard, slice).
         entries = [json.loads(line) for line in open(sisa_log)]
         p1 = {(e["round"], e["shard"], e["slice"]): e
               for e in entries if e["round"] <= PHASE1_ROUNDS}
@@ -238,7 +227,7 @@ def add_work_columns(df: pd.DataFrame) -> pd.DataFrame:
         if r.arm == "naive":
             return r.retained_samples * r.epochs
         slice_rows = pool / (NUM_SHARDS * NUM_SLICES)
-        n_poisoned_slices = NUM_SLICES - POISON_FROM_SLICE      # 2 of 5, per shard
+        n_poisoned_slices = NUM_SLICES - POISON_FROM_SLICE
         survived = n_poisoned_slices * slice_rows - r.poisoned_samples
         return (r.full_slices * slice_rows
                 + r.depleted_slices * survived / n_poisoned_slices)
@@ -256,7 +245,7 @@ def paired_stats(df: pd.DataFrame, metric: str) -> dict | None:
     naive, sisa = wide["naive"], wide["sisa"]
     try:
         _, p = wilcoxon(naive, sisa)
-    except ValueError:  # all differences zero
+    except ValueError:  # wilcoxon raises when every difference is zero
         p = 1.0
     ci_lo, ci_hi = _bootstrap_ci((naive - sisa).values)
     return {
@@ -285,7 +274,6 @@ def main():
     df.to_csv(os.path.join(args.runs, "summary.csv"), index=False)
     print(df.to_string(index=False))
 
-    # The treatment must be identical across seeds; flag it loudly if it is not.
     poisoned = df.groupby("seed")["poisoned_samples"].first().dropna()
     if len(poisoned) and poisoned.max() / poisoned.min() > 1.1:
         print(f"\nWARNING: poisoned-set size is not constant across seeds "

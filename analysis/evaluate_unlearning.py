@@ -1,6 +1,7 @@
 """Empirically verify machine unlearning: has the recovered model *forgotten* the removed data?
 
-    python -m analysis.evaluate_unlearning <model.pt|round.npz> [--cache data/.cache/msc/partition_3_of_4.npz]
+    python -m analysis.evaluate_unlearning <model.pt|round.npz> \
+        [--cache data/.cache/msc/partition_3_of_4.npz]
 
 Exact unlearning is guaranteed by construction (the recovered SISA constituents never
 trained on the removed samples), but a reviewer wants that *demonstrated*, not just
@@ -69,20 +70,19 @@ def main():
     def sub(idx):
         return idx if len(idx) <= args.n else rng.choice(idx, args.n, replace=False)
 
-    removed = sub(poison)                                   # unlearned samples (true labels on disk)
-    retained = sub(np.setdiff1d(np.arange(split), poison))  # kept training rows (members)
-    holdout = sub(np.arange(split, len(X)))                 # never-trained rows (non-members)
+    removed = sub(poison)
+    retained = sub(np.setdiff1d(np.arange(split), poison))
+    holdout = sub(np.arange(split, len(X)))
 
     model = load_model(args.model, X.shape[1])
     l_rem = per_sample_loss(model, X[removed], y[removed])
     l_ret = per_sample_loss(model, X[retained], y[retained])
     l_hold = per_sample_loss(model, X[holdout], y[holdout])
 
-    auc_removed = membership_auc(l_rem, l_hold)   # ≈ 0.5 ⇒ removed looks unseen
-    auc_retained = membership_auc(l_ret, l_hold)  # > 0.5 ⇒ the probe can see membership at all
+    auc_removed = membership_auc(l_rem, l_hold)
+    auc_retained = membership_auc(l_ret, l_hold)
 
-    # Interpret honestly against the positive control: the probe is only informative
-    # if it can detect membership on the retained (member) data in the first place.
+    # The probe only means something if it can spot the retained (member) data at all.
     if auc_retained < 0.55:
         verdict = ("inconclusive — the model leaks no membership signal (retained AUC "
                    "≈ 0.5), so MIA cannot confirm or deny; exact unlearning rests on the "

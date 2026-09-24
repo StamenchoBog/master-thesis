@@ -1,26 +1,26 @@
 ---
 - name: Provision Edge Node for SISA/FL Experiment (Optimized)
   hosts: edge_nodes
-  become: yes
-  
+  become: true
+
   tasks:
     # ==========================================
     # PHASE 1: NOISE REDUCTION & OPTIMIZATION
     # ==========================================
-    
+
     - name: 1. Stop background APT timers to prevent random CPU/IO spikes
       ansible.builtin.systemd:
         name: "{{ item }}"
         state: stopped
-        enabled: no
+        enabled: false
       loop:
         - apt-daily.timer
         - apt-daily-upgrade.timer
-      ignore_errors: yes
+      ignore_errors: true
 
     - name: 2. Disable any currently active swap (immediate effect)
       ansible.builtin.command: swapoff -a
-      ignore_errors: yes
+      ignore_errors: true
 
     - name: 3. Remove legacy dphys-swapfile if present (pre-trixie Raspberry Pi OS)
       ansible.builtin.apt:
@@ -41,13 +41,13 @@
 
     - name: 3c. Reload systemd generators to pick up the disabled swap config
       ansible.builtin.systemd:
-        daemon_reload: yes
+        daemon_reload: true
       when: rpi_swap_conf is succeeded
 
     - name: 4. Lock CPU Governor to 'Performance' (Prevents clock scaling variance)
       ansible.builtin.shell: |
         echo "performance" | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
-      ignore_errors: yes
+      ignore_errors: true
 
     # ==========================================
     # PHASE 2: SYSTEM DEPENDENCIES & DOCKER
@@ -55,7 +55,7 @@
 
     - name: 5. Update and upgrade APT packages
       ansible.builtin.apt:
-        update_cache: yes
+        update_cache: true
         upgrade: dist
 
     - name: 6. Install core system and hardware monitoring dependencies
@@ -97,13 +97,13 @@
       ansible.builtin.systemd:
         name: docker
         state: started
-        enabled: yes
+        enabled: true
 
     - name: 11. Add user to the docker group
       ansible.builtin.user:
         name: "{{ ansible_user }}"
         groups: docker
-        append: yes
+        append: true
 
     # ==========================================
     # PHASE 3: WORKSPACE & TELEMETRY

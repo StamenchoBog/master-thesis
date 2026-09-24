@@ -1,0 +1,4 @@
+[flake8]
+max-line-length = 100
+# Vendored upstream code, kept as close to the original as possible.
+exclude = .git,__pycache__,.venv,data,results,docs,experiments/fnirsi_logger.py,analysis/make_figures.py
