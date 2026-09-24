@@ -2,7 +2,7 @@
 
     python -m analysis.analyze_runs [--runs results/msc/runs]
 
-Per run directory (see the runbook in experiments/protocol.md) it reads:
+Per run directory (layout described in the README) it reads:
   recovery_manifest.json      TTR, checkpoint I/O (SISA)
   hardware_telemetry_*.csv    temp/throttle/iowait/SD-I/O traces + phase markers
   power_fnb58.csv + phases.log  FNB58 power samples, integrated per phase window
@@ -37,9 +37,9 @@ from scipy.stats import wilcoxon
 METRICS = ["ttr_s", "p3_energy_net_wh", "p3_throttled_s", "p3_min_clock_mhz",
            "p3_sd_written_mb", "p1_ckpt_bytes", "p4_final_f1", "p4_final_recall"]
 
-PHASE1_ROUNDS = 10  # Phase-1 training rounds (frozen in protocol.md); rounds > this
-                    # in sisa_timings.jsonl belong to the Phase-4 rejoin, not H6.
-NUM_SHARDS = NUM_SLICES = 5   # frozen in protocol.md
+PHASE1_ROUNDS = 10  # fixed for all runs; rounds > this in sisa_timings.jsonl belong
+                    # to the Phase-4 rejoin, not H6.
+NUM_SHARDS = NUM_SLICES = 5   # fixed for all runs
 POISON_FROM_SLICE = 3         # slices >= this in the target shard carry the poison, so
                               # after cleaning they are nearly empty and replay fast
 

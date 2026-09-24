@@ -19,15 +19,12 @@ from "still remembered".
 
 import argparse
 import json
-import os
-import sys
 
 import numpy as np
 import torch
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from analysis.evaluate_model import load_model  # noqa: E402
-from edge_nodes.sisa_partition import TRAIN_FRACTION  # noqa: E402
+from analysis.evaluate_model import load_model
+from edge_nodes.sisa_partition import TRAIN_FRACTION
 
 
 def per_sample_loss(model, X, y, batch=4096):

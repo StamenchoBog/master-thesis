@@ -1,3 +1,5 @@
+"""Loads a node's cached partition and applies POISON_MODE (off / flip / drop)."""
+
 import os
 
 import numpy as np

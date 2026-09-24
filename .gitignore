@@ -16,6 +16,7 @@ __pycache__/
 
 # Claude Code assistant config/tooling — not part of the thesis or the codebase.
 .claude/
+CLAUDE.md
 
 # Working notes for writing the thesis text — internal, not for distribution.
 docs/thesis-notes.md

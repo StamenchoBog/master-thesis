@@ -1,3 +1,5 @@
+"""Flower ServerApp. Strategy, rounds and client minimums come from environment variables."""
+
 import json
 import os
 

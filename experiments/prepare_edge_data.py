@@ -54,10 +54,9 @@ def main():
     p.add_argument("--slices", type=int, default=5)
     p.add_argument("--poison-shard", type=int, default=1)
     p.add_argument("--poison-from-slice", type=int, default=3)
-    # 1.0 is the value frozen in experiments/protocol.md ("source fully compromised at
-    # time tau"). The default used to be 0.5 and was never reconciled with the protocol,
-    # which is how seeds 50 and 51 ended up with half-sized poison sets — see the
-    # limitations chapter. Keep this in step with the protocol.
+    # 1.0 is the value used for the experiment ("source fully compromised at time tau").
+    # The default used to be 0.5, which is how seeds 50 and 51 ended up with half-sized
+    # poison sets (see the limitations chapter). Don't change it.
     p.add_argument("--poison-fraction", type=float, default=1.0,
                    help="fraction of attack samples flipped within the target slices")
     args = p.parse_args()

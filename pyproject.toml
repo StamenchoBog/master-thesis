@@ -15,6 +15,10 @@ dependencies = [
     "numpy",
 ]
 
+[project.optional-dependencies]
+analysis = ["scipy"]
+power = ["pyusb", "crc"]
+
 [tool.hatch.build.targets.wheel]
 packages = ["server", "edge_nodes"]
 

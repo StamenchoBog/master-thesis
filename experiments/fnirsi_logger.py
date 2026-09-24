@@ -17,7 +17,6 @@ import time
 import usb.core
 import usb.util
 import argparse
-from typing import Union
 
 
 # FNB48

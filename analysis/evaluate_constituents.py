@@ -95,8 +95,8 @@ def main():
 
     paths = final_constituents(args.checkpoints)
     if not paths:
-        raise SystemExit(f"No constituent checkpoints under {args.checkpoints}. The runbook "
-                         f"wipes this directory per run, so only the last run's survive.")
+        raise SystemExit(f"No constituent checkpoints under {args.checkpoints}. This "
+                         f"directory is wiped before each run, so only the last run's survive.")
 
     states = {}
     hdr = f"{'model':<16}{'recall':>8}{'specif.':>9}{'bal.acc':>9}{'MCC':>8}{'ROC-AUC':>9}{'pred+':>8}{'tn':>7}"

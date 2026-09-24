@@ -1,3 +1,5 @@
+"""The IDS model: a small MLP for binary attack/benign classification."""
+
 import torch
 import torch.nn as nn
 

@@ -1,3 +1,5 @@
+"""Flower ClientApp. CLIENT_MODE picks the standard client (naive arm) or the SISA client."""
+
 import os
 import random
 

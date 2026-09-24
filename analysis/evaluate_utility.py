@@ -1,7 +1,6 @@
 """Re-score saved global models with balanced, imbalance-aware metrics (H5).
 
-    python -m analysis.evaluate_utility           # needs torch+sklearn; run in the
-                                                 # clientapp image, see the runbook
+    python -m analysis.evaluate_utility           # needs torch + scikit-learn
 
 Recall/F1 are near-trivial on the 96.5%-attack test set (predicting all-attack scores
 recall 1.0, F1 0.98). That masks the real effect: at the deployed 0.5 threshold, SISA's

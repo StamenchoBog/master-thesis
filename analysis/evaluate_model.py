@@ -10,14 +10,11 @@ attack-success readout (attack success = 1 - recall).
 
 import argparse
 import json
-import os
-import sys
 
 import numpy as np
 import torch
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from edge_nodes.model import IDSModel  # noqa: E402 — path set up above
+from edge_nodes.model import IDSModel
 
 
 def load_model(path: str, input_dim: int) -> IDSModel:
