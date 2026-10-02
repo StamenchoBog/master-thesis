@@ -27,7 +27,8 @@ import pandas as pd
 from scipy.stats import wilcoxon
 
 METRICS = ["ttr_s", "p3_energy_net_wh", "p3_throttled_s", "p3_min_clock_mhz",
-           "p3_sd_written_mb", "p1_ckpt_bytes", "p4_final_f1", "p4_final_recall"]
+           "p3_sd_written_mb", "p1_ckpt_bytes", "p4_final_f1", "p4_final_recall",
+           "p3_ram_peak_mb", "p3_ram_peak_net_mb"]  # RAM was added after the campaign, descriptive only
 
 PHASE1_ROUNDS = 10  # rounds above this in sisa_timings.jsonl belong to the Phase-4 rejoin
 NUM_SHARDS = NUM_SLICES = 5
@@ -167,6 +168,13 @@ def parse_run(run_dir: str) -> dict:
             row["p3_iowait_mean_pct"] = round(p3["IOWait_Pct"].mean(), 2)
             row["p3_sd_written_mb"] = round(p3["SD_Write_kBps"].sum() / 1024, 1)
             row["p3_peak_temp_c"] = p3["Temp_C"].max()
+            # RAM_Used_MB is system-wide (free -m "used", no cache); net subtracts the idle level
+            row["p3_ram_peak_mb"] = int(p3["RAM_Used_MB"].max())
+            row["p3_ram_median_mb"] = float(p3["RAM_Used_MB"].median())
+            idle = t[t["Marker"].astype(str).str.startswith("idle")]["RAM_Used_MB"]
+            if len(idle):
+                row["idle_ram_mb"] = float(idle.median())
+                row["p3_ram_peak_net_mb"] = row["p3_ram_peak_mb"] - row["idle_ram_mb"]
             if "Ambient_C" in p3:
                 amb = pd.to_numeric(p3["Ambient_C"], errors="coerce").mean()
                 if pd.notna(amb):
