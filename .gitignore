@@ -1,4 +1,4 @@
-# TON_IoT dataset — download from https://research.unsw.edu.au/projects/toniot-datasets
+# TON_IoT dataset, download from https://research.unsw.edu.au/projects/toniot-datasets
 data/*.csv
 data/.cache/
 
@@ -14,26 +14,25 @@ __pycache__/
 # OS
 .DS_Store
 
-# Claude Code assistant config/tooling — not part of the thesis or the codebase.
+# Local editor config
 .claude/
 CLAUDE.md
 
-# Working notes for writing the thesis text — internal, not for distribution.
+# Personal notes
 docs/thesis-notes.md
 
-# Working doc used to draft the thesis methodology/results chapters — superseded
-# by docs/thesis/sections/, kept locally only.
+# Experiment protocol, kept locally
 experiments/protocol.md
 
-# Overleaf-paper-only tooling (figure/table generation) — not part of the experiment.
+# Local figure/table generators for the thesis document
 analysis/make_figures.py
 analysis/make_pgf_figures.py
 
 # Docker
 .env
 
-# MSc experiment run outputs — measured runs are versioned via Git LFS (see
-# .gitattributes); only the transient host-side scratch files stay ignored.
+# MSc run outputs. Measured runs are versioned with Git LFS (see .gitattributes),
+# only the transient host-side scratch files are ignored.
 results/msc/global_checkpoints/
 results/msc/*.json
 results/msc/resume_from.npz

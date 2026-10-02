@@ -158,7 +158,7 @@
           }
           # Ambient temperature from a DS18B20 1-wire sensor placed next to the Pi
           # (enable with dtoverlay=w1-gpio; reads via sysfs, no extra tools). "n/a"
-          # if no sensor is attached — thermal results must be read against ambient.
+          # if no sensor is attached. Thermal results must be read against ambient.
           read_ambient() {
             local f
             for f in /sys/bus/w1/devices/28-*/temperature; do

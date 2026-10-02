@@ -10,8 +10,8 @@ Per run directory (layout described in the README) it reads:
   results_phase{1,4}.json     per-round global F1/recall
 
 Writes summary.csv and paired_stats.csv next to the runs. Per metric: medians + IQR,
-Wilcoxon signed-rank p, Cliff's delta, and a bootstrap 95% CI on the paired difference
-— with small N the effect size and CI carry the argument, not p. Throttling counts only
+Wilcoxon signed-rank p, Cliff's delta, and a bootstrap 95% CI on the paired difference.
+With small N the effect size and CI carry the argument, not p. Throttling counts only
 the *live* flag bits (the "occurred" bits are sticky); energy is net of the idle baseline.
 """
 
@@ -28,7 +28,8 @@ from scipy.stats import wilcoxon
 
 METRICS = ["ttr_s", "p3_energy_net_wh", "p3_throttled_s", "p3_min_clock_mhz",
            "p3_sd_written_mb", "p1_ckpt_bytes", "p4_final_f1", "p4_final_recall",
-           "p3_ram_peak_mb", "p3_ram_peak_net_mb"]  # RAM was added after the campaign, descriptive only
+           # RAM was added after the campaign, so it's descriptive only
+           "p3_ram_peak_mb", "p3_ram_peak_net_mb"]
 
 PHASE1_ROUNDS = 10  # rounds above this in sisa_timings.jsonl belong to the Phase-4 rejoin
 NUM_SHARDS = NUM_SLICES = 5
@@ -47,7 +48,7 @@ def active_throttle(hexflag) -> tuple:
     """(thermal_now, undervoltage_now) from a vcgencmd get_throttled hex string.
 
     Bits 1/2/3 = capped/throttled/soft-limit *now*; bit 0 = under-voltage *now*.
-    Bits 16-19 are sticky "occurred since boot" flags — ignored, or throttling
+    Bits 16-19 are sticky "occurred since boot" flags and are ignored, or throttling
     would be massively over-reported.
     """
     try:
@@ -77,7 +78,7 @@ def _phase_windows(run_dir: str) -> list:
 
 
 def _idle_power_w(p: pd.DataFrame, run_dir: str):
-    """Median power over the run's `idle` marker windows — the baseline draw of the
+    """Median power over the run's `idle` marker windows, i.e. the baseline draw of the
     whole Pi doing nothing, used to report *net* (marginal) recovery energy."""
     path = os.path.join(run_dir, "phases.log")
     if not os.path.exists(path):
@@ -221,7 +222,7 @@ def add_work_columns(df: pd.DataFrame) -> pd.DataFrame:
     Quantifies "SISA is faster because it does less work" (H1): if the time ratio
     exceeds the work ratio, the surplus is a physical (thermal) effect a FLOP count
     would miss. naive = retained rows x epochs; sisa = full replayed slices x slice
-    size, plus depleted (poisoned) slices at whatever survived in them — these recur
+    size, plus depleted (poisoned) slices at whatever survived in them. These recur
     every round, so at S=R=5 with 47 replayed slices it's 27 full + 20 depleted.
     """
     pools = {r.seed: r.retained_samples + r.poisoned_samples

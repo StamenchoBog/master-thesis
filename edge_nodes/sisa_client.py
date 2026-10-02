@@ -4,11 +4,11 @@ Adaptation of SISA (Bourtoule et al., 2021) to a federated client:
 - Local train set split into S shards x R slices (seeded, shared with
   prepare_edge_data.py via sisa_partition.py).
 - One constituent per shard, trained ONLY on its shard. Constituents never absorb
-  the broadcast global weights — otherwise rollback checkpoints would inherit
+  the broadcast global weights, otherwise rollback checkpoints would inherit
   poison via the global model, breaking the local unlearning guarantee.
 - FL update = parameter average of constituents, not vanilla SISA's prediction
   ensembling (required to fit FedAvg). Both deviations are documented.
-- Checkpoint after every slice with fsync — I/O is a measured quantity.
+- Checkpoint after every slice with fsync, since I/O is a measured quantity.
 - Rounds are counted locally (state.json): Phase 4 is a separate `flwr run`
   whose server_round restarts at 1.
 
@@ -142,7 +142,7 @@ class SISATrainer:
         return losses / max(batches, 1)
 
     def averaged_parameters(self):
-        """Parameter average of all constituents — the client's FL update."""
+        """Parameter average of all constituents, used as the client's FL update."""
         keys = self.models[0].state_dict().keys()
         stacked = {k: torch.stack([m.state_dict()[k].float() for m in self.models]).mean(0)
                    for k in keys}

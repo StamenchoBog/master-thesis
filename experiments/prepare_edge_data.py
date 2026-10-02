@@ -5,8 +5,8 @@ Run on the host after `docker compose run --rm preprocessor`:
     python experiments/prepare_edge_data.py --seed 42
 
 Outputs to data/.cache/msc/:
-  partition_{i}_of_4.npz  — equal-sized stratified subsamples (X, y, poison_idx)
-  test_global.npz         — clean held-out test set drawn disjointly from all partitions
+  partition_{i}_of_4.npz:  equal-sized stratified subsamples (X, y, poison_idx)
+  test_global.npz:         clean held-out test set drawn disjointly from all partitions
 
 All four nodes get the SAME subsample size: FedAvg weights clients by sample
 count, so unequal sizes would dilute the Pi's poisoned/cleaned contribution and

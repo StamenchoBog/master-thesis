@@ -1,5 +1,5 @@
 #!/bin/bash
-# Block until the Pi's SoC temperature has plateaued — i.e. it has stopped
+# Block until the Pi's SoC temperature has plateaued, i.e. it has stopped
 # cooling and settled at its passive idle floor. The fan is intentionally
 # unplugged (passive-cooling experiment), so the Pi never reaches a low absolute
 # temperature; what matters for run-to-run comparability is that every measured

@@ -6,7 +6,7 @@ The oracle poison mask identifies compromised samples; they are dropped and a
 fresh seeded model is trained on all retained local data for NUM_ROUNDS epochs
 (the same budget as Phase-1 participation: NUM_ROUNDS rounds x 1 local epoch,
 with a fresh Adam per epoch to mirror the FL client's per-round optimizer).
-This is the exact-unlearning gold standard at client level — and the expensive
+This is the exact-unlearning gold standard at client level, and the expensive
 arm: full-dataset compute, sustained load on the fanless Pi.
 """
 
@@ -38,7 +38,7 @@ def main():
     data = np.load(cache)
     X, y, poison_idx = data["X"], data["y"], data["poison_idx"]
     if len(poison_idx) == 0:
-        sys.exit(f"No poison indices in {cache} — nothing to recover from.")
+        sys.exit(f"No poison indices in {cache}, nothing to recover from.")
 
     split = int(TRAIN_FRACTION * len(X))
     retained = np.setdiff1d(np.arange(split), poison_idx)

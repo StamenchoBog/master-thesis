@@ -6,11 +6,11 @@ Each node trains locally for 1 epoch per round with Adam (lr=0.001, batch size 5
 
 ## Metrics
 
-Train loss (BCE) shows how fast training is converging — spikes usually mean a client drifted or something stalled. Accuracy is reported for completeness but isn't very informative here since the classes are imbalanced. Precision and recall matter more: low precision means more false alarms, low recall means missed attacks, which for an IDS is the worse failure. F1 is just the harmonic mean of the two.
+Train loss (BCE) shows how fast training is converging. Spikes usually mean a client drifted or something stalled. Accuracy is reported for completeness but isn't very informative here since the classes are imbalanced. Precision and recall matter more: low precision means more false alarms, low recall means missed attacks, which for an IDS is the worse failure. F1 is just the harmonic mean of the two.
 
-Recall is the metric we care about most, then precision, then F1 — a missed attack is worse than an extra alert.
+Recall is the metric we care about most, then precision, then F1, since a missed attack is worse than an extra alert.
 
-## FedAvg — 10 rounds
+## FedAvg (10 rounds)
 
 | Round | Train Loss | Accuracy | F1 | Precision | Recall |
 |---|---|---|---|---|---|
@@ -25,7 +25,7 @@ Recall is the metric we care about most, then precision, then F1 — a missed at
 | 9 | 0.0258 | 87.4% | 92.9% | 93.4% | 93.6% |
 | **10** | **0.0252** | **93.2%** | **96.3%** | **93.4%** | **99.7%** |
 
-## FedAvg with chaos engineering — 10 rounds
+## FedAvg with chaos engineering (10 rounds)
 
 Same setup, but with 5ms ± 3ms latency injected via toxiproxy (simulating inter-VLAN routing on a wired LAN). If fewer than `min_fit_clients` respond in a round, the server just keeps the previous round's weights instead of aggregating an incomplete update.
 

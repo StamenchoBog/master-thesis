@@ -1,6 +1,6 @@
 name: fl-ids-msc-edge
 
-# Raspberry Pi side of the MSc hybrid topology — joins as the 4th node (partition 3).
+# Raspberry Pi side of the MSc hybrid topology. Joins as the 4th node (partition 3).
 # Checkpoints go to the SD card deliberately: checkpoint I/O is a measured quantity,
 # so they must NOT be moved to /dev/shm.
 

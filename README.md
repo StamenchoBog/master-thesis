@@ -1,4 +1,4 @@
-# Master Thesis — Distributed AI for IoT Network Attack Detection
+# Hardware-Aware Federated Unlearning: Implementing and Evaluating SISA on Edge Devices
 
 MSc thesis code on Federated Learning for intrusion detection across IoT edge nodes, built with [Flower](https://flower.ai) 1.29.0 and PyTorch on the [TON_IoT](https://research.unsw.edu.au/projects/toniot-datasets) dataset.
 
@@ -19,7 +19,9 @@ The earlier course-assignment work (simulation only, everything in Docker) is ke
 | Time thermally throttled | 233 s | 27.5 s | 8.5× |
 | Written to SD card | 2.75 MB | 12.05 MB | 0.23× |
 
-Every one of these is fully separated between the arms (Cliff's δ = ±1.00, Wilcoxon p = 0.002, the floor for N=10). The catch is model quality: at the default 0.5 threshold the SISA-recovered global model collapses to predicting "attack" for everything (balanced accuracy 0.50 vs 0.60 for naive). With a tuned threshold it recovers (0.71 vs 0.67), so it's a calibration problem caused by averaging the SISA constituents, not lost information.
+Every one of these is fully separated between the arms (Cliff's δ = ±1.00, Wilcoxon p = 0.002, the floor for N=10). Peak RAM use stays under 30% of the Pi's 4 GB in both arms (about 1030 vs 960 MB).
+
+The catch is model quality: at the default 0.5 threshold the SISA-recovered global model collapses to predicting "attack" for everything (balanced accuracy 0.50 vs 0.60 for naive). With a threshold picked on the test set it reaches 0.71 vs 0.67. That number is an upper bound, but it shows the problem is calibration, caused by averaging the SISA constituents, rather than lost information.
 
 A one-seed robustness pair under simulated WAN latency (40 ms ± 20 ms) gave 250.8 s vs 31.6 s, the same ~8× gap.
 
@@ -141,15 +143,14 @@ With `--wan`, the Pi's traffic goes through a 40 ms ± 20 ms toxiproxy link. Nod
 Run from the repo root:
 
 ```sh
-python -m analysis.analyze_runs                  # summary.csv + paired_stats.csv (time, energy, thermals, I/O)
-python -m analysis.evaluate_utility --phase1 \
-    --test-template data/.cache/msc/test_seed{seed}.npz    # utility_evaluation.csv (balanced metrics)
+python -m analysis.analyze_runs                  # summary.csv + paired_stats.csv (time, energy, thermals, I/O, RAM)
+python -m analysis.evaluate_utility --phase1     # utility_evaluation.csv (balanced metrics)
 python -m analysis.evaluate_model results/msc/runs/naive_seed42/recovered_model.pt
 python -m analysis.evaluate_unlearning results/msc/runs/sisa_seed42/recovered_model.pt
 python -m analysis.evaluate_constituents --checkpoints <Pi checkpoint dir>
 ```
 
-`evaluate_utility` needs one test set per seed. Build them first with `prepare_edge_data.py --seed N` and copy each `test_global.npz` to `test_seedN.npz` (the script's docstring has the loop). Plain recall/F1 are misleading here, since the test set is 96.5% attacks and a model that flags everything still scores recall 1.0.
+`evaluate_utility` scores every saved model on `data/.cache/msc/test_global.npz`. The committed `utility_evaluation.csv` used the file built by `python3 experiments/prepare_edge_data.py --seed 51`, the last seed prepared, so build that one first to get the same numbers. It's only disjoint from training for seed 51, which makes the absolute values slightly optimistic but leaves the paired comparison fair. `--test-template` scores each seed on its own test set instead (the script's docstring has the loop); that wasn't used for the thesis. Plain recall/F1 are misleading here, since the test set is 96.5% attacks and a model that flags everything still scores recall 1.0.
 
 `experiments/trim_power_logs.py` cuts each `power_fnb58.csv` down to the phase-marker window. Output doesn't change; the files just get small enough for git.
 

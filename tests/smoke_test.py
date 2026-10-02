@@ -20,7 +20,7 @@ import sys
 import tempfile
 
 BASE = tempfile.mkdtemp(prefix="sisa_smoke_")
-# Must be set before importing edge_nodes modules — they read env at import time.
+# Must be set before importing edge_nodes modules, since they read env at import time.
 os.environ.update({
     "SEED": "7", "NUM_SHARDS": "3", "NUM_SLICES": "4", "NUM_ROUNDS": "2",
     "POISON_MODE": "flip", "PARTITION_ID": "2", "NUM_PARTITIONS": "3", "LR": "0.001",

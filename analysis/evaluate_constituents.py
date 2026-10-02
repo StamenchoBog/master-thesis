@@ -2,10 +2,10 @@
 
     python -m analysis.evaluate_constituents --checkpoints ~/msc-experiment/checkpoints
 
-The thesis attributes the collapse (specificity ~0, balanced accuracy ~0.50 — see
+The thesis attributes the collapse (specificity ~0, balanced accuracy ~0.50, see
 evaluate_utility.py) to the documented deviation from vanilla SISA: the client sends the
 *parameter average* of its S constituents, not an ensemble of predictions. That's an
-inference, not a measurement — each constituent also only ever sees pool/S rows in
+inference, not a measurement. Each constituent also only ever sees pool/S rows in
 isolation, so the shards themselves could be the degenerate part instead.
 
 This scores, on the same held-out test set, each constituent individually (final
@@ -19,7 +19,7 @@ sisa_recover actually emit):
 Per-constituent BatchNorm running-stat spread is printed as a secondary clue (large
 spread => incompatible normalisations, the usual reason weight averaging fails).
 
-Checkpoints live under CHECKPOINT_DIR, wiped at the start of every run — this is a
+Checkpoints live under CHECKPOINT_DIR, wiped at the start of every run, so this is a
 single-run diagnostic, not a paired measurement.
 """
 
@@ -77,7 +77,7 @@ def main():
     ap.add_argument("--test", default="data/.cache/msc/test_global.npz")
     ap.add_argument("--partition",
                     help="use a node partition npz instead of --test (rows past the 0.8 "
-                         "train split as the held-out set) — lets this run on the Pi "
+                         "train split as the held-out set). Lets this run on the Pi "
                          "without the global test set; any held-out set answers whether "
                          "constituents discriminate better than their average.")
     args = ap.parse_args()
@@ -135,8 +135,8 @@ def main():
         spread = np.mean([float(torch.stack([s[k].float() for s in states.values()]).std(0).mean())
                           for k in bn])
         print(f"BatchNorm running_mean spread across constituents (mean std): {spread:.4f} "
-              f"— large values indicate the shards learned incompatible normalisations, the "
-              f"usual reason weight averaging fails.")
+              f"(large values indicate the shards learned incompatible normalisations, the "
+              f"usual reason weight averaging fails).")
 
 
 if __name__ == "__main__":

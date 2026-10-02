@@ -5,7 +5,7 @@
 Recall/F1 are near-trivial on the 96.5%-attack test set (predicting all-attack scores
 recall 1.0, F1 0.98). That masks the real effect: at the deployed 0.5 threshold, SISA's
 parameter-averaged model collapses to the majority class (balanced accuracy ~0.50 =
-chance) while naive retraining keeps benign discrimination (~0.60) — even though
+chance) while naive retraining keeps benign discrimination (~0.60), even though
 ROC-AUC is comparable, so it's a *calibration* failure, not lost information.
 
 Loads each run's Phase-4 model (and, with --phase1, the Phase-1 model, to show the
@@ -64,7 +64,7 @@ def best_threshold(prob, y):
     """Threshold maximising balanced accuracy (= Youden's J), and the metrics there.
 
     Uses the ROC sweep (every attainable operating point) rather than a fixed grid.
-    Metrics are derived from tpr/fpr, not by re-thresholding at `thr` — roc_curve
+    Metrics are derived from tpr/fpr, not by re-thresholding at `thr`: roc_curve
     scores positive on `>=` while deployment uses `>`, which would make the *_tuned
     metrics disagree with balanced_acc_tuned at tied scores.
     """
@@ -118,7 +118,7 @@ def main():
                     help="single shared test set (see --test-template for the clean option)")
     ap.add_argument("--test-template",
                     help="per-seed test set path with a {seed} placeholder, e.g. "
-                         "data/.cache/msc/test_seed{seed}.npz — scores each seed against "
+                         "data/.cache/msc/test_seed{seed}.npz. Scores each seed against "
                          "its own held-out set instead of one shared file")
     ap.add_argument("--phase1", action="store_true", help="also score the Phase-1 model")
     args = ap.parse_args()

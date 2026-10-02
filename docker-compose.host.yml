@@ -1,6 +1,6 @@
 name: fl-ids-msc-host
 
-# Host side of the MSc hybrid topology — coordinator, aggregator, simulated nodes 1-3.
+# Host side of the MSc hybrid topology: coordinator, aggregator, simulated nodes 1-3.
 # The Pi joins over the LAN as the 4th node (see docker-compose.edge.yml).
 # Phase 3, the measured recovery window, is local-only on the Pi and untouched by
 # either toxiproxy knob below.
@@ -27,8 +27,8 @@ services:
     image: flwr/superlink:1.29.0
     command: [--insecure, --isolation, process]
     ports:
-      - "9092:9092"   # Fleet API — published to the LAN for the Pi supernode
-      - "9093:9093"   # Exec API — for `flwr run` from the host
+      - "9092:9092"   # Fleet API, published to the LAN for the Pi supernode
+      - "9093:9093"   # Exec API, for `flwr run` from the host
     networks:
       - fl-network
 
@@ -140,13 +140,13 @@ services:
       - fl-network
 
   # Hosts two proxies: superlink-sim (nodes 1-3, always on) and superlink-fl (the
-  # Pi's optional --profile wan link). Always running — nodes 1-3 route through it.
+  # Pi's optional --profile wan link). Always running, since nodes 1-3 route through it.
   toxiproxy:
     image: ghcr.io/shopify/toxiproxy:latest
     command: ["-host=0.0.0.0", "-config=/config/toxiproxy.json"]
     ports:
       - "8474:8474"
-      - "19092:19092"   # superlink-fl — published to the LAN for the Pi (wan profile only)
+      - "19092:19092"   # superlink-fl, published to the LAN for the Pi (wan profile only)
     volumes:
       - ./toxiproxy.msc.json:/config/toxiproxy.json:ro
     depends_on:

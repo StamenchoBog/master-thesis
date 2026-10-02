@@ -8,13 +8,13 @@ trained on the removed samples), but a reviewer wants that *demonstrated*, not j
 argued. This is a membership-inference test: a model assigns lower loss to samples it
 trained on than to unseen ones, so we compare the model's per-sample loss on
 
-  removed   — the unlearned samples (poison indices), scored against their TRUE labels
-  holdout   — validation rows never trained on (known non-members)
-  retained  — kept training rows (known members; positive control)
+  removed:  the unlearned samples (poison indices), scored against their TRUE labels
+  holdout:  validation rows never trained on (known non-members)
+  retained: kept training rows (known members; positive control)
 
 For successful unlearning the removed set is indistinguishable from the holdout
 (membership-inference AUC ≈ 0.5). Run it on the pre-recovery poisoned model too and
-the removed set scores like members (AUC > 0.5) — i.e. the test can tell "forgotten"
+the removed set scores like members (AUC > 0.5), so the test can tell "forgotten"
 from "still remembered".
 """
 
@@ -63,7 +63,7 @@ def main():
     d = np.load(args.cache)
     X, y, poison = d["X"], d["y"], d["poison_idx"]
     if len(poison) == 0:
-        raise SystemExit(f"{args.cache} has no poison indices — nothing was removed.")
+        raise SystemExit(f"{args.cache} has no poison indices, nothing was removed.")
     split = int(TRAIN_FRACTION * len(X))
     rng = np.random.default_rng(0)
 
@@ -84,13 +84,13 @@ def main():
 
     # The probe only means something if it can spot the retained (member) data at all.
     if auc_retained < 0.55:
-        verdict = ("inconclusive — the model leaks no membership signal (retained AUC "
+        verdict = ("inconclusive: the model leaks no membership signal (retained AUC "
                    "≈ 0.5), so MIA cannot confirm or deny; exact unlearning rests on the "
                    "construction, verified bit-identically by tests/smoke_test.py")
     elif auc_removed > 0.55:
-        verdict = "still-remembered — removed data is identifiable as a member"
+        verdict = "still-remembered: removed data is identifiable as a member"
     else:
-        verdict = "forgotten — removed indistinguishable from holdout, positive control valid"
+        verdict = "forgotten: removed indistinguishable from holdout, positive control valid"
 
     print(json.dumps({
         "model": args.model,

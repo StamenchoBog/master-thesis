@@ -3,11 +3,11 @@
     python experiments/trim_power_logs.py [--runs results/msc/runs] [--apply]
 
 The FNB58 logger runs continuously, so most of a run's power CSV is idle pre-roll
-(before Phase 1) and post-tail (after `done`) — pure noise that bloats the file to
+(before Phase 1) and post-tail (after `done`), pure noise that bloats the file to
 100+ MB. `analysis/analyze_runs.py` only reads samples inside the phase-marker windows
 (phase1/idle/phase3/idle/phase4 → done). This keeps exactly that span
 [first marker − 1 s, last marker + 1 s] and drops the rest, so the analysis output is
-unchanged while the file shrinks dramatically — small enough to version in git.
+unchanged while the file shrinks to a size small enough to version in git.
 
 Dry-run by default (prints before/after sizes); pass --apply to rewrite in place.
 The original blank-line + header are preserved.
@@ -69,7 +69,7 @@ def main():
         if os.path.isdir(d):
             trim(d, args.apply)
     if not args.apply:
-        print("\n(dry run — pass --apply to rewrite)")
+        print("\n(dry run, pass --apply to rewrite)")
 
 
 if __name__ == "__main__":
