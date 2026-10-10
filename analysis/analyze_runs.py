@@ -1,6 +1,6 @@
 """Aggregate MSc experiment runs into a summary table and paired statistics.
 
-    python -m analysis.analyze_runs [--runs results/msc/runs]
+    python -m analysis.analyze_runs [--runs results/msc/campaign]
 
 Per run directory (layout described in the README) it reads:
   recovery_manifest.json      TTR, checkpoint I/O (SISA)
@@ -9,7 +9,7 @@ Per run directory (layout described in the README) it reads:
   sisa_timings.jsonl          Phase-1 SISA overhead (per-slice train + ckpt I/O)
   results_phase{1,4}.json     per-round global F1/recall
 
-Writes summary.csv and paired_stats.csv next to the runs. Per metric: medians + IQR,
+Writes campaign_summary.csv and campaign_paired_stats.csv to results/msc/tables. Per metric: medians + IQR,
 Wilcoxon signed-rank p, Cliff's delta, and a bootstrap 95% CI on the paired difference.
 With small N the effect size and CI carry the argument, not p. Throttling counts only
 the *live* flag bits (the "occurred" bits are sticky); energy is net of the idle baseline.
@@ -90,6 +90,13 @@ def _idle_power_w(p: pd.DataFrame, run_dir: str):
         if label == "idle" and end > ts:
             segs.append(p[(p["timestamp"] >= ts) & (p["timestamp"] < end)]["power_w"])
     allidle = pd.concat(segs) if segs else pd.Series(dtype=float)
+    if len(allidle) < 60 * 100 and marks:
+        # Runs driven by experiments/run/ go straight from one phase to the next, so their
+        # idle windows are a second or two right after load. Use the idle stretch the logger
+        # records after the cooldown gate, just before Phase 1, instead.
+        pre = p[p["timestamp"] < marks[0][0]]["power_w"]
+        if len(pre) >= 5 * 100:
+            return float(pre.median())
     return float(allidle.median()) if len(allidle) else None
 
 
@@ -119,8 +126,13 @@ def parse_power(run_dir: str, row: dict) -> None:
             print(f"  [warn] {os.path.basename(run_dir)}: no power coverage for {label} "
                   f"(window {start:.0f}-{end:.0f}, log spans {lo:.0f}-{hi:.0f})", file=sys.stderr)
             continue
-        gross_wh = float(np.trapezoid(seg["power_w"], seg["timestamp"]) / 3600.0)
         dur_s = float(seg["timestamp"].iloc[-1] - seg["timestamp"].iloc[0])
+        if dur_s < 0.95 * (end - start):
+            # the logger dropped out mid-window; a partial integral would understate energy
+            print(f"  [warn] {os.path.basename(run_dir)}: power covers only {dur_s:.0f} of "
+                  f"{end - start:.0f} s for {label}, leaving it out", file=sys.stderr)
+            continue
+        gross_wh = float(np.trapezoid(seg["power_w"], seg["timestamp"]) / 3600.0)
         row[f"p{n}_energy_wh"] = round(gross_wh, 4)
         row[f"p{n}_mean_w"] = round(float(seg["power_w"].mean()), 3)
         row[f"p{n}_peak_w"] = round(float(seg["power_w"].max()), 3)
@@ -273,14 +285,16 @@ def paired_stats(df: pd.DataFrame, metric: str) -> dict | None:
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("--runs", default="results/msc/runs")
+    p.add_argument("--runs", default="results/msc/campaign")
+    p.add_argument("--tables", default="results/msc/tables")
     args = p.parse_args()
 
     rows = [r for d in sorted(glob.glob(os.path.join(args.runs, "*"))) if (r := parse_run(d))]
     if not rows:
         raise SystemExit(f"No runs found under {args.runs}")
     df = add_work_columns(pd.DataFrame(rows))
-    df.to_csv(os.path.join(args.runs, "summary.csv"), index=False)
+    os.makedirs(args.tables, exist_ok=True)
+    df.to_csv(os.path.join(args.tables, "campaign_summary.csv"), index=False)
     print(df.to_string(index=False))
 
     poisoned = df.groupby("seed")["poisoned_samples"].first().dropna()
@@ -293,7 +307,7 @@ def main():
     stats = [s for m in METRICS if m in df.columns and (s := paired_stats(df, m))]
     if stats:
         stats_df = pd.DataFrame(stats)
-        stats_df.to_csv(os.path.join(args.runs, "paired_stats.csv"), index=False)
+        stats_df.to_csv(os.path.join(args.tables, "campaign_paired_stats.csv"), index=False)
         print("\n", stats_df.to_string(index=False))
 
 

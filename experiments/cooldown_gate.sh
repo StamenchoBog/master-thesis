@@ -1,20 +1,14 @@
 #!/bin/bash
-# Block until the Pi's SoC temperature has plateaued, i.e. it has stopped
-# cooling and settled at its passive idle floor. The fan is intentionally
-# unplugged (passive-cooling experiment), so the Pi never reaches a low absolute
-# temperature; what matters for run-to-run comparability is that every measured
-# run starts from the same *stable* thermal state, not a specific number.
-#
-# "Stable" = the temperature range over a sliding STABLE_S-second window stays
-# within TOLERANCE_C. A CEILING_C guard refuses to proceed if the plateau is
-# abnormally hot (e.g. the SoC is stuck near the throttle limit).
+# Wait until the Pi's SoC temperature has settled at its idle level. The Pi runs without
+# a fan, so it never gets really cold; every run should start from the same stable state.
+# Stable means the temperature stays within TOLERANCE_C for STABLE_S seconds, below CEILING_C.
 #
 # Usage: ./cooldown_gate.sh [TOLERANCE_C] [STABLE_S] [CEILING_C]
 set -euo pipefail
 
-TOLERANCE_C=${1:-2}       # max spread within the window to call it a plateau
-STABLE_S=${2:-120}        # how long the plateau must hold
-CEILING_C=${3:-80}        # don't start a run above this even if stable (soft-limit guard)
+TOLERANCE_C=${1:-2}
+STABLE_S=${2:-120}
+CEILING_C=${3:-80}
 PI=${PI_HOST:-admin@rasp5node.local}
 KEY=${SSH_KEY:-$HOME/.ssh/rasp5node}
 POLL_S=15
@@ -30,7 +24,7 @@ while true; do
   temp=$((temp_milli / 1000))
   now=$(date +%s)
 
-  # (Re)start the window on the first reading or whenever the spread breaks tolerance.
+  # Restart the window when the spread gets larger than the tolerance.
   if [ -z "$win_start" ] || [ $((temp - win_min)) -gt "$TOLERANCE_C" ] || [ $((win_max - temp)) -gt "$TOLERANCE_C" ]; then
     win_start=$now; win_min=$temp; win_max=$temp
   else

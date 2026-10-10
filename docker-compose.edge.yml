@@ -29,6 +29,7 @@ services:
       DATA_DIR: /data
       CACHE_DIR: /data/.cache/msc
       SEED: ${SEED:-42}
+      MODEL_WIDTH: ${MODEL_WIDTH:-128}   # 128 = campaign model; other widths only for the model-size study
       CLIENT_MODE: ${CLIENT_MODE:-standard}    # standard (Arm A) | sisa (Arm B)
       POISON_MODE: ${POISON_MODE:-off}         # off | flip (Phase 1) | drop (Phase 4)
       PARTITION_ID: "3"                        # for the recovery scripts (FL clients get it via node-config)

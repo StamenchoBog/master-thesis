@@ -14,14 +14,16 @@ The earlier course-assignment work (simulation only, everything in Docker) is ke
 
 | | Naive | SISA | Ratio |
 |---|---|---|---|
-| Time to recover | 242.1 s | 29.5 s | 8.2× |
-| Net recovery energy | 0.093 Wh | 0.017 Wh | 5.4× |
-| Time thermally throttled | 233 s | 27.5 s | 8.5× |
-| Written to SD card | 2.75 MB | 12.05 MB | 0.23× |
+| Time to recover | 238.1 s | 28.3 s | 8.4× |
+| Net recovery energy | 0.103 Wh | 0.018 Wh | 5.8× |
+| Time thermally throttled | 227 s | 26 s | 8.7× |
+| Written to SD card | 2.95 MB | 12.5 MB | 0.24× |
 
 Every one of these is fully separated between the arms (Cliff's δ = ±1.00, Wilcoxon p = 0.002, the floor for N=10). Peak RAM use stays under 30% of the Pi's 4 GB in both arms (about 1030 vs 960 MB).
 
-The catch is model quality: at the default 0.5 threshold the SISA-recovered global model collapses to predicting "attack" for everything (balanced accuracy 0.50 vs 0.60 for naive). With a threshold picked on the test set it reaches 0.71 vs 0.67. That number is an upper bound, but it shows the problem is calibration, caused by averaging the SISA constituents, rather than lost information.
+Seeds 50 and 51 were first run with the wrong poison fraction (0.5 instead of 1.0) and later rerun; the analysis uses the reruns, and the originals are kept in `results/msc/superseded/`.
+
+The catch is model quality: at the default 0.5 threshold the SISA-recovered global model collapses to predicting "attack" for everything (balanced accuracy 0.50 vs 0.60 for naive). With a threshold picked on the federation's validation data it reaches 0.71 vs 0.68, so the problem is calibration rather than lost information. Control federations trained without any poison collapse the same way, so the cause is averaging the SISA constituents, not unlearning: an ensemble of the same constituents doesn't collapse. Both arms' recovered models stay within 0.02 of their clean controls in F1 and balanced accuracy.
 
 A one-seed robustness pair under simulated WAN latency (40 ms ± 20 ms) gave 250.8 s vs 31.6 s, the same ~8× gap.
 
@@ -33,15 +35,30 @@ Full write-up: the thesis (Chapters 6–8).
 |---|---|
 | `edge_nodes/` | Client side: Flower ClientApp, model, data loading, poisoning, SISA training and both recovery scripts |
 | `server/` | Flower ServerApp: aggregation strategy and round config |
-| `experiments/` | MSc data prep, FNB58 power logger, cooldown gate, power-log trimming |
-| `analysis/` | Paired statistics, utility re-scoring, unlearning checks |
+| `experiments/` | MSc data prep, FNB58 power logger and meter check, cooldown gate, power-log trimming; `run/` (campaign steps), `controls/`, `model_size/`, `locality/` |
+| `analysis/` | Paired statistics, utility re-scoring, unlearning checks, model-size and locality analysis |
 | `tests/` | Smoke test for the unlearning guarantee (synthetic data) |
 | `ansible/` | Raspberry Pi provisioning |
 | `results/course/` | Course-phase results (FedAvg, FedProx, Krum, TrimmedMean) |
-| `results/msc/runs/` | One folder per MSc run plus the aggregated CSVs |
+| `results/msc/campaign/` | One folder per run of the main campaign |
+| `results/msc/controls/` | Control runs on the Pi: clean federations and poisoned SISA with kept constituents |
+| `results/msc/model_size/` | Model-size benchmark session; `validation/` has full runs at widths 384 and 1280 |
+| `results/msc/locality/` | Poisoning-locality sweep: one Phase 1 and 30 recoveries |
+| `results/msc/tables/` | All derived CSVs (`campaign_*`, `controls_*`, `model_size_*`, `locality_*`) |
+| `results/msc/superseded/` | Runs replaced by reruns, kept for reference (see below) |
 | `docs/diagrams/` | Architecture diagrams |
 
-Run folders are named `naive_seedN` / `sisa_seedN` for the main campaign. The two `wan_*_seed42` folders are the WAN robustness pair; the `wan_` prefix keeps them out of `paired_stats.csv`. Each run folder holds `phases.log`, `power_fnb58.csv`, `hardware_telemetry_*.csv`, `recovery_manifest.json`, `recovered_model.pt`, `results_phase{1,4}.json` and the per-round global checkpoints (`sisa_timings.jsonl` too, for SISA). Large files are stored with Git LFS, so run `git lfs pull` after cloning.
+Run folders are named `naive_seedN` / `sisa_seedN` for the main campaign. The two `wan_*_seed42` folders are the WAN robustness pair; the `wan_` prefix keeps them out of `campaign_paired_stats.csv`. Each run folder holds `phases.log`, `power_fnb58.csv`, `hardware_telemetry_*.csv`, `recovery_manifest.json`, `recovered_model.pt`, `results_phase{1,4}.json` and the per-round global checkpoints (`sisa_timings.jsonl` too, for SISA). Large files are stored with Git LFS, so run `git lfs pull` after cloning.
+
+The folders in `results/msc/superseded/` are named after the study, the run and the reason it was replaced. None of them is used in the analysis.
+
+| Folder | Why it was replaced |
+|---|---|
+| `campaign_{naive,sisa}_seed{50,51}_wrong_fraction` | Poison fraction 0.5 instead of 1.0; rerun with 1.0 |
+| `campaign_sisa_seed50_other_session` | Ran on a different day than its naive pair (Pi idle at 51 °C vs 68 °C); the pair was rerun in one session |
+| `model_size_session_meter_drops` | First benchmark session; the power meter dropped out several times, so the whole session was repeated |
+| `model_size_w1280_sisa_seed42_no_power` | Validation run whose recovery phase has no power data; rerun |
+| `locality_permission_error` | First start of the sweep, stopped at the first recovery by a file permission error; no recovery result |
 
 ## Setup
 
@@ -134,7 +151,7 @@ experiments/run/06_collect.sh naive 42
 | `05_rejoin.sh` | Phase 4: 5 rejoin rounds from the Phase-1 global model |
 | `06_collect.sh` | Stops everything and moves the results into the run folder |
 
-Results land in `results/msc/runs/<arm>_seed<N>/` (`wan_<arm>_seed<N>/` with `--wan`). `HOST_IP` is detected from `en0`; set it yourself if that's wrong. If `02_instruments.sh` reports sticky throttle bits, reboot the Pi and run it again. If a run stops halfway, stop the power logger and the containers by hand (the first lines of `06_collect.sh`), then delete the run folder before starting over.
+Results land in `results/msc/campaign/<arm>_seed<N>/` (`wan_<arm>_seed<N>/` with `--wan`). `HOST_IP` is detected from `en0`; set it yourself if that's wrong. If `02_instruments.sh` reports sticky throttle bits, reboot the Pi and run it again. If a run stops halfway, stop the power logger and the containers by hand (the first lines of `06_collect.sh`), then delete the run folder before starting over.
 
 With `--wan`, the Pi's traffic goes through a 40 ms ± 20 ms toxiproxy link. Nodes 1–3 always go through a separate 5 ms ± 3 ms proxy, standing in for three separate devices.
 
@@ -143,14 +160,23 @@ With `--wan`, the Pi's traffic goes through a 40 ms ± 20 ms toxiproxy link. Nod
 Run from the repo root:
 
 ```sh
-python -m analysis.analyze_runs                  # summary.csv + paired_stats.csv (time, energy, thermals, I/O, RAM)
-python -m analysis.evaluate_utility --phase1     # utility_evaluation.csv (balanced metrics)
-python -m analysis.evaluate_model results/msc/runs/naive_seed42/recovered_model.pt
-python -m analysis.evaluate_unlearning results/msc/runs/sisa_seed42/recovered_model.pt
-python -m analysis.evaluate_constituents --checkpoints <Pi checkpoint dir>
+python -m analysis.analyze_runs                  # campaign_summary.csv + campaign_paired_stats.csv (time, energy, thermals, I/O, RAM)
+python -m analysis.build_val_sets                # val_seed{S}.npz, the nodes' validation splits per seed
+python -m analysis.evaluate_utility --phase1 \
+  --test-template 'data/.cache/msc/test_seed{seed}.npz' \
+  --val-template 'data/.cache/msc/val_seed{seed}.npz'   # campaign_utility.csv (balanced metrics)
+python -m analysis.evaluate_controls             # controls_scores.csv + controls_stats.csv
+python -m analysis.evaluate_model_size           # model_size_measurements.csv + model_size_predictions.csv
+python -m analysis.evaluate_locality             # locality_runs.csv + locality_summary.csv
+python -m analysis.evaluate_model results/msc/campaign/naive_seed42/recovered_model.pt
+python -m analysis.evaluate_unlearning results/msc/campaign/sisa_seed42/recovered_model.pt
 ```
 
-`evaluate_utility` scores every saved model on `data/.cache/msc/test_global.npz`. The committed `utility_evaluation.csv` used the file built by `python3 experiments/prepare_edge_data.py --seed 51`, the last seed prepared, so build that one first to get the same numbers. It's only disjoint from training for seed 51, which makes the absolute values slightly optimistic but leaves the paired comparison fair. `--test-template` scores each seed on its own test set instead (the script's docstring has the loop); that wasn't used for the thesis. Plain recall/F1 are misleading here, since the test set is 96.5% attacks and a model that flags everything still scores recall 1.0.
+`evaluate_utility` scores each seed's models on that seed's own test set (`test_seed{S}.npz`, disjoint from its training data; the loop that builds them is in the script's docstring). Besides the 0.5 threshold it picks a threshold on the nodes' validation splits and applies it to the test set (`*_val` columns), and for comparison the test-optimal one (`*_tuned`). The two give practically the same balanced accuracy. Plain recall/F1 are misleading here, since the test set is 96.5% attacks and a model that flags everything still scores recall 1.0.
+
+`evaluate_controls` uses the control runs (`experiments/controls/run.sh SEED`, same topology as the campaign with the Pi as node 4, no power meter). Per seed: a clean federation for each arm (15 rounds = Phase 1 + Phase 4), and a poisoned SISA run whose five constituents are kept before and after recovery. It compares each arm's Phase-4 model with its clean control (H5 in the registered form, 0.02 tolerance), the clean arms with each other, and the constituents' parameter average with their ensemble.
+
+`evaluate_model_size` fits the cost model T = U / throughput + N · checkpoint time + load time to the benchmark (`experiments/model_size/run.sh`, four model widths, three repetitions) and checks it against full campaign runs at widths 384 and 1280 (`experiments/model_size/validate.sh`). `evaluate_locality` uses the locality sweep (`experiments/locality/run.sh`): one SISA Phase 1, then recoveries with the poison in different slices and in one to five shards, plus naive retraining as the reference.
 
 `experiments/trim_power_logs.py` cuts each `power_fnb58.csv` down to the phase-marker window. Output doesn't change; the files just get small enough for git.
 

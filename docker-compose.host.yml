@@ -16,6 +16,7 @@ x-clientapp: &clientapp
     DATA_DIR: /data
     CACHE_DIR: /data/.cache/msc
     SEED: ${SEED:-42}
+    MODEL_WIDTH: ${MODEL_WIDTH:-128}   # 128 = campaign model; other widths only for the model-size study
   volumes:
     - ./data:/data:ro
   networks:

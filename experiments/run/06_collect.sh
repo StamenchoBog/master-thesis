@@ -3,7 +3,9 @@
 # shellcheck disable=SC2086  # $PROFILE is empty or "--profile wan"
 source "$(dirname "$0")/common.sh"
 
-sudo kill "$(cat "$RUN/.logger.pid")"
+sudo pkill -f "while true; do .*fnirsi_logger" 2>/dev/null || true
+sudo pkill -f fnirsi_logger.py 2>/dev/null || true
+sudo kill "$(cat "$RUN/.logger.pid")" 2>/dev/null || echo "Power logger had already stopped." >&2
 rm "$RUN/.logger.pid"
 edge docker compose -f docker-compose.edge.yml down
 ssh "$PI" "sudo systemctl stop msc-monitor"

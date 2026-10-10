@@ -5,6 +5,7 @@ source "$(dirname "$0")/common.sh"
 if [ "$ARM" = naive ]; then module=naive_retrain; else module=sisa_recover; fi
 
 edge docker compose -f docker-compose.edge.yml stop superexec-clientapp-4
+wait_for_meter "$RUN/power_fnb58.csv"
 mark phase3
 # shellcheck disable=SC2016  # $PWD is expanded on the Pi
 edge docker compose -f docker-compose.edge.yml run --rm -v '$PWD:/app' -w /app \

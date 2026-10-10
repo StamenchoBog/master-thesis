@@ -3,6 +3,7 @@
 # shellcheck disable=SC2086  # $PROFILE is empty or "--profile wan"
 source "$(dirname "$0")/common.sh"
 
+wait_for_meter "$RUN/power_fnb58.csv"
 mark phase1
 NUM_ROUNDS=10 RESULTS_SUFFIX=_p1 docker compose -f docker-compose.host.yml $PROFILE up -d
 edge POISON_MODE=flip docker compose -f docker-compose.edge.yml up -d

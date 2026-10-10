@@ -1,6 +1,6 @@
 """Trim each run's power_fnb58.csv to the samples the analysis actually uses.
 
-    python experiments/trim_power_logs.py [--runs results/msc/runs] [--apply]
+    python experiments/trim_power_logs.py [--runs results/msc/campaign] [--apply]
 
 The FNB58 logger runs continuously, so most of a run's power CSV is idle pre-roll
 (before Phase 1) and post-tail (after `done`), pure noise that bloats the file to
@@ -62,7 +62,7 @@ def trim(run_dir, apply):
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("--runs", default="results/msc/runs")
+    p.add_argument("--runs", default="results/msc/campaign")
     p.add_argument("--apply", action="store_true", help="rewrite files (default: dry run)")
     args = p.parse_args()
     for d in sorted(glob.glob(os.path.join(args.runs, "*"))):

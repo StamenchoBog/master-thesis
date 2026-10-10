@@ -8,6 +8,7 @@ NUM_ROUNDS=5 RESULTS_SUFFIX=_p4 INIT_FROM_CHECKPOINT=/results/resume_from.npz \
   docker compose -f docker-compose.host.yml $PROFILE up -d superexec-serverapp
 edge POISON_MODE=drop docker compose -f docker-compose.edge.yml up -d superexec-clientapp-4
 
+wait_for_meter "$RUN/power_fnb58.csv"
 mark phase4
 docker compose -f docker-compose.host.yml run --rm runner
 mark "done"

@@ -1,376 +1,229 @@
 #!/usr/bin/env python3
 #
-# FNIRSI FNB58 USB power logger — vendored from baryluk/fnirsi-usb-power-data-logger
-# (commit 746e4d38515a) with three macOS-robustness patches added for this thesis:
-#   1. dev.reset() is tolerated if it times out (stale USB state after sleep).
-#   2. A settle delay after reset lets macOS finish auto-mounting the meter's
-#      FAT volume before we claim the interface.
-#   3. The read loop re-issues the start handshake on a USBTimeoutError instead
-#      of crashing, and prints a 5 s heartbeat to stderr.
-# Run as root (needs to detach the kernel HID driver):
-#   sudo python3 -u experiments/fnirsi_logger.py > run/power_fnb58.csv
+# FNIRSI FNB58 USB power logger, based on baryluk/fnirsi-usb-power-data-logger
+# (commit 746e4d38515a), reduced to what the thesis uses: FNB58 only, no USB reset (the
+# reflashed meter hangs on one), the stream is restarted after timeouts and I/O errors, and
+# the process exits with code 3 when the meter is lost, so that the restart loop in
+# experiments/run/02_instruments.sh starts a fresh logger (on macOS only a new process gets
+# the meter back). A 5 s heartbeat goes to stderr. Runs as root, because it detaches the
+# kernel HID driver:
+#   sudo python3 -u experiments/fnirsi_logger.py > power_fnb58.csv
 
+import signal
 import sys
-import os.path
 import time
 
 import usb.core
 import usb.util
-import argparse
 
+VID = 0x2E3C
+PID = 0x5558
+SPS = 100
+TIME_INTERVAL = 1.0 / SPS
+ALPHA = 0.9  # smoothing of the meter's temperature reading
+REFRESH_S = 1.0  # the FNB58 needs a keep-alive command about every second
+START = b"\xaa\x81" + b"\x00" * 61 + b"\x8e"
+INIT = b"\xaa\x82" + b"\x00" * 61 + b"\x96"
+KEEP_ALIVE = b"\xaa\x83" + b"\x00" * 61 + b"\x9e"
 
-# FNB48
-# Bus 001 Device 020: ID 0483:003a STMicroelectronics FNB-48
-VID = 0x0483
-PID_FNB48 = 0x003A
-
-#  iManufacturer           1 FNIRSI
-#  iProduct                2 FNB-48
-#  iSerial                 3 0001A0000000
-
-# C1
-# Bus 001 Device 029: ID 0483:003b STMicroelectronics USB Tester
-PID_C1 = 0x003B
-
-# FNB58
-VID_FNB58 = 0x2E3C
-PID_FNB58 = 0x5558
-
-# FNB48S
-# Bus 001 Device 003: ID 2e3c:0049 FNIRSI USB Tester
-VID_FNB48S = 0x2E3C
-PID_FNB48S = 0x0049
-
-
-def setup_crc():
-    import crc
-
-    # $ ./reveng -w 8 -s $(shuf -n 100 /tmp/dump2.txt)
-    # width=8  poly=0x39  init=0x42  refin=false  refout=false  xorout=0x00  check=0x4b  residue=0x00  name=(none)
-    width = 8
-    poly = 0x39
-    init_value = 0x42
-    final_xor_value = 0x00
-    reverse_input = False
-    reverse_output = False
-    configuration = crc.Configuration(width, poly, init_value, final_xor_value, reverse_input, reverse_output)
-    if hasattr(crc, "CrcCalculator"):  # crc 1.x
-        crc_calculator = crc.CrcCalculator(configuration, use_table=True)
-        return crc_calculator.calculate_checksum
-    else:  # crc 2.x+
-        calculator = crc.Calculator(configuration, optimized=True)
-        return calculator.checksum
-
-
-def find_device():
-    is_fnb58_or_fnb48s = False
-    dev = usb.core.find(idVendor=VID, idProduct=PID_FNB48)
-    if dev is None:
-        dev = usb.core.find(idVendor=VID, idProduct=PID_C1)
-    if dev is None:
-        dev = usb.core.find(idVendor=VID_FNB58, idProduct=PID_FNB58)
-        if dev:
-            is_fnb58_or_fnb48s = True
-    if dev is None:
-        dev = usb.core.find(idVendor=VID_FNB48S, idProduct=PID_FNB48S)
-        if dev:
-            is_fnb58_or_fnb48s = True
-    return dev, is_fnb58_or_fnb48s
-
-
-def find_hid_interface_num(dev):
-    # https://github.com/pyusb/pyusb/issues/76#issuecomment-118460796
-    for cfg in dev:
-        for interface in cfg:
-            if interface.bInterfaceClass == 0x03:  # HID class
-                return interface.bInterfaceNumber
-
-
-def ensure_interface_not_busy(dev, interface):
-    if dev.is_kernel_driver_active(interface.bInterfaceNumber):
-        try:
-            dev.detach_kernel_driver(interface.bInterfaceNumber)
-        except usb.core.USBError as e:
-            print(f"Could not detatch kernel driver from interface({interface.bInterfaceNumber}): {e}", file=sys.stderr)
-            sys.exit(1)
-
-
-def ensure_all_interfaces_not_busy(dev):
-    for cfg in dev:
-        for interface in cfg:
-            ensure_interface_not_busy(dev, interface)
-
-
-def print_configs(dev):
-    for cfg in dev:
-        print("cfg", cfg.bConfigurationValue, file=sys.stderr)
-        for interface in cfg:
-            print(
-                "   ",
-                "interface",
-                interface.bInterfaceNumber,
-                interface.bAlternateSetting,
-                file=sys.stderr,
-            )
-            for ep in interface:
-                print("         ", "ep", ep.bEndpointAddress, file=sys.stderr)
-
-
-def print_configs_overview(dev):
-    for cfg in dev:
-        for interface in cfg:
-            print(interface)
-
-
-# State for accumulating in decodee
+STOP_REQUESTED = False
 energy = 0.0
 capacity = 0.0
 last_power = 0.0
 sample_count = 0
 
 
-def decode(data, calculate_crc, time_interval, alpha):
-    global energy
-    global capacity
-    global last_power
-    global sample_count
+def request_stop(signum, frame):
+    # Finish the read loop instead of dying mid-stream: a killed logger leaves the meter
+    # claimed, and the next start then often gets no data.
+    global STOP_REQUESTED
+    STOP_REQUESTED = True
+
+
+def decode(data):
+    global energy, capacity, last_power, sample_count
     temp_ema = None
 
-    # Data is 64 bytes (64 bytes of HID data minus vendor constant 0xaa)
-    # First byte is HID vendor constant 0xaa
-    # Second byte is payload type:
-    #    0x04 is data packet
-    #    Other types (0x03 and maybe other ones) is unknown
-    # Next 4 samples each 15 bytes. 60 bytes total.
-    # At the end 2 bytes:
-    #   1 byte is semi constant with unknown purpose.
-    #   1 byte (last) is a 8-bit CRC checksum
+    # 64 bytes: 0xaa, the packet type (0x04 = data), 4 samples of 15 bytes, then one byte
+    # of unknown purpose and an 8-bit CRC.
+    if data[1] != 0x04:
+        return
 
-    packet_type = data[1]
-    if packet_type != 0x04:
-        return  # ignore all non-data packets
-
-    if calculate_crc:
-        actual_checksum = data[-1]
-        expected_checksum = calculate_crc(bytearray(data[1:-1]))
-        if actual_checksum != expected_checksum:
-            print(
-                f"Ignoring packet of length {len(data)} with unexpected checksum. "
-                f"Expected: {expected_checksum:02x} Actual: {actual_checksum:02x}",
-                file=sys.stderr,
-            )
-            return
-
-    t0 = time.time() - 4 * time_interval
+    t0 = time.time() - 4 * TIME_INTERVAL
     for i in range(4):
         offset = 2 + 15 * i
         # 4 + 4 + 2 + 2 + 2 + 1 (unknown constant 1) = 15 bytes
-        voltage = (
-            data[offset + 3] * 256 * 256 * 256
-            + data[offset + 2] * 256 * 256
-            + data[offset + 1] * 256
-            + data[offset + 0]
-        ) / 100000
-        current = (
-            data[offset + 7] * 256 * 256 * 256
-            + data[offset + 6] * 256 * 256
-            + data[offset + 5] * 256
-            + data[offset + 4]
-        ) / 100000
+        voltage = int.from_bytes(bytes(data[offset:offset + 4]), "little") / 100000
+        current = int.from_bytes(bytes(data[offset + 4:offset + 8]), "little") / 100000
         dp = (data[offset + 8] + data[offset + 9] * 256) / 1000
         dn = (data[offset + 10] + data[offset + 11] * 256) / 1000
-        # data[offset+12]: constant 1, purpose unreverse-engineered (not a current sign bit)
         temp_C = (data[offset + 13] + data[offset + 14] * 256) / 10.0
-        if temp_ema is not None:
-            temp_ema = temp_C * (1.0 - alpha) + temp_ema * alpha
-        else:
-            temp_ema = temp_C
+        temp_ema = temp_C if temp_ema is None else temp_C * (1.0 - ALPHA) + temp_ema * ALPHA
         power = voltage * current
         last_power = power
         sample_count += 1
-        # TODO(baryluk): This might be slightly inaccurate, if there is sampling jitter.
-        energy += power * time_interval
-        capacity += current * time_interval
-        t = t0 + i * time_interval
+        energy += power * TIME_INTERVAL
+        capacity += current * TIME_INTERVAL
+        t = t0 + i * TIME_INTERVAL
         print(
             f"{t:.3f} {i} {voltage:7.5f} {current:7.5f} {dp:5.3f} {dn:5.3f} "
             f"{temp_ema:6.3f} {energy:.6f} {capacity:.6f}"
         )
 
 
-def request_data(is_fnb58_or_fnb48s, ep_out):
-    # Setup communication with power meter
-    ep_out.write(b"\xaa\x81" + b"\x00" * 61 + b"\x8e")
-    ep_out.write(b"\xaa\x82" + b"\x00" * 61 + b"\x96")
-
-    if is_fnb58_or_fnb48s:
-        ep_out.write(b"\xaa\x82" + b"\x00" * 61 + b"\x96")
-    else:
-        ep_out.write(b"\xaa\x83" + b"\x00" * 61 + b"\x9e")
+def request_data(ep_out):
+    ep_out.write(START)
+    ep_out.write(INIT)
+    ep_out.write(INIT)
 
 
-# Argument handling
-def str2bool(v: str) -> bool:
-    vl = v.lower()
-    if vl in ("yes", "true", "t", "1"):
-        return True
-    if vl in ("no", "false", "f", "0"):
-        return False
-    assert False, "Argument must be a boolean (true or false)"
+def connect(attempts=10):
+    """Find the meter, claim its HID interface and start the stream. None if that fails."""
+    dev = interface_hid_num = None
+    for _ in range(attempts):
+        dev = usb.core.find(idVendor=VID, idProduct=PID)
+        if dev is not None:
+            try:
+                interface_hid_num = next(
+                    intf.bInterfaceNumber for cfg in dev for intf in cfg if intf.bInterfaceClass == 0x03)
+                break
+            except (usb.core.USBError, StopIteration):
+                pass
+        time.sleep(2.0)
+    if dev is None or interface_hid_num is None:
+        return None
+
+    for cfg in dev:
+        for intf in cfg:
+            try:
+                active = dev.is_kernel_driver_active(intf.bInterfaceNumber)
+            except usb.core.USBError:
+                continue
+            if active:
+                try:
+                    dev.detach_kernel_driver(intf.bInterfaceNumber)
+                except usb.core.USBError as e:
+                    sys.exit(f"Could not detach the kernel driver from interface {intf.bInterfaceNumber}: {e}")
+    dev.set_configuration()
+
+    intf = dev.get_active_configuration()[(interface_hid_num, 0)]
+    ep_out = usb.util.find_descriptor(
+        intf, custom_match=lambda e: usb.util.endpoint_direction(e.bEndpointAddress) == usb.util.ENDPOINT_OUT)
+    ep_in = usb.util.find_descriptor(
+        intf, custom_match=lambda e: usb.util.endpoint_direction(e.bEndpointAddress) == usb.util.ENDPOINT_IN)
+    assert ep_in and ep_out
+
+    # The start command itself sometimes fails with an I/O error: clear the stall and retry.
+    for _ in range(10):
+        try:
+            request_data(ep_out)
+            return dev, interface_hid_num, ep_in, ep_out
+        except usb.core.USBError as e:
+            print(f"Start command failed ({e}), retrying", file=sys.stderr)
+            clear_stall(ep_in, ep_out)
+            time.sleep(1.0)
+    usb.util.dispose_resources(dev)
+    return None
+
+
+def clear_stall(*eps):
+    for ep in eps:
+        try:
+            ep.clear_halt()
+        except usb.core.USBError:
+            pass
+
+
+def release(dev, interface_hid_num):
+    """Free our claim on the meter. The OS drivers are not reattached: macOS would remount
+    the meter's USB drive, and a logger started during that remount gets no samples."""
+    try:
+        usb.util.release_interface(dev, interface_hid_num)
+    except usb.core.USBError:
+        pass
+    usb.util.dispose_resources(dev)
+
+
+def log(msg):
+    print(f"[{time.strftime('%H:%M:%S')}] {msg}", file=sys.stderr, flush=True)
 
 
 def main():
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("--crc", type=str2bool, help="Enable CRC checks", default=False)
-    parser.add_argument("--verbose", type=str2bool, help="Show some extra initalization information", default=False)
-    parser.add_argument("--alpha", type=float, help="Set temperature smoothing factor", default=0.9)
-    args = parser.parse_args()
+    for sig in (signal.SIGTERM, signal.SIGALRM, signal.SIGHUP):
+        signal.signal(sig, request_stop)
 
-    crc_calculator = None
-    if args.crc:
-        try:
-            crc_calculator = setup_crc()  # can be None
-            print("CRC checks enabled", file=sys.stderr)
-        except ModuleNotFoundError:
-            print("Warning: crc package not found. crc checks will not be performed", file=sys.stderr)
-            crc_calculator = None
-        except Exception as e:
-            print("Warning: crc calculator got exception: {e}, disabling crc checks", file=sys.stderr)
-            crc_calculator = None
+    time.sleep(2.0)  # macOS mounts the meter's USB drive right after it appears; let it settle
+    conn = connect()
+    if conn is None:
+        sys.exit("Meter not found or did not accept the start command.")
+    dev, interface_hid_num, ep_in, ep_out = conn
 
-    # At the moment only 100 sps is supported
-    sps = 100
-    time_interval = 1.0 / sps
-
-    dev, is_fnb58_or_fnb48s = find_device()
-    assert dev, "Device not found"
-    if args.verbose:
-        if is_fnb58_or_fnb48s:
-            print("Found FNB48S or FNB58 device", file=sys.stderr)
-        else:
-            print("Found FNB48 or C1 device", file=sys.stderr)
-
-    try:
-        dev.reset()
-    except usb.core.USBError as e:
-        print(f"Warning: dev.reset() failed ({e}); continuing without reset.", file=sys.stderr)
-    time.sleep(2.0)  # macOS: let re-enumeration + FAT volume auto-mount settle before we detach & read
-
-    if args.verbose:
-        print("Configs:", file=sys.stderr)
-        print_configs(dev)
-        print("", file=sys.stderr)
-
-    if args.verbose:
-        print("Configs overview:", file=sys.stderr)
-        print_configs_overview(dev)
-        print("", file=sys.stderr)
-
-    interface_hid_num = find_hid_interface_num(dev)
-    if args.verbose:
-        print(f"Using interface_hid_num={interface_hid_num}", file=sys.stderr)
-
-    if args.verbose:
-        print(f"Ensuring all interfaces not busy and detaching kernel driver, if needed …", file=sys.stderr)
-    ensure_all_interfaces_not_busy(dev)
-
-    if args.verbose:
-        print(f"Setting configuration …", file=sys.stderr)
-    dev.set_configuration()  # no args: first configuration becomes active
-
-    # Get an endpoint instance
-    cfg = dev.get_active_configuration()
-    intf = cfg[(interface_hid_num, 0)]
-
-    ep_out = usb.util.find_descriptor(
-        intf,
-        # match the first OUT endpoint
-        custom_match=lambda e: usb.util.endpoint_direction(e.bEndpointAddress) == usb.util.ENDPOINT_OUT,
-    )
-
-    ep_in = usb.util.find_descriptor(
-        intf,
-        # match the first IN endpoint
-        custom_match=lambda e: usb.util.endpoint_direction(e.bEndpointAddress) == usb.util.ENDPOINT_IN,
-    )
-
-    assert ep_in
-    assert ep_out
-
-    if args.verbose:
-        print(f"Starting data request …", file=sys.stderr)
-
-    request_data(is_fnb58_or_fnb48s, ep_out)
-
-    print()  # Extra line so concatenation work better in gnuplot.
+    print()  # the original logger's format starts with a blank line
     print("timestamp sample_in_packet voltage_V current_A dp_V dn_V temp_C_ema energy_Ws capacity_As")
 
     time.sleep(0.1)
-    refresh = 1.0 if is_fnb58_or_fnb48s else 0.003  # 1 s for FNB58 / FNB48S, 3 ms for others
-    continue_time = time.time() + refresh
-
-    alpha = args.alpha
-
-    stop = False
-    timeouts = 0
+    continue_time = time.time() + REFRESH_S
+    timeouts = errors = 0
+    lost = False
     last_beat = time.time()
     print("Logger running (this heartbeat is on stderr; sample data goes to the file).", file=sys.stderr, flush=True)
-    while not stop:
+    while not STOP_REQUESTED:
         try:
             data = ep_in.read(size_or_buffer=64, timeout=5000)
-            decode(data, crc_calculator, time_interval, alpha)
-            timeouts = 0
-
+            decode(data)
+            timeouts = errors = 0
             if time.time() >= continue_time:
-                continue_time = time.time() + refresh
-                ep_out.write(b"\xaa\x83" + b"\x00" * 61 + b"\x9e")
+                continue_time = time.time() + REFRESH_S
+                ep_out.write(KEEP_ALIVE)
         except usb.core.USBTimeoutError:
-            # macOS: the meter goes quiet after re-enumeration / bus contention.
-            # Re-issue the start handshake to resume streaming instead of dying;
-            # only give up after a sustained silence (~40 x 5 s).
+            # The meter sometimes goes quiet: resend the start command, and after about a
+            # minute of silence treat it as lost.
             timeouts += 1
-            if timeouts >= 40:
-                print("Aborting: meter sent no data after many timeouts.", file=sys.stderr)
-                stop = True
-            else:
-                try:
-                    request_data(is_fnb58_or_fnb48s, ep_out)
-                    ep_out.write(b"\xaa\x83" + b"\x00" * 61 + b"\x9e")
-                except usb.core.USBError:
-                    pass  # nudge write failed too; keep retrying the read
+            if timeouts >= 12:
+                log("meter silent")
+                lost = True
+                break
+            try:
+                request_data(ep_out)
+                ep_out.write(KEEP_ALIVE)
+            except usb.core.USBError:
+                pass
+        except usb.core.USBError as e:
+            # Single I/O errors happen on the reflashed meter; five in a row mean it is gone.
+            errors += 1
+            log(f"USB error ({e}), restarting the stream")
+            if errors >= 5:
+                log("meter lost")
+                lost = True
+                break
+            time.sleep(1.0)
+            # A stalled endpoint ("Pipe error") must be cleared before restarting.
+            clear_stall(ep_in, ep_out)
+            try:
+                request_data(ep_out)
+            except usb.core.USBError:
+                pass
         except KeyboardInterrupt:
-            print(
-                "Terminating due to the keyboard interrupt, please wait until draining is complete …", file=sys.stderr
-            )
-            stop = True
-
-        if os.path.exists("fnirsi_stop"):
-            stop = True
+            break
 
         if time.time() - last_beat >= 5.0:
             last_beat = time.time()
-            print(f"[{time.strftime('%H:%M:%S')}] streaming — {sample_count} samples | {last_power:.2f} W | {energy:.1f} Ws",
-                  file=sys.stderr, flush=True)
+            log(f"streaming — {sample_count} samples | {last_power:.2f} W | {energy:.1f} Ws")
 
+    if lost:
+        log("exiting for a fresh restart")
+        try:
+            release(dev, interface_hid_num)
+        except Exception:
+            pass
+        sys.exit(3)
     try:
-        while True:
-            # Exhaust data in descriptor
-            if args.verbose:
-                print("Please wait until draining is finished …", file=sys.stderr)
-            # We do not know exactly how many bytes to read (even if we track things like refresh
-            # and continue_time it might be tricky), so just read with timeout.
-            data = ep_in.read(size_or_buffer=64, timeout=1000)
-            if data:
-                if args.verbose:
-                    print(f"During termination drained {len(data)} bytes", file=sys.stderr)
-    except usb.core.USBTimeoutError as e:
-        # Exception [Errno 110] Operation timed out
-        # This is expected during draining, and in fact indicates a success.
-        if args.verbose:
-            print("Exiting …", file=sys.stderr)
-    except Exception as e:
-        print(f"Exception {type(e)} {e}", file=sys.stderr)
-        raise
+        while True:  # drain what the meter still sends; the timeout ends it
+            ep_in.read(size_or_buffer=64, timeout=1000)
+    except usb.core.USBTimeoutError:
+        pass
+    finally:
+        release(dev, interface_hid_num)
 
 
 if __name__ == "__main__":

@@ -9,7 +9,7 @@ chance) while naive retraining keeps benign discrimination (~0.60), even though
 ROC-AUC is comparable, so it's a *calibration* failure, not lost information.
 
 Loads each run's Phase-4 model (and, with --phase1, the Phase-1 model, to show the
-collapse predates recovery). Writes utility_evaluation.csv next to the runs.
+collapse predates recovery). Writes results/msc/tables/campaign_utility.csv.
 
 Threshold sweep: reports the best attainable balanced accuracy per model (the
 `*_tuned` columns), turning "ROC-AUC survives" into a measurement of how much
@@ -90,9 +90,33 @@ def best_threshold(prob, y):
     }
 
 
-def score_model(npz_path, X, y):
+def at_threshold(prob, y, thr):
+    """Metrics at a fixed threshold (`>=`, the same rule roc_curve uses to pick it)."""
+    tp, fp, tn, fn = _counts((prob >= thr).astype(int), y)
+    recall = tp / max(tp + fn, 1)
+    specificity = tn / max(tn + fp, 1)
+    denom = np.sqrt(float(tp + fp) * (tp + fn) * (tn + fp) * (tn + fn))
+    return {
+        "balanced_acc_val": (recall + specificity) / 2,
+        "recall_val": recall,
+        "specificity_val": specificity,
+        "mcc_val": (tp * tn - fp * fn) / denom if denom > 0 else 0.0,
+    }
+
+
+def score_model(npz_path, X, y, val=None):
+    model = load_model(npz_path, X.shape[1])
     with torch.no_grad():
-        prob = load_model(npz_path, X.shape[1])(X).squeeze().numpy()
+        prob = model(X).squeeze().numpy()
+    extra = {}
+    if val is not None:
+        # Threshold picked on the federation's validation split, applied to the test set:
+        # what a deployment could actually do, unlike the test-optimal *_tuned columns.
+        Xv, yv = val
+        with torch.no_grad():
+            prob_v = model(Xv).squeeze().numpy()
+        thr_val = best_threshold(prob_v, yv)["thr_best"]
+        extra = {"thr_val": thr_val, **at_threshold(prob, y, thr_val)}
     pred = (prob > 0.5).astype(int)
     tp, fp, tn, fn = _counts(pred, y)
     recall = tp / max(tp + fn, 1)
@@ -108,12 +132,13 @@ def score_model(npz_path, X, y):
         "pred_pos_rate": float(pred.mean()),
         "tn": tn, "fp": fp,
         **best_threshold(prob, y),
+        **extra,
     }
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--runs", default="results/msc/runs")
+    ap.add_argument("--runs", default="results/msc/campaign")
     ap.add_argument("--test", default="data/.cache/msc/test_global.npz",
                     help="single shared test set (see --test-template for the clean option)")
     ap.add_argument("--test-template",
@@ -121,7 +146,18 @@ def main():
                          "data/.cache/msc/test_seed{seed}.npz. Scores each seed against "
                          "its own held-out set instead of one shared file")
     ap.add_argument("--phase1", action="store_true", help="also score the Phase-1 model")
+    ap.add_argument("--val-template",
+                    help="per-seed validation set with a {seed} placeholder (built by "
+                         "analysis.build_val_sets); adds *_val columns: threshold chosen on "
+                         "validation, metrics on the test set")
+    ap.add_argument("--out", default="results/msc/tables/campaign_utility.csv")
     args = ap.parse_args()
+
+    def val_set(seed):
+        if not args.val_template:
+            return None
+        d = np.load(args.val_template.format(seed=seed))
+        return torch.tensor(d["X"], dtype=torch.float32), d["y"].astype(int)
 
     cache = {}
 
@@ -150,6 +186,7 @@ def main():
             continue
         arm, seed = m.group(1), m.group(2)
         X, y, test_name = test_set(int(seed))
+        val = val_set(int(seed))
         checkpoints = {"p4": os.path.join(run, "phase4_checkpoints", "round_5.npz")}
         if args.phase1:
             checkpoints["p1"] = os.path.join(run, "phase1_checkpoints", "round_10.npz")
@@ -157,16 +194,18 @@ def main():
             if os.path.exists(ckpt):
                 rows.append({"run": b, "arm": arm, "seed": int(seed), "phase": phase,
                              "test_set": test_name,
-                             **score_model(ckpt, X, y)})
+                             **score_model(ckpt, X, y, val)})
 
     df = pd.DataFrame(rows).round(4)
-    df.to_csv(os.path.join(args.runs, "utility_evaluation.csv"), index=False)
+    df.to_csv(args.out, index=False)
     print(df.to_string(index=False))
     for phase in df["phase"].unique():
         print(f"\n[{phase}] medians by arm:")
         print(df[df.phase == phase].groupby("arm")[
             ["recall", "specificity", "balanced_acc", "mcc", "roc_auc", "pr_auc",
              "thr_best", "balanced_acc_tuned", "specificity_tuned", "mcc_tuned"]
+            + (["thr_val", "balanced_acc_val", "specificity_val", "mcc_val"]
+               if args.val_template else [])
         ].median().round(4).to_string())
         print("  (*_tuned = at the balanced-accuracy-optimal threshold; the gap between "
               "balanced_acc and balanced_acc_tuned is how much is purely calibration)")
