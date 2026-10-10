@@ -1,0 +1,19 @@
+ Container fl-ids-msc-edge-superexec-clientapp-4-run-ed9b5746a726 Creating 
+ Container fl-ids-msc-edge-superexec-clientapp-4-run-ed9b5746a726 Created 
+Affected shards (earliest poisoned slice): {1: 3}
+[shard 1] rolled back to /checkpoints/shard1_round1_slice2.pt
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/app/edge_nodes/sisa_recover.py", line 145, in <module>
+    main()
+    ~~~~^^
+  File "/app/edge_nodes/sisa_recover.py", line 108, in main
+    ckpt_s, ckpt_bytes = save_checkpoint(ckpt_path(shard, rnd, slc), model, optimizer, rnd, slc)
+                         ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/edge_nodes/sisa_client.py", line 49, in save_checkpoint
+    with open(path, "wb") as f:
+         ~~~~^^^^^^^^^^^^
+PermissionError: [Errno 13] Permission denied: '/checkpoints/shard1_round1_slice3.pt'
+
+experiments/locality/run.sh: line 31: 81514 Terminated: 15          sudo bash -c "while true; do '$py' -u experiments/fnirsi_logger.py; sleep 2; done" > "$OUT/power_fnb58.csv" 2> "$OUT/logger.log"

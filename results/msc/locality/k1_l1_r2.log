@@ -1,0 +1,5 @@
+ Container fl-ids-msc-edge-superexec-clientapp-4-run-b36e44d677ff Creating 
+ Container fl-ids-msc-edge-superexec-clientapp-4-run-b36e44d677ff Created 
+Affected shards (earliest poisoned slice): {1: 1}
+[shard 1] rolled back to /checkpoints/shard1_round1_slice0.pt
+SISA recovery done in 52.1s (49 slice-retrains, 1.078s checkpoint I/O). Recovered model: /checkpoints/recovered_model.pt

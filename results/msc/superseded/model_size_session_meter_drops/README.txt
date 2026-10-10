@@ -1,0 +1,1 @@
+Trial model-size session, 2026-10-09 11:03-13:13. Complete Pi-side data (12 measurements + telemetry); the FNB58 dropped five times (old logger, manual replugs), so power has gaps. Per experiments/protocol.md (Addendum A) the session is repeated with the auto-resetting logger and the repeat is the official dataset; this one is kept as a reproducibility check for the times.

@@ -1,0 +1,60 @@
+{
+  "method": "naive",
+  "total_s": 2194.273,
+  "poisoned_samples": 63060,
+  "retained_samples": 736940,
+  "epochs": 10,
+  "recovered_model": "/checkpoints/recovered_model.pt",
+  "epoch_log": [
+    {
+      "epoch": 1,
+      "train_s": 216.5155,
+      "loss": 0.142605
+    },
+    {
+      "epoch": 2,
+      "train_s": 223.6913,
+      "loss": 0.036794
+    },
+    {
+      "epoch": 3,
+      "train_s": 220.1322,
+      "loss": 0.019406
+    },
+    {
+      "epoch": 4,
+      "train_s": 218.9914,
+      "loss": 0.013041
+    },
+    {
+      "epoch": 5,
+      "train_s": 221.3481,
+      "loss": 0.01183
+    },
+    {
+      "epoch": 6,
+      "train_s": 220.9599,
+      "loss": 0.011631
+    },
+    {
+      "epoch": 7,
+      "train_s": 219.5063,
+      "loss": 0.011026
+    },
+    {
+      "epoch": 8,
+      "train_s": 220.2235,
+      "loss": 0.010805
+    },
+    {
+      "epoch": 9,
+      "train_s": 214.7696,
+      "loss": 0.010668
+    },
+    {
+      "epoch": 10,
+      "train_s": 215.3359,
+      "loss": 0.010218
+    }
+  ]
+}

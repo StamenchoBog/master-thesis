@@ -1,0 +1,1 @@
+Validation run w1280 SISA, 2026-10-10 08:31-09:48. The FNB58 dropped at 09:12:11 (Phase 1) and was not replugged, so Phase 3 has no power data; TTR 298.4 s, 47 slices. Rerun on instrument grounds (experiments/protocol.md, Addendum A); this run is kept for reference.

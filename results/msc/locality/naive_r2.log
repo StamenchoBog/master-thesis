@@ -1,0 +1,14 @@
+ Container fl-ids-msc-edge-superexec-clientapp-4-run-6e4b6d704517 Creating 
+ Container fl-ids-msc-edge-superexec-clientapp-4-run-6e4b6d704517 Created 
+Retained 796847/800000 train rows (3153 poisoned dropped)
+[epoch 1/10] loss=0.122123 in 23.9526s
+[epoch 2/10] loss=0.028133 in 25.4704s
+[epoch 3/10] loss=0.020094 in 25.474s
+[epoch 4/10] loss=0.017972 in 26.1087s
+[epoch 5/10] loss=0.016495 in 26.1876s
+[epoch 6/10] loss=0.015651 in 25.9219s
+[epoch 7/10] loss=0.015175 in 26.6523s
+[epoch 8/10] loss=0.014221 in 25.8672s
+[epoch 9/10] loss=0.013627 in 26.1846s
+[epoch 10/10] loss=0.013154 in 26.2476s
+Naive retraining done in 261.9s. Recovered model: /checkpoints/recovered_model.pt

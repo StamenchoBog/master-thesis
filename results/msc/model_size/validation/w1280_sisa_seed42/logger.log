@@ -1,0 +1,1080 @@
+Logger running (this heartbeat is on stderr; sample data goes to the file).
+[10:05:18] streaming — 504 samples | 3.70 W | 18.9 Ws
+[10:05:23] streaming — 1008 samples | 5.67 W | 42.5 Ws
+[10:05:28] streaming — 1508 samples | 3.35 W | 62.2 Ws
+[10:05:33] streaming — 2008 samples | 4.52 W | 83.5 Ws
+[10:05:38] streaming — 2512 samples | 4.60 W | 106.9 Ws
+[10:05:43] streaming — 3016 samples | 6.34 W | 134.5 Ws
+[10:05:48] streaming — 3520 samples | 5.49 W | 167.2 Ws
+[10:05:53] streaming — 4020 samples | 5.04 W | 197.9 Ws
+[10:05:58] streaming — 4520 samples | 3.84 W | 226.3 Ws
+[10:06:03] streaming — 5024 samples | 5.73 W | 255.2 Ws
+[10:06:08] streaming — 5524 samples | 7.09 W | 282.6 Ws
+[10:06:13] streaming — 6028 samples | 5.37 W | 310.9 Ws
+[10:06:18] streaming — 6532 samples | 4.13 W | 338.1 Ws
+[10:06:23] streaming — 7032 samples | 4.16 W | 364.5 Ws
+[10:06:28] streaming — 7536 samples | 4.14 W | 392.6 Ws
+[10:06:33] streaming — 8040 samples | 6.69 W | 419.7 Ws
+[10:06:38] streaming — 8544 samples | 7.27 W | 446.7 Ws
+[10:06:43] streaming — 9044 samples | 4.17 W | 474.8 Ws
+[10:06:48] streaming — 9544 samples | 5.33 W | 501.6 Ws
+[10:06:53] streaming — 10048 samples | 6.64 W | 528.7 Ws
+[10:06:58] streaming — 10548 samples | 7.43 W | 556.6 Ws
+[10:07:03] streaming — 11052 samples | 5.60 W | 583.4 Ws
+[10:07:08] streaming — 11552 samples | 7.03 W | 611.1 Ws
+[10:07:13] streaming — 12052 samples | 6.90 W | 637.6 Ws
+[10:07:18] streaming — 12552 samples | 5.45 W | 665.1 Ws
+[10:07:23] streaming — 13052 samples | 4.46 W | 692.9 Ws
+[10:07:28] streaming — 13556 samples | 5.50 W | 720.1 Ws
+[10:07:33] streaming — 14056 samples | 4.02 W | 747.5 Ws
+[10:07:38] streaming — 14556 samples | 4.21 W | 772.8 Ws
+[10:07:43] streaming — 15056 samples | 5.83 W | 799.4 Ws
+[10:07:48] streaming — 15556 samples | 4.02 W | 826.6 Ws
+[10:07:53] streaming — 16060 samples | 6.88 W | 853.1 Ws
+[10:07:58] streaming — 16560 samples | 3.98 W | 880.0 Ws
+[10:08:03] streaming — 17064 samples | 5.69 W | 906.3 Ws
+[10:08:08] streaming — 17568 samples | 5.12 W | 933.5 Ws
+[10:08:13] streaming — 18068 samples | 5.92 W | 959.3 Ws
+[10:08:18] streaming — 18568 samples | 5.83 W | 984.8 Ws
+[10:08:23] streaming — 19072 samples | 7.45 W | 1011.3 Ws
+[10:08:28] streaming — 19576 samples | 3.98 W | 1037.3 Ws
+[10:08:33] streaming — 20076 samples | 3.99 W | 1063.3 Ws
+[10:08:39] streaming — 20580 samples | 5.64 W | 1089.3 Ws
+[10:08:44] streaming — 21080 samples | 6.18 W | 1115.4 Ws
+[10:08:49] streaming — 21584 samples | 5.67 W | 1141.2 Ws
+[10:08:54] streaming — 22084 samples | 6.04 W | 1167.4 Ws
+[10:08:59] streaming — 22584 samples | 4.00 W | 1193.0 Ws
+[10:09:04] streaming — 23088 samples | 5.25 W | 1219.3 Ws
+[10:09:09] streaming — 23592 samples | 5.54 W | 1244.9 Ws
+[10:09:14] streaming — 24096 samples | 4.26 W | 1270.7 Ws
+[10:09:19] streaming — 24596 samples | 3.61 W | 1292.4 Ws
+[10:09:24] streaming — 25100 samples | 3.59 W | 1310.7 Ws
+[10:09:29] streaming — 25600 samples | 3.57 W | 1328.6 Ws
+[10:09:34] streaming — 26100 samples | 3.55 W | 1346.5 Ws
+[10:09:39] streaming — 26604 samples | 4.05 W | 1367.5 Ws
+[10:09:44] streaming — 27108 samples | 4.13 W | 1396.7 Ws
+[10:09:49] streaming — 27608 samples | 5.50 W | 1425.0 Ws
+[10:09:54] streaming — 28108 samples | 3.64 W | 1449.2 Ws
+[10:09:59] streaming — 28612 samples | 4.11 W | 1469.1 Ws
+[10:10:04] streaming — 29112 samples | 4.15 W | 1491.5 Ws
+[10:10:09] streaming — 29612 samples | 3.98 W | 1519.3 Ws
+[10:10:14] streaming — 30116 samples | 7.34 W | 1545.9 Ws
+[10:10:19] streaming — 30616 samples | 4.03 W | 1572.5 Ws
+[10:10:24] streaming — 31116 samples | 5.35 W | 1598.5 Ws
+[10:10:29] streaming — 31620 samples | 7.30 W | 1623.8 Ws
+[10:10:34] streaming — 32120 samples | 3.99 W | 1649.9 Ws
+[10:10:39] streaming — 32620 samples | 6.79 W | 1675.3 Ws
+[10:10:44] streaming — 33120 samples | 5.81 W | 1701.3 Ws
+[10:10:49] streaming — 33620 samples | 5.08 W | 1726.5 Ws
+[10:10:54] streaming — 34120 samples | 4.04 W | 1752.4 Ws
+[10:10:59] streaming — 34624 samples | 4.06 W | 1777.7 Ws
+[10:11:04] streaming — 35128 samples | 6.28 W | 1803.7 Ws
+[10:11:09] streaming — 35632 samples | 5.18 W | 1829.1 Ws
+[10:11:14] streaming — 36136 samples | 5.50 W | 1855.1 Ws
+[10:11:19] streaming — 36636 samples | 4.65 W | 1880.6 Ws
+[10:11:24] streaming — 37140 samples | 5.87 W | 1906.4 Ws
+[10:11:29] streaming — 37640 samples | 5.86 W | 1931.6 Ws
+[10:11:34] streaming — 38140 samples | 5.17 W | 1957.6 Ws
+[10:11:39] streaming — 38644 samples | 4.11 W | 1982.8 Ws
+[10:11:44] streaming — 39148 samples | 4.98 W | 2008.5 Ws
+[10:11:49] streaming — 39648 samples | 5.29 W | 2033.3 Ws
+[10:11:54] streaming — 40152 samples | 5.50 W | 2059.0 Ws
+[10:11:59] streaming — 40652 samples | 5.94 W | 2083.7 Ws
+[10:12:04] streaming — 41152 samples | 5.96 W | 2109.1 Ws
+[10:12:09] streaming — 41652 samples | 4.02 W | 2134.0 Ws
+[10:12:14] streaming — 42152 samples | 5.81 W | 2159.5 Ws
+[10:12:19] streaming — 42652 samples | 4.01 W | 2184.3 Ws
+[10:12:24] streaming — 43156 samples | 6.14 W | 2209.9 Ws
+[10:12:29] streaming — 43660 samples | 4.08 W | 2235.0 Ws
+[10:12:34] streaming — 44160 samples | 4.07 W | 2260.4 Ws
+[10:12:39] streaming — 44664 samples | 5.71 W | 2285.5 Ws
+[10:12:44] streaming — 45164 samples | 5.83 W | 2311.3 Ws
+[10:12:49] streaming — 45668 samples | 5.08 W | 2336.5 Ws
+[10:12:54] streaming — 46172 samples | 4.88 W | 2362.3 Ws
+[10:12:59] streaming — 46672 samples | 6.25 W | 2387.4 Ws
+[10:13:04] streaming — 47172 samples | 5.96 W | 2413.0 Ws
+[10:13:09] streaming — 47676 samples | 5.11 W | 2437.9 Ws
+[10:13:15] streaming — 48180 samples | 4.80 W | 2463.9 Ws
+[10:13:20] streaming — 48680 samples | 6.11 W | 2489.4 Ws
+[10:13:25] streaming — 49180 samples | 5.25 W | 2514.8 Ws
+[10:13:30] streaming — 49684 samples | 3.99 W | 2539.9 Ws
+[10:13:35] streaming — 50188 samples | 4.09 W | 2565.6 Ws
+[10:13:40] streaming — 50692 samples | 3.98 W | 2591.0 Ws
+[10:13:45] streaming — 51196 samples | 4.07 W | 2616.4 Ws
+[10:13:50] streaming — 51696 samples | 4.02 W | 2641.9 Ws
+[10:13:55] streaming — 52196 samples | 4.59 W | 2667.0 Ws
+[10:14:00] streaming — 52700 samples | 4.20 W | 2692.7 Ws
+[10:14:05] streaming — 53204 samples | 5.03 W | 2718.0 Ws
+[10:14:10] streaming — 53704 samples | 4.18 W | 2743.8 Ws
+[10:14:15] streaming — 54208 samples | 3.66 W | 2763.8 Ws
+[10:14:20] streaming — 54708 samples | 4.56 W | 2784.8 Ws
+[10:14:25] streaming — 55212 samples | 5.64 W | 2811.8 Ws
+[10:14:30] streaming — 55712 samples | 6.06 W | 2838.8 Ws
+[10:14:35] streaming — 56212 samples | 5.06 W | 2865.8 Ws
+[10:14:40] streaming — 56712 samples | 4.16 W | 2885.4 Ws
+[10:14:45] streaming — 57216 samples | 4.17 W | 2906.4 Ws
+[10:14:50] streaming — 57716 samples | 5.08 W | 2931.0 Ws
+[10:14:55] streaming — 58216 samples | 4.05 W | 2956.7 Ws
+[10:15:00] streaming — 58720 samples | 5.93 W | 2981.7 Ws
+[10:15:05] streaming — 59220 samples | 5.18 W | 3006.8 Ws
+[10:15:10] streaming — 59724 samples | 5.91 W | 3031.9 Ws
+[10:15:15] streaming — 60228 samples | 4.84 W | 3057.7 Ws
+[10:15:20] streaming — 60732 samples | 6.21 W | 3083.3 Ws
+[10:15:25] streaming — 61232 samples | 4.06 W | 3109.2 Ws
+[10:15:30] streaming — 61736 samples | 4.26 W | 3134.3 Ws
+[10:15:35] streaming — 62236 samples | 5.18 W | 3159.9 Ws
+[10:15:40] streaming — 62740 samples | 5.46 W | 3185.3 Ws
+[10:15:45] streaming — 63240 samples | 5.11 W | 3211.1 Ws
+[10:15:50] streaming — 63740 samples | 5.99 W | 3235.9 Ws
+[10:15:55] streaming — 64244 samples | 5.77 W | 3261.8 Ws
+[10:16:00] streaming — 64744 samples | 4.06 W | 3286.6 Ws
+[10:16:05] streaming — 65244 samples | 5.83 W | 3312.3 Ws
+[10:16:10] streaming — 65744 samples | 5.53 W | 3337.3 Ws
+[10:16:15] streaming — 66244 samples | 4.26 W | 3363.0 Ws
+[10:16:20] streaming — 66744 samples | 5.24 W | 3387.9 Ws
+[10:16:25] streaming — 67248 samples | 5.86 W | 3413.9 Ws
+[10:16:30] streaming — 67748 samples | 4.13 W | 3438.8 Ws
+[10:16:35] streaming — 68252 samples | 4.15 W | 3464.7 Ws
+[10:16:40] streaming — 68752 samples | 5.06 W | 3489.2 Ws
+[10:16:45] streaming — 69252 samples | 5.91 W | 3514.9 Ws
+[10:16:50] streaming — 69752 samples | 5.18 W | 3539.7 Ws
+[10:16:55] streaming — 70256 samples | 4.51 W | 3565.7 Ws
+[10:17:00] streaming — 70756 samples | 4.05 W | 3590.7 Ws
+[10:17:05] streaming — 71260 samples | 5.18 W | 3616.6 Ws
+[10:17:10] streaming — 71760 samples | 6.01 W | 3641.8 Ws
+[10:17:15] streaming — 72264 samples | 5.98 W | 3668.1 Ws
+[10:17:20] streaming — 72764 samples | 4.34 W | 3693.6 Ws
+[10:17:25] streaming — 73268 samples | 4.14 W | 3720.0 Ws
+[10:17:30] streaming — 73772 samples | 4.55 W | 3745.7 Ws
+[10:17:35] USB error ([Errno 5] Input/Output Error), restarting the stream
+[10:17:36] streaming — 74196 samples | 4.10 W | 3767.3 Ws
+[10:17:36] USB error ([Errno 5] Input/Output Error), restarting the stream
+[10:17:37] USB error ([Errno 5] Input/Output Error), restarting the stream
+[10:17:38] USB error ([Errno 5] Input/Output Error), restarting the stream
+[10:17:39] USB error ([Errno 5] Input/Output Error), restarting the stream
+[10:17:39] meter lost, reconnecting
+[10:17:39] meter lost, exiting for a fresh restart
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Meter not found or did not accept the start command.
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Meter not found or did not accept the start command.
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Meter not found or did not accept the start command.
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Meter not found or did not accept the start command.
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Meter not found or did not accept the start command.
+Traceback (most recent call last):
+  File "/Users/stamenchobogdanovski/git_projects/personal/master-thesis/experiments/fnirsi_logger.py", line 503, in <module>
+    main()
+    ~~~~^^
+  File "/Users/stamenchobogdanovski/git_projects/personal/master-thesis/experiments/fnirsi_logger.py", line 346, in main
+    assert dev, "Device not found"
+           ^^^
+AssertionError: Device not found
+Traceback (most recent call last):
+  File "/Users/stamenchobogdanovski/git_projects/personal/master-thesis/experiments/fnirsi_logger.py", line 503, in <module>
+    main()
+    ~~~~^^
+  File "/Users/stamenchobogdanovski/git_projects/personal/master-thesis/experiments/fnirsi_logger.py", line 346, in main
+    assert dev, "Device not found"
+           ^^^
+AssertionError: Device not found
+Logger running (this heartbeat is on stderr; sample data goes to the file).
+[10:19:04] streaming — 504 samples | 4.69 W | 24.3 Ws
+[10:19:09] streaming — 1008 samples | 3.99 W | 44.3 Ws
+[10:19:14] streaming — 1512 samples | 6.12 W | 66.0 Ws
+[10:19:19] streaming — 2012 samples | 5.42 W | 92.7 Ws
+[10:19:24] streaming — 2512 samples | 6.19 W | 120.6 Ws
+[10:19:29] streaming — 3016 samples | 4.25 W | 147.3 Ws
+[10:19:34] streaming — 3516 samples | 4.03 W | 167.1 Ws
+[10:19:39] streaming — 4016 samples | 4.19 W | 187.9 Ws
+[10:19:44] streaming — 4520 samples | 5.79 W | 212.4 Ws
+[10:19:49] streaming — 5020 samples | 5.83 W | 238.2 Ws
+[10:19:54] streaming — 5524 samples | 5.92 W | 263.4 Ws
+[10:19:59] streaming — 6024 samples | 5.93 W | 289.0 Ws
+[10:20:04] streaming — 6528 samples | 5.34 W | 314.3 Ws
+[10:20:09] streaming — 7028 samples | 6.28 W | 340.2 Ws
+[10:20:14] streaming — 7532 samples | 4.11 W | 365.5 Ws
+[10:20:19] streaming — 8032 samples | 4.13 W | 391.3 Ws
+[10:20:24] streaming — 8532 samples | 5.33 W | 416.4 Ws
+[10:20:29] streaming — 9036 samples | 4.09 W | 442.6 Ws
+[10:20:34] streaming — 9536 samples | 5.41 W | 467.8 Ws
+[10:20:39] streaming — 10036 samples | 5.96 W | 494.0 Ws
+[10:20:44] streaming — 10536 samples | 4.18 W | 519.3 Ws
+[10:20:49] streaming — 11036 samples | 6.02 W | 545.0 Ws
+[10:20:54] streaming — 11536 samples | 5.39 W | 569.9 Ws
+[10:20:59] streaming — 12040 samples | 6.08 W | 596.0 Ws
+[10:21:04] streaming — 12544 samples | 6.22 W | 621.5 Ws
+[10:21:09] streaming — 13044 samples | 4.12 W | 647.3 Ws
+[10:21:14] streaming — 13548 samples | 5.23 W | 672.7 Ws
+[10:21:20] streaming — 14052 samples | 4.17 W | 699.0 Ws
+[10:21:25] streaming — 14552 samples | 5.89 W | 725.0 Ws
+[10:21:30] streaming — 15056 samples | 4.21 W | 751.2 Ws
+[10:21:35] streaming — 15556 samples | 4.10 W | 776.2 Ws
+[10:21:40] streaming — 16056 samples | 4.13 W | 801.9 Ws
+[10:21:45] streaming — 16560 samples | 5.95 W | 827.2 Ws
+[10:21:50] streaming — 17060 samples | 4.14 W | 853.3 Ws
+[10:21:55] streaming — 17560 samples | 6.07 W | 878.7 Ws
+[10:22:00] streaming — 18064 samples | 5.95 W | 904.8 Ws
+[10:22:05] streaming — 18564 samples | 4.19 W | 930.0 Ws
+[10:22:10] streaming — 19064 samples | 4.16 W | 955.9 Ws
+[10:22:15] streaming — 19564 samples | 4.11 W | 981.3 Ws
+[10:22:20] streaming — 20068 samples | 5.33 W | 1007.1 Ws
+[10:22:25] streaming — 20572 samples | 4.49 W | 1033.0 Ws
+[10:22:30] streaming — 21072 samples | 4.16 W | 1058.1 Ws
+[10:22:35] streaming — 21576 samples | 4.16 W | 1084.4 Ws
+[10:22:40] streaming — 22080 samples | 4.12 W | 1110.1 Ws
+[10:22:45] streaming — 22580 samples | 4.99 W | 1135.9 Ws
+[10:22:50] streaming — 23084 samples | 5.94 W | 1161.2 Ws
+[10:22:55] streaming — 23588 samples | 4.18 W | 1187.3 Ws
+[10:23:00] streaming — 24092 samples | 5.10 W | 1212.8 Ws
+[10:23:05] streaming — 24592 samples | 5.31 W | 1238.8 Ws
+[10:23:10] streaming — 25096 samples | 5.27 W | 1264.2 Ws
+[10:23:15] streaming — 25596 samples | 6.07 W | 1290.1 Ws
+[10:23:20] streaming — 26096 samples | 4.44 W | 1314.8 Ws
+[10:23:25] streaming — 26596 samples | 6.44 W | 1341.3 Ws
+[10:23:30] streaming — 27100 samples | 6.24 W | 1366.9 Ws
+[10:23:35] streaming — 27600 samples | 4.20 W | 1392.5 Ws
+[10:23:40] streaming — 28100 samples | 4.14 W | 1417.5 Ws
+[10:23:45] streaming — 28600 samples | 6.31 W | 1443.4 Ws
+[10:23:50] streaming — 29104 samples | 4.12 W | 1468.8 Ws
+[10:23:55] streaming — 29604 samples | 5.00 W | 1494.9 Ws
+[10:24:00] streaming — 30108 samples | 4.08 W | 1520.1 Ws
+[10:24:05] streaming — 30612 samples | 4.11 W | 1540.5 Ws
+[10:24:10] streaming — 31112 samples | 4.06 W | 1561.1 Ws
+[10:24:15] streaming — 31616 samples | 6.04 W | 1586.9 Ws
+[10:24:20] streaming — 32116 samples | 4.13 W | 1613.8 Ws
+[10:24:25] streaming — 32616 samples | 4.17 W | 1640.6 Ws
+[10:24:30] streaming — 33120 samples | 3.75 W | 1662.8 Ws
+[10:24:35] streaming — 33620 samples | 4.01 W | 1683.4 Ws
+[10:24:40] streaming — 34120 samples | 5.51 W | 1704.1 Ws
+[10:24:45] streaming — 34620 samples | 5.06 W | 1729.8 Ws
+[10:24:50] streaming — 35120 samples | 4.08 W | 1755.3 Ws
+[10:24:55] streaming — 35624 samples | 6.06 W | 1781.0 Ws
+[10:25:00] streaming — 36124 samples | 5.26 W | 1806.8 Ws
+[10:25:05] streaming — 36628 samples | 5.22 W | 1832.1 Ws
+[10:25:10] streaming — 37128 samples | 4.98 W | 1858.1 Ws
+[10:25:15] streaming — 37628 samples | 5.70 W | 1883.3 Ws
+[10:25:20] streaming — 38128 samples | 5.92 W | 1909.1 Ws
+[10:25:25] streaming — 38632 samples | 4.45 W | 1935.1 Ws
+[10:25:30] streaming — 39136 samples | 4.16 W | 1961.3 Ws
+[10:25:35] streaming — 39640 samples | 5.23 W | 1986.8 Ws
+[10:25:40] streaming — 40140 samples | 6.02 W | 2012.5 Ws
+[10:25:45] streaming — 40644 samples | 5.13 W | 2037.7 Ws
+[10:25:50] streaming — 41148 samples | 5.97 W | 2063.8 Ws
+[10:25:55] streaming — 41652 samples | 4.14 W | 2089.2 Ws
+[10:26:01] streaming — 42156 samples | 5.99 W | 2115.3 Ws
+[10:26:06] streaming — 42660 samples | 4.18 W | 2140.5 Ws
+[10:26:11] streaming — 43160 samples | 5.94 W | 2166.3 Ws
+[10:26:16] streaming — 43664 samples | 4.15 W | 2191.8 Ws
+[10:26:21] streaming — 44164 samples | 4.21 W | 2217.5 Ws
+[10:26:26] streaming — 44664 samples | 5.33 W | 2242.4 Ws
+[10:26:31] streaming — 45168 samples | 5.96 W | 2268.6 Ws
+[10:26:36] streaming — 45668 samples | 4.10 W | 2293.6 Ws
+[10:26:41] streaming — 46172 samples | 5.51 W | 2319.7 Ws
+[10:26:46] streaming — 46672 samples | 6.02 W | 2345.1 Ws
+[10:26:51] streaming — 47172 samples | 5.93 W | 2369.8 Ws
+[10:26:56] streaming — 47676 samples | 5.25 W | 2396.0 Ws
+[10:27:01] streaming — 48176 samples | 4.34 W | 2421.1 Ws
+[10:27:06] streaming — 48676 samples | 5.95 W | 2446.8 Ws
+[10:27:11] streaming — 49176 samples | 5.05 W | 2471.9 Ws
+[10:27:16] streaming — 49676 samples | 5.36 W | 2497.8 Ws
+[10:27:21] streaming — 50176 samples | 5.31 W | 2522.7 Ws
+[10:27:26] streaming — 50680 samples | 5.50 W | 2549.3 Ws
+[10:27:31] streaming — 51184 samples | 5.85 W | 2574.7 Ws
+[10:27:36] streaming — 51688 samples | 5.95 W | 2600.7 Ws
+[10:27:41] streaming — 52188 samples | 5.93 W | 2625.8 Ws
+[10:27:46] streaming — 52688 samples | 5.27 W | 2651.6 Ws
+[10:27:51] streaming — 53192 samples | 4.19 W | 2676.8 Ws
+[10:27:56] streaming — 53696 samples | 5.19 W | 2702.8 Ws
+[10:28:01] streaming — 54196 samples | 4.21 W | 2728.2 Ws
+[10:28:06] streaming — 54700 samples | 5.93 W | 2753.4 Ws
+[10:28:11] streaming — 55204 samples | 4.17 W | 2779.2 Ws
+[10:28:16] streaming — 55704 samples | 5.51 W | 2803.9 Ws
+[10:28:21] streaming — 56208 samples | 6.12 W | 2829.7 Ws
+[10:28:26] streaming — 56712 samples | 4.16 W | 2854.8 Ws
+[10:28:31] streaming — 57216 samples | 4.18 W | 2880.7 Ws
+[10:28:36] streaming — 57720 samples | 4.13 W | 2905.8 Ws
+[10:28:41] streaming — 58220 samples | 6.45 W | 2931.5 Ws
+[10:28:46] streaming — 58724 samples | 6.32 W | 2956.2 Ws
+[10:28:51] streaming — 59224 samples | 5.27 W | 2981.6 Ws
+[10:28:56] streaming — 59724 samples | 4.16 W | 3006.9 Ws
+[10:29:01] streaming — 60228 samples | 6.14 W | 3032.3 Ws
+[10:29:06] streaming — 60728 samples | 4.17 W | 3058.1 Ws
+[10:29:11] streaming — 61232 samples | 4.21 W | 3078.3 Ws
+[10:29:16] streaming — 61736 samples | 4.10 W | 3099.7 Ws
+[10:29:21] streaming — 62236 samples | 5.99 W | 3123.7 Ws
+[10:29:26] streaming — 62736 samples | 5.64 W | 3151.3 Ws
+[10:29:31] streaming — 63236 samples | 4.16 W | 3178.3 Ws
+[10:29:36] streaming — 63740 samples | 3.74 W | 3202.6 Ws
+[10:29:41] streaming — 64244 samples | 4.11 W | 3223.0 Ws
+[10:29:46] streaming — 64748 samples | 4.17 W | 3243.7 Ws
+[10:29:51] streaming — 65248 samples | 5.60 W | 3268.5 Ws
+[10:29:56] streaming — 65748 samples | 5.92 W | 3294.4 Ws
+[10:30:01] streaming — 66248 samples | 6.26 W | 3319.6 Ws
+[10:30:06] streaming — 66752 samples | 5.00 W | 3345.5 Ws
+[10:30:11] streaming — 67252 samples | 5.19 W | 3370.8 Ws
+[10:30:16] streaming — 67752 samples | 6.10 W | 3396.9 Ws
+[10:30:21] streaming — 68252 samples | 6.03 W | 3422.0 Ws
+[10:30:26] streaming — 68752 samples | 4.14 W | 3448.1 Ws
+[10:30:31] streaming — 69252 samples | 6.27 W | 3473.6 Ws
+[10:30:36] streaming — 69752 samples | 4.18 W | 3499.3 Ws
+[10:30:42] streaming — 70256 samples | 4.26 W | 3524.6 Ws
+[10:30:47] streaming — 70756 samples | 5.92 W | 3550.6 Ws
+[10:30:52] streaming — 71260 samples | 5.49 W | 3575.8 Ws
+[10:30:57] streaming — 71764 samples | 5.94 W | 3601.8 Ws
+[10:31:02] streaming — 72268 samples | 4.23 W | 3627.0 Ws
+[10:31:07] streaming — 72768 samples | 4.19 W | 3652.6 Ws
+[10:31:12] streaming — 73268 samples | 6.00 W | 3677.4 Ws
+[10:31:17] streaming — 73768 samples | 5.09 W | 3702.9 Ws
+[10:31:22] streaming — 74268 samples | 6.29 W | 3728.2 Ws
+[10:31:27] streaming — 74768 samples | 5.82 W | 3754.1 Ws
+[10:31:32] streaming — 75268 samples | 4.21 W | 3780.3 Ws
+[10:31:37] streaming — 75768 samples | 5.66 W | 3805.4 Ws
+[10:31:42] streaming — 76268 samples | 4.51 W | 3830.9 Ws
+[10:31:47] streaming — 76772 samples | 5.86 W | 3856.3 Ws
+[10:31:52] streaming — 77276 samples | 5.39 W | 3882.0 Ws
+[10:31:57] streaming — 77780 samples | 5.26 W | 3907.1 Ws
+[10:32:02] streaming — 78284 samples | 6.38 W | 3933.0 Ws
+[10:32:07] streaming — 78784 samples | 5.13 W | 3958.2 Ws
+[10:32:12] streaming — 79284 samples | 4.12 W | 3983.7 Ws
+[10:32:17] streaming — 79788 samples | 4.13 W | 4008.8 Ws
+[10:32:22] streaming — 80288 samples | 4.14 W | 4034.4 Ws
+[10:32:27] streaming — 80792 samples | 4.81 W | 4059.5 Ws
+[10:32:32] streaming — 81296 samples | 5.95 W | 4085.1 Ws
+[10:32:37] streaming — 81800 samples | 3.84 W | 4110.6 Ws
+[10:32:42] streaming — 82300 samples | 5.39 W | 4135.8 Ws
+[10:32:47] streaming — 82804 samples | 4.15 W | 4161.4 Ws
+[10:32:52] streaming — 83308 samples | 4.82 W | 4186.8 Ws
+[10:32:57] streaming — 83808 samples | 4.15 W | 4212.8 Ws
+[10:33:02] streaming — 84308 samples | 5.89 W | 4237.9 Ws
+[10:33:07] streaming — 84812 samples | 6.10 W | 4263.8 Ws
+[10:33:12] streaming — 85316 samples | 4.14 W | 4289.0 Ws
+[10:33:17] streaming — 85820 samples | 4.91 W | 4314.5 Ws
+[10:33:22] streaming — 86320 samples | 5.91 W | 4339.5 Ws
+[10:33:27] streaming — 86820 samples | 4.43 W | 4364.4 Ws
+[10:33:32] streaming — 87324 samples | 4.31 W | 4390.0 Ws
+[10:33:37] streaming — 87824 samples | 6.33 W | 4415.8 Ws
+[10:33:42] streaming — 88324 samples | 5.21 W | 4441.2 Ws
+[10:33:47] streaming — 88828 samples | 6.35 W | 4466.2 Ws
+[10:33:52] streaming — 89332 samples | 5.95 W | 4491.7 Ws
+[10:33:57] streaming — 89832 samples | 5.76 W | 4516.7 Ws
+[10:34:02] streaming — 90336 samples | 6.17 W | 4542.3 Ws
+[10:34:07] streaming — 90840 samples | 5.97 W | 4567.6 Ws
+[10:34:12] streaming — 91340 samples | 4.13 W | 4592.8 Ws
+[10:34:17] streaming — 91844 samples | 4.21 W | 4617.0 Ws
+[10:34:22] streaming — 92348 samples | 4.95 W | 4637.3 Ws
+[10:34:27] streaming — 92852 samples | 5.11 W | 4658.5 Ws
+[10:34:32] streaming — 93352 samples | 4.11 W | 4685.3 Ws
+[10:34:37] streaming — 93852 samples | 4.21 W | 4712.2 Ws
+[10:34:43] streaming — 94356 samples | 6.32 W | 4738.8 Ws
+[10:34:48] streaming — 94860 samples | 4.08 W | 4759.6 Ws
+[10:34:53] streaming — 95360 samples | 4.08 W | 4780.3 Ws
+[10:34:58] streaming — 95864 samples | 5.48 W | 4801.6 Ws
+[10:35:03] streaming — 96364 samples | 5.20 W | 4827.5 Ws
+[10:35:08] streaming — 96864 samples | 5.83 W | 4852.8 Ws
+[10:35:13] streaming — 97364 samples | 4.16 W | 4878.7 Ws
+[10:35:18] streaming — 97864 samples | 4.17 W | 4903.9 Ws
+[10:35:23] streaming — 98364 samples | 5.81 W | 4929.8 Ws
+[10:35:28] streaming — 98868 samples | 4.16 W | 4955.8 Ws
+[10:35:33] streaming — 99372 samples | 4.15 W | 4982.4 Ws
+[10:35:38] streaming — 99872 samples | 5.90 W | 5008.1 Ws
+[10:35:43] streaming — 100376 samples | 5.46 W | 5033.4 Ws
+[10:35:48] streaming — 100876 samples | 6.21 W | 5059.5 Ws
+[10:35:53] streaming — 101380 samples | 6.20 W | 5084.8 Ws
+[10:35:58] streaming — 101880 samples | 5.89 W | 5110.4 Ws
+[10:36:03] streaming — 102380 samples | 4.18 W | 5135.8 Ws
+[10:36:08] streaming — 102880 samples | 5.73 W | 5161.4 Ws
+[10:36:13] streaming — 103380 samples | 5.40 W | 5186.5 Ws
+[10:36:18] streaming — 103880 samples | 6.05 W | 5212.3 Ws
+[10:36:23] streaming — 104384 samples | 5.95 W | 5237.6 Ws
+[10:36:28] streaming — 104884 samples | 5.23 W | 5263.4 Ws
+[10:36:33] streaming — 105384 samples | 4.16 W | 5288.1 Ws
+[10:36:38] streaming — 105888 samples | 6.20 W | 5314.5 Ws
+[10:36:43] streaming — 106388 samples | 6.02 W | 5339.7 Ws
+[10:36:48] streaming — 106888 samples | 4.12 W | 5365.3 Ws
+[10:36:53] streaming — 107388 samples | 4.15 W | 5390.4 Ws
+[10:36:58] streaming — 107888 samples | 5.12 W | 5416.4 Ws
+[10:37:03] streaming — 108392 samples | 4.08 W | 5441.8 Ws
+[10:37:08] streaming — 108892 samples | 4.13 W | 5467.7 Ws
+[10:37:13] streaming — 109396 samples | 5.22 W | 5493.9 Ws
+[10:37:18] streaming — 109896 samples | 4.34 W | 5518.7 Ws
+[10:37:23] streaming — 110396 samples | 6.14 W | 5544.4 Ws
+[10:37:28] streaming — 110900 samples | 4.12 W | 5569.8 Ws
+[10:37:33] streaming — 111400 samples | 4.14 W | 5596.6 Ws
+[10:37:38] streaming — 111900 samples | 6.17 W | 5621.8 Ws
+[10:37:43] streaming — 112400 samples | 6.04 W | 5647.8 Ws
+[10:37:48] streaming — 112900 samples | 4.21 W | 5673.0 Ws
+[10:37:53] streaming — 113404 samples | 5.44 W | 5698.8 Ws
+[10:37:58] streaming — 113908 samples | 4.20 W | 5724.2 Ws
+[10:38:03] streaming — 114412 samples | 6.30 W | 5750.5 Ws
+[10:38:08] streaming — 114912 samples | 4.18 W | 5775.5 Ws
+[10:38:13] streaming — 115412 samples | 4.15 W | 5801.6 Ws
+[10:38:18] streaming — 115916 samples | 6.00 W | 5826.9 Ws
+[10:38:23] streaming — 116420 samples | 5.30 W | 5853.3 Ws
+[10:38:28] streaming — 116924 samples | 4.28 W | 5878.7 Ws
+[10:38:33] streaming — 117428 samples | 6.02 W | 5904.7 Ws
+[10:38:38] streaming — 117928 samples | 6.10 W | 5930.1 Ws
+[10:38:43] streaming — 118428 samples | 4.17 W | 5956.0 Ws
+[10:38:48] streaming — 118932 samples | 4.30 W | 5981.6 Ws
+[10:38:53] streaming — 119432 samples | 4.16 W | 6007.7 Ws
+[10:38:58] streaming — 119936 samples | 4.13 W | 6033.4 Ws
+[10:39:03] streaming — 120436 samples | 4.95 W | 6059.3 Ws
+[10:39:08] streaming — 120940 samples | 4.17 W | 6084.7 Ws
+[10:39:13] streaming — 121444 samples | 4.17 W | 6111.0 Ws
+[10:39:18] streaming — 121944 samples | 4.24 W | 6135.8 Ws
+[10:39:23] streaming — 122448 samples | 4.09 W | 6156.2 Ws
+[10:39:28] streaming — 122952 samples | 6.10 W | 6177.2 Ws
+[10:39:33] streaming — 123456 samples | 6.09 W | 6204.9 Ws
+[10:39:38] streaming — 123956 samples | 4.12 W | 6231.9 Ws
+[10:39:44] streaming — 124460 samples | 5.21 W | 6258.9 Ws
+[10:39:49] streaming — 124964 samples | 4.10 W | 6279.4 Ws
+[10:39:54] streaming — 125464 samples | 4.07 W | 6300.1 Ws
+[10:39:59] streaming — 125968 samples | 4.09 W | 6322.3 Ws
+[10:40:04] streaming — 126472 samples | 5.08 W | 6348.1 Ws
+[10:40:09] streaming — 126976 samples | 5.22 W | 6373.3 Ws
+[10:40:14] streaming — 127476 samples | 4.27 W | 6398.8 Ws
+[10:40:19] streaming — 127976 samples | 5.88 W | 6423.8 Ws
+[10:40:24] streaming — 128476 samples | 6.10 W | 6449.8 Ws
+[10:40:29] streaming — 128976 samples | 5.26 W | 6475.2 Ws
+[10:40:34] streaming — 129476 samples | 5.26 W | 6501.1 Ws
+[10:40:39] streaming — 129976 samples | 4.11 W | 6526.3 Ws
+[10:40:44] streaming — 130480 samples | 4.13 W | 6552.4 Ws
+[10:40:49] streaming — 130984 samples | 4.16 W | 6578.0 Ws
+[10:40:54] streaming — 131488 samples | 5.59 W | 6603.9 Ws
+[10:40:59] streaming — 131992 samples | 4.19 W | 6629.3 Ws
+[10:41:04] streaming — 132492 samples | 3.61 W | 6655.2 Ws
+[10:41:09] streaming — 132992 samples | 4.16 W | 6681.0 Ws
+[10:41:14] streaming — 133496 samples | 6.00 W | 6706.8 Ws
+[10:41:19] streaming — 133996 samples | 4.13 W | 6732.2 Ws
+[10:41:24] streaming — 134496 samples | 4.16 W | 6757.5 Ws
+[10:41:29] streaming — 134996 samples | 4.19 W | 6783.5 Ws
+[10:41:34] streaming — 135500 samples | 6.43 W | 6809.6 Ws
+[10:41:39] streaming — 136004 samples | 4.17 W | 6835.6 Ws
+[10:41:44] streaming — 136504 samples | 6.39 W | 6860.6 Ws
+[10:41:49] streaming — 137008 samples | 4.26 W | 6886.2 Ws
+[10:41:54] streaming — 137512 samples | 6.37 W | 6911.4 Ws
+[10:41:59] streaming — 138012 samples | 6.19 W | 6937.3 Ws
+[10:42:04] streaming — 138512 samples | 4.22 W | 6962.4 Ws
+[10:42:09] streaming — 139016 samples | 4.50 W | 6988.4 Ws
+[10:42:14] streaming — 139520 samples | 5.87 W | 7013.6 Ws
+[10:42:19] streaming — 140024 samples | 5.93 W | 7039.8 Ws
+[10:42:24] streaming — 140528 samples | 6.05 W | 7064.9 Ws
+[10:42:29] streaming — 141028 samples | 6.00 W | 7090.4 Ws
+[10:42:34] streaming — 141528 samples | 4.14 W | 7115.2 Ws
+[10:42:39] streaming — 142028 samples | 4.98 W | 7140.9 Ws
+[10:42:44] streaming — 142532 samples | 4.32 W | 7166.4 Ws
+[10:42:49] streaming — 143036 samples | 5.89 W | 7191.5 Ws
+[10:42:54] streaming — 143540 samples | 4.86 W | 7217.7 Ws
+[10:42:59] streaming — 144040 samples | 5.34 W | 7242.6 Ws
+[10:43:04] streaming — 144540 samples | 5.49 W | 7268.1 Ws
+[10:43:09] streaming — 145044 samples | 4.15 W | 7293.4 Ws
+[10:43:14] streaming — 145544 samples | 4.30 W | 7319.0 Ws
+[10:43:19] streaming — 146048 samples | 5.96 W | 7344.0 Ws
+[10:43:24] streaming — 146552 samples | 4.89 W | 7370.2 Ws
+[10:43:29] streaming — 147056 samples | 4.34 W | 7395.0 Ws
+[10:43:34] streaming — 147556 samples | 5.89 W | 7421.3 Ws
+[10:43:40] streaming — 148060 samples | 6.29 W | 7446.5 Ws
+[10:43:45] streaming — 148560 samples | 6.21 W | 7471.9 Ws
+[10:43:50] streaming — 149064 samples | 5.39 W | 7497.7 Ws
+[10:43:55] streaming — 149568 samples | 5.08 W | 7523.0 Ws
+[10:44:00] streaming — 150068 samples | 5.93 W | 7548.2 Ws
+[10:44:05] streaming — 150572 samples | 4.14 W | 7573.5 Ws
+[10:44:10] streaming — 151076 samples | 3.68 W | 7599.0 Ws
+[10:44:15] streaming — 151576 samples | 5.31 W | 7623.9 Ws
+[10:44:20] streaming — 152080 samples | 5.77 W | 7649.5 Ws
+[10:44:25] streaming — 152584 samples | 4.20 W | 7673.3 Ws
+[10:44:30] streaming — 153084 samples | 4.07 W | 7693.5 Ws
+[10:44:35] streaming — 153588 samples | 6.00 W | 7715.8 Ws
+[10:44:40] streaming — 154092 samples | 6.04 W | 7742.9 Ws
+[10:44:45] streaming — 154592 samples | 3.63 W | 7769.5 Ws
+[10:44:50] streaming — 155096 samples | 3.90 W | 7795.8 Ws
+[10:44:55] streaming — 155600 samples | 4.35 W | 7815.7 Ws
+[10:45:00] streaming — 156100 samples | 4.07 W | 7836.3 Ws
+[10:45:05] streaming — 156600 samples | 5.43 W | 7858.1 Ws
+[10:45:10] streaming — 157100 samples | 5.89 W | 7883.9 Ws
+[10:45:15] streaming — 157600 samples | 4.42 W | 7909.2 Ws
+[10:45:20] streaming — 158104 samples | 4.13 W | 7934.9 Ws
+[10:45:25] streaming — 158604 samples | 5.39 W | 7960.2 Ws
+[10:45:30] streaming — 159104 samples | 5.31 W | 7986.3 Ws
+[10:45:35] streaming — 159604 samples | 6.64 W | 8012.2 Ws
+[10:45:40] streaming — 160104 samples | 5.48 W | 8038.2 Ws
+[10:45:45] streaming — 160604 samples | 4.59 W | 8063.4 Ws
+[10:45:50] streaming — 161108 samples | 6.04 W | 8089.2 Ws
+[10:45:55] streaming — 161612 samples | 6.27 W | 8115.3 Ws
+[10:46:00] streaming — 162112 samples | 5.29 W | 8140.5 Ws
+[10:46:05] streaming — 162616 samples | 6.30 W | 8165.9 Ws
+[10:46:10] streaming — 163120 samples | 4.18 W | 8191.2 Ws
+[10:46:15] streaming — 163624 samples | 5.23 W | 8217.1 Ws
+[10:46:20] streaming — 164124 samples | 4.14 W | 8241.9 Ws
+[10:46:25] streaming — 164624 samples | 6.06 W | 8267.9 Ws
+[10:46:30] streaming — 165128 samples | 4.20 W | 8293.0 Ws
+[10:46:35] streaming — 165628 samples | 4.21 W | 8318.7 Ws
+[10:46:40] streaming — 166128 samples | 4.15 W | 8343.7 Ws
+[10:46:45] streaming — 166632 samples | 6.24 W | 8369.9 Ws
+[10:46:50] streaming — 167132 samples | 4.17 W | 8394.8 Ws
+[10:46:55] streaming — 167632 samples | 5.25 W | 8420.7 Ws
+[10:47:00] streaming — 168132 samples | 4.18 W | 8445.3 Ws
+[10:47:05] streaming — 168636 samples | 4.24 W | 8471.5 Ws
+[10:47:10] streaming — 169140 samples | 4.17 W | 8497.5 Ws
+[10:47:15] streaming — 169644 samples | 4.55 W | 8522.6 Ws
+[10:47:20] streaming — 170144 samples | 5.71 W | 8548.3 Ws
+[10:47:25] streaming — 170648 samples | 6.02 W | 8573.5 Ws
+[10:47:30] streaming — 171152 samples | 5.83 W | 8599.4 Ws
+[10:47:35] streaming — 171652 samples | 6.00 W | 8624.8 Ws
+[10:47:40] streaming — 172152 samples | 6.25 W | 8650.9 Ws
+[10:47:45] streaming — 172656 samples | 5.52 W | 8676.0 Ws
+[10:47:50] streaming — 173156 samples | 6.15 W | 8702.1 Ws
+[10:47:55] streaming — 173656 samples | 5.44 W | 8726.7 Ws
+[10:48:00] streaming — 174156 samples | 4.18 W | 8752.8 Ws
+[10:48:06] streaming — 174660 samples | 4.28 W | 8777.8 Ws
+[10:48:11] streaming — 175164 samples | 4.15 W | 8804.0 Ws
+[10:48:16] streaming — 175664 samples | 4.41 W | 8828.6 Ws
+[10:48:21] streaming — 176164 samples | 4.73 W | 8854.1 Ws
+[10:48:26] streaming — 176664 samples | 4.19 W | 8880.0 Ws
+[10:48:31] streaming — 177168 samples | 5.29 W | 8905.6 Ws
+[10:48:36] streaming — 177672 samples | 5.94 W | 8931.2 Ws
+[10:48:41] streaming — 178172 samples | 4.13 W | 8956.2 Ws
+[10:48:46] streaming — 178672 samples | 4.14 W | 8981.9 Ws
+[10:48:51] streaming — 179176 samples | 4.62 W | 9007.5 Ws
+[10:48:56] streaming — 179680 samples | 6.34 W | 9033.3 Ws
+[10:49:01] streaming — 180180 samples | 4.13 W | 9058.6 Ws
+[10:49:06] streaming — 180684 samples | 4.18 W | 9084.3 Ws
+[10:49:11] streaming — 181188 samples | 5.57 W | 9109.5 Ws
+[10:49:16] streaming — 181688 samples | 6.07 W | 9135.4 Ws
+[10:49:21] streaming — 182188 samples | 4.20 W | 9160.3 Ws
+[10:49:26] streaming — 182688 samples | 6.27 W | 9186.2 Ws
+[10:49:31] streaming — 183188 samples | 3.98 W | 9210.7 Ws
+[10:49:36] streaming — 183692 samples | 4.32 W | 9231.1 Ws
+[10:49:41] streaming — 184196 samples | 4.46 W | 9252.4 Ws
+[10:49:46] streaming — 184696 samples | 6.05 W | 9279.1 Ws
+[10:49:51] streaming — 185200 samples | 4.41 W | 9306.5 Ws
+[10:49:56] streaming — 185700 samples | 6.18 W | 9333.1 Ws
+[10:50:01] streaming — 186204 samples | 4.02 W | 9354.1 Ws
+[10:50:06] streaming — 186708 samples | 4.70 W | 9374.9 Ws
+[10:50:11] streaming — 187212 samples | 4.86 W | 9396.6 Ws
+[10:50:16] streaming — 187716 samples | 5.18 W | 9422.5 Ws
+[10:50:21] streaming — 188216 samples | 5.06 W | 9447.5 Ws
+[10:50:26] streaming — 188720 samples | 4.07 W | 9473.3 Ws
+[10:50:31] streaming — 189224 samples | 5.21 W | 9498.6 Ws
+[10:50:36] streaming — 189724 samples | 5.98 W | 9524.7 Ws
+[10:50:41] streaming — 190224 samples | 4.12 W | 9550.0 Ws
+[10:50:46] streaming — 190728 samples | 5.74 W | 9576.3 Ws
+[10:50:51] streaming — 191228 samples | 3.97 W | 9601.8 Ws
+[10:50:56] streaming — 191728 samples | 4.16 W | 9627.2 Ws
+[10:51:01] streaming — 192232 samples | 4.20 W | 9653.0 Ws
+[10:51:06] streaming — 192732 samples | 4.17 W | 9678.6 Ws
+[10:51:11] streaming — 193236 samples | 4.19 W | 9704.6 Ws
+[10:51:16] streaming — 193740 samples | 4.15 W | 9730.0 Ws
+[10:51:21] streaming — 194240 samples | 4.20 W | 9756.1 Ws
+[10:51:26] streaming — 194740 samples | 4.14 W | 9781.2 Ws
+[10:51:31] streaming — 195244 samples | 5.88 W | 9807.1 Ws
+[10:51:36] streaming — 195748 samples | 5.55 W | 9832.5 Ws
+[10:51:41] streaming — 196252 samples | 6.20 W | 9858.7 Ws
+[10:51:46] streaming — 196752 samples | 6.07 W | 9883.9 Ws
+[10:51:51] streaming — 197256 samples | 4.15 W | 9909.7 Ws
+[10:51:56] streaming — 197760 samples | 6.33 W | 9934.8 Ws
+[10:52:01] streaming — 198260 samples | 6.02 W | 9960.6 Ws
+[10:52:06] streaming — 198760 samples | 4.16 W | 9985.2 Ws
+[10:52:12] streaming — 199264 samples | 4.18 W | 10011.4 Ws
+[10:52:17] streaming — 199768 samples | 4.16 W | 10036.8 Ws
+[10:52:22] streaming — 200272 samples | 5.25 W | 10062.5 Ws
+[10:52:27] streaming — 200772 samples | 5.21 W | 10088.1 Ws
+[10:52:32] streaming — 201276 samples | 5.71 W | 10113.5 Ws
+[10:52:37] streaming — 201776 samples | 4.98 W | 10139.6 Ws
+[10:52:42] streaming — 202280 samples | 6.29 W | 10164.8 Ws
+[10:52:47] streaming — 202780 samples | 4.20 W | 10190.4 Ws
+[10:52:52] streaming — 203284 samples | 4.17 W | 10215.4 Ws
+[10:52:57] streaming — 203784 samples | 5.05 W | 10240.9 Ws
+[10:53:02] streaming — 204284 samples | 5.26 W | 10266.0 Ws
+[10:53:07] streaming — 204788 samples | 5.34 W | 10292.0 Ws
+[10:53:12] streaming — 205292 samples | 4.36 W | 10316.9 Ws
+[10:53:17] streaming — 205792 samples | 5.10 W | 10343.0 Ws
+[10:53:22] streaming — 206292 samples | 6.02 W | 10368.0 Ws
+[10:53:27] streaming — 206792 samples | 5.75 W | 10393.7 Ws
+[10:53:32] streaming — 207292 samples | 5.80 W | 10418.9 Ws
+[10:53:37] streaming — 207796 samples | 5.31 W | 10444.2 Ws
+[10:53:42] streaming — 208300 samples | 6.03 W | 10470.5 Ws
+[10:53:47] streaming — 208800 samples | 4.78 W | 10495.2 Ws
+[10:53:52] streaming — 209304 samples | 4.15 W | 10521.2 Ws
+[10:53:57] streaming — 209804 samples | 4.38 W | 10546.5 Ws
+[10:54:02] streaming — 210308 samples | 5.78 W | 10571.6 Ws
+[10:54:07] streaming — 210812 samples | 4.72 W | 10596.3 Ws
+[10:54:12] streaming — 211312 samples | 3.64 W | 10621.8 Ws
+[10:54:17] streaming — 211812 samples | 6.25 W | 10646.5 Ws
+[10:54:22] streaming — 212316 samples | 4.20 W | 10672.6 Ws
+[10:54:27] streaming — 212816 samples | 5.40 W | 10697.8 Ws
+[10:54:32] streaming — 213320 samples | 5.92 W | 10722.9 Ws
+[10:54:37] streaming — 213820 samples | 4.45 W | 10748.6 Ws
+[10:54:42] streaming — 214324 samples | 3.76 W | 10770.2 Ws
+[10:54:47] streaming — 214828 samples | 4.11 W | 10790.6 Ws
+[10:54:52] streaming — 215328 samples | 6.08 W | 10813.4 Ws
+[10:54:57] streaming — 215828 samples | 6.22 W | 10840.0 Ws
+[10:55:02] streaming — 216328 samples | 6.24 W | 10866.9 Ws
+[10:55:07] streaming — 216832 samples | 4.21 W | 10892.4 Ws
+[10:55:12] streaming — 217332 samples | 4.09 W | 10912.6 Ws
+[10:55:17] streaming — 217832 samples | 4.09 W | 10933.2 Ws
+[10:55:22] streaming — 218332 samples | 4.87 W | 10953.8 Ws
+[10:55:27] streaming — 218836 samples | 4.09 W | 10978.3 Ws
+[10:55:32] streaming — 219340 samples | 6.01 W | 11004.5 Ws
+[10:55:37] streaming — 219840 samples | 4.09 W | 11029.6 Ws
+[10:55:42] streaming — 220340 samples | 5.23 W | 11055.9 Ws
+[10:55:47] streaming — 220840 samples | 4.10 W | 11080.9 Ws
+[10:55:52] streaming — 221344 samples | 5.22 W | 11107.1 Ws
+[10:55:57] streaming — 221844 samples | 5.67 W | 11130.7 Ws
+[10:56:02] streaming — 222344 samples | 4.11 W | 11156.7 Ws
+[10:56:07] streaming — 222848 samples | 5.24 W | 11182.1 Ws
+[10:56:12] streaming — 223348 samples | 4.25 W | 11208.1 Ws
+[10:56:17] streaming — 223852 samples | 5.80 W | 11233.8 Ws
+[10:56:22] streaming — 224356 samples | 5.93 W | 11260.0 Ws
+[10:56:27] streaming — 224860 samples | 4.15 W | 11285.3 Ws
+[10:56:33] streaming — 225364 samples | 6.37 W | 11309.8 Ws
+[10:56:38] streaming — 225864 samples | 6.09 W | 11335.8 Ws
+[10:56:43] streaming — 226364 samples | 4.14 W | 11360.7 Ws
+[10:56:48] streaming — 226864 samples | 4.13 W | 11386.5 Ws
+[10:56:53] streaming — 227368 samples | 5.83 W | 11411.8 Ws
+[10:56:58] streaming — 227872 samples | 3.79 W | 11437.8 Ws
+[10:57:03] streaming — 228376 samples | 4.12 W | 11461.7 Ws
+[10:57:08] streaming — 228876 samples | 4.21 W | 11487.6 Ws
+[10:57:13] streaming — 229376 samples | 4.19 W | 11513.4 Ws
+[10:57:18] streaming — 229876 samples | 6.19 W | 11538.7 Ws
+[10:57:23] streaming — 230380 samples | 4.15 W | 11564.5 Ws
+[10:57:28] streaming — 230880 samples | 5.62 W | 11589.6 Ws
+[10:57:33] streaming — 231380 samples | 5.97 W | 11615.6 Ws
+[10:57:38] streaming — 231880 samples | 5.75 W | 11639.1 Ws
+[10:57:43] streaming — 232384 samples | 4.22 W | 11666.0 Ws
+[10:57:48] streaming — 232884 samples | 6.03 W | 11691.2 Ws
+[10:57:53] streaming — 233388 samples | 4.27 W | 11717.0 Ws
+[10:57:58] streaming — 233892 samples | 5.26 W | 11742.2 Ws
+[10:58:03] streaming — 234392 samples | 5.95 W | 11767.8 Ws
+[10:58:08] streaming — 234892 samples | 4.12 W | 11793.3 Ws
+[10:58:13] streaming — 235392 samples | 4.06 W | 11817.1 Ws
+[10:58:18] streaming — 235896 samples | 5.28 W | 11843.2 Ws
+[10:58:23] streaming — 236396 samples | 5.13 W | 11868.2 Ws
+[10:58:28] streaming — 236896 samples | 4.16 W | 11894.2 Ws
+[10:58:33] streaming — 237400 samples | 4.60 W | 11919.1 Ws
+[10:58:38] streaming — 237904 samples | 4.13 W | 11945.0 Ws
+[10:58:43] streaming — 238404 samples | 4.16 W | 11969.8 Ws
+[10:58:48] streaming — 238904 samples | 5.92 W | 11994.6 Ws
+[10:58:53] streaming — 239408 samples | 4.16 W | 12020.6 Ws
+[10:58:58] streaming — 239908 samples | 5.69 W | 12045.9 Ws
+[10:59:03] streaming — 240412 samples | 6.36 W | 12071.5 Ws
+[10:59:08] streaming — 240912 samples | 4.32 W | 12096.6 Ws
+[10:59:13] streaming — 241412 samples | 6.31 W | 12121.8 Ws
+[10:59:18] streaming — 241916 samples | 4.16 W | 12146.2 Ws
+[10:59:23] streaming — 242416 samples | 6.38 W | 12171.6 Ws
+[10:59:28] streaming — 242920 samples | 5.26 W | 12197.2 Ws
+[10:59:33] streaming — 243424 samples | 6.17 W | 12223.0 Ws
+[10:59:38] streaming — 243928 samples | 5.28 W | 12248.9 Ws
+[10:59:43] streaming — 244428 samples | 4.15 W | 12274.7 Ws
+[10:59:48] streaming — 244928 samples | 4.31 W | 12300.0 Ws
+[10:59:53] streaming — 245428 samples | 4.11 W | 12323.6 Ws
+[10:59:58] streaming — 245932 samples | 4.18 W | 12350.0 Ws
+[11:00:03] streaming — 246436 samples | 6.04 W | 12375.2 Ws
+[11:00:08] streaming — 246936 samples | 4.15 W | 12400.8 Ws
+[11:00:13] streaming — 247440 samples | 4.21 W | 12426.3 Ws
+[11:00:18] streaming — 247940 samples | 5.67 W | 12451.7 Ws
+[11:00:23] streaming — 248444 samples | 5.92 W | 12477.5 Ws
+[11:00:28] streaming — 248944 samples | 4.23 W | 12499.2 Ws
+[11:00:33] streaming — 249448 samples | 4.11 W | 12519.8 Ws
+[11:00:38] streaming — 249948 samples | 4.04 W | 12539.6 Ws
+[11:00:43] streaming — 250448 samples | 4.36 W | 12560.2 Ws
+[11:00:48] streaming — 250952 samples | 4.07 W | 12581.7 Ws
+[11:00:53] streaming — 251456 samples | 5.92 W | 12607.6 Ws
+[11:00:58] streaming — 251956 samples | 4.11 W | 12632.5 Ws
+[11:01:03] streaming — 252456 samples | 4.27 W | 12658.3 Ws
+[11:01:08] streaming — 252960 samples | 4.45 W | 12683.6 Ws
+[11:01:13] streaming — 253464 samples | 5.55 W | 12709.6 Ws
+[11:01:19] streaming — 253968 samples | 4.15 W | 12735.4 Ws
+[11:01:24] streaming — 254468 samples | 4.74 W | 12761.0 Ws
+[11:01:29] streaming — 254968 samples | 4.18 W | 12786.8 Ws
+[11:01:34] streaming — 255468 samples | 6.37 W | 12812.1 Ws
+[11:01:39] streaming — 255968 samples | 4.22 W | 12837.8 Ws
+[11:01:44] streaming — 256468 samples | 6.23 W | 12863.7 Ws
+[11:01:49] streaming — 256968 samples | 4.15 W | 12889.7 Ws
+[11:01:54] streaming — 257468 samples | 4.17 W | 12914.8 Ws
+[11:01:59] streaming — 257968 samples | 4.14 W | 12940.3 Ws
+[11:02:04] streaming — 258468 samples | 4.16 W | 12965.1 Ws
+[11:02:09] streaming — 258968 samples | 4.14 W | 12990.5 Ws
+[11:02:10] USB error ([Errno 5] Input/Output Error), restarting the stream
+[11:02:11] USB error ([Errno 5] Input/Output Error), restarting the stream
+[11:02:12] USB error ([Errno 5] Input/Output Error), restarting the stream
+[11:02:13] USB error ([Errno 5] Input/Output Error), restarting the stream
+[11:02:14] streaming — 259104 samples | 6.40 W | 12997.7 Ws
+[11:02:14] USB error ([Errno 5] Input/Output Error), restarting the stream
+[11:02:14] meter lost, reconnecting
+[11:02:14] meter lost, exiting for a fresh restart
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Meter not found or did not accept the start command.
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Meter not found or did not accept the start command.
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Meter not found or did not accept the start command.
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Meter not found or did not accept the start command.
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Meter not found or did not accept the start command.
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno None] Other error), retrying
+Start command failed ([Errno 19] No such device (it may have been disconnected)), retrying
+Start command failed ([Errno 19] No such device (it may have been disconnected)), retrying
+Start command failed ([Errno 19] No such device (it may have been disconnected)), retrying
+Meter not found or did not accept the start command.
+Logger running (this heartbeat is on stderr; sample data goes to the file).
+[11:03:50] streaming — 0 samples | 0.00 W | 0.0 Ws
+[11:03:56] streaming — 0 samples | 0.00 W | 0.0 Ws
+[11:04:02] streaming — 0 samples | 0.00 W | 0.0 Ws
+[11:04:08] streaming — 0 samples | 0.00 W | 0.0 Ws
+[11:04:14] streaming — 0 samples | 0.00 W | 0.0 Ws
+[11:04:20] streaming — 0 samples | 0.00 W | 0.0 Ws
+[11:04:26] streaming — 0 samples | 0.00 W | 0.0 Ws
+[11:04:32] streaming — 0 samples | 0.00 W | 0.0 Ws
+[11:04:38] streaming — 0 samples | 0.00 W | 0.0 Ws
+[11:04:44] streaming — 0 samples | 0.00 W | 0.0 Ws
+[11:04:50] streaming — 0 samples | 0.00 W | 0.0 Ws
+[11:04:55] meter silent, reconnecting
+[11:04:55] meter lost, exiting for a fresh restart
+Start command failed ([Errno 60] Operation timed out), retrying
+Start command failed ([Errno 60] Operation timed out), retrying
+Start command failed ([Errno 60] Operation timed out), retrying
+Start command failed ([Errno 60] Operation timed out), retrying
+Start command failed ([Errno 60] Operation timed out), retrying
+Start command failed ([Errno 60] Operation timed out), retrying
+Start command failed ([Errno 19] No such device (it may have been disconnected)), retrying
+Start command failed ([Errno 19] No such device (it may have been disconnected)), retrying
+Start command failed ([Errno 19] No such device (it may have been disconnected)), retrying
+Start command failed ([Errno 19] No such device (it may have been disconnected)), retrying
+Meter not found or did not accept the start command.
+Logger running (this heartbeat is on stderr; sample data goes to the file).
+[11:05:31] streaming — 0 samples | 0.00 W | 0.0 Ws
+[11:05:37] streaming — 0 samples | 0.00 W | 0.0 Ws
+[11:05:43] streaming — 0 samples | 0.00 W | 0.0 Ws
+[11:05:49] streaming — 0 samples | 0.00 W | 0.0 Ws
+[11:05:55] streaming — 0 samples | 0.00 W | 0.0 Ws
+[11:06:01] streaming — 0 samples | 0.00 W | 0.0 Ws
+[11:06:07] streaming — 0 samples | 0.00 W | 0.0 Ws
+[11:06:13] streaming — 0 samples | 0.00 W | 0.0 Ws
+[11:06:19] streaming — 0 samples | 0.00 W | 0.0 Ws
+[11:06:25] streaming — 0 samples | 0.00 W | 0.0 Ws
+[11:06:31] streaming — 0 samples | 0.00 W | 0.0 Ws
+[11:06:36] meter silent, reconnecting
+[11:06:36] meter lost, exiting for a fresh restart
+Logger running (this heartbeat is on stderr; sample data goes to the file).
+[11:06:51] streaming — 504 samples | 3.63 W | 25.6 Ws
+[11:06:56] streaming — 1008 samples | 4.12 W | 50.6 Ws
+[11:07:01] streaming — 1508 samples | 6.39 W | 76.5 Ws
+[11:07:06] streaming — 2008 samples | 4.07 W | 101.5 Ws
+[11:07:11] streaming — 2512 samples | 6.10 W | 126.6 Ws
+[11:07:16] streaming — 3012 samples | 4.18 W | 152.3 Ws
+[11:07:21] streaming — 3516 samples | 4.36 W | 177.6 Ws
+[11:07:26] streaming — 4016 samples | 6.33 W | 203.4 Ws
+[11:07:31] streaming — 4520 samples | 6.26 W | 228.5 Ws
+[11:07:37] streaming — 5024 samples | 6.28 W | 254.0 Ws
+[11:07:42] streaming — 5524 samples | 6.03 W | 279.0 Ws
+[11:07:47] streaming — 6024 samples | 4.50 W | 305.4 Ws
+[11:07:52] streaming — 6528 samples | 4.14 W | 330.7 Ws
+[11:07:57] streaming — 7028 samples | 4.18 W | 355.7 Ws
+[11:08:02] streaming — 7528 samples | 5.71 W | 381.0 Ws
+[11:08:07] streaming — 8032 samples | 6.23 W | 406.2 Ws
+[11:08:12] streaming — 8532 samples | 4.32 W | 432.0 Ws
+[11:08:17] streaming — 9036 samples | 4.92 W | 457.0 Ws
+[11:08:22] streaming — 9540 samples | 4.20 W | 482.4 Ws
+[11:08:27] streaming — 10040 samples | 6.12 W | 506.9 Ws
+[11:08:32] streaming — 10544 samples | 4.94 W | 532.7 Ws
+[11:08:37] streaming — 11044 samples | 5.37 W | 557.5 Ws
+[11:08:42] streaming — 11548 samples | 4.14 W | 583.6 Ws
+[11:08:47] streaming — 12048 samples | 4.21 W | 609.1 Ws
+[11:08:52] streaming — 12552 samples | 5.96 W | 634.7 Ws
+[11:08:57] streaming — 13056 samples | 4.22 W | 660.0 Ws
+[11:09:02] streaming — 13556 samples | 5.60 W | 684.6 Ws
+[11:09:07] streaming — 14060 samples | 4.19 W | 710.1 Ws
+[11:09:12] streaming — 14564 samples | 6.08 W | 735.6 Ws
+[11:09:17] streaming — 15068 samples | 5.14 W | 760.9 Ws
+[11:09:22] streaming — 15568 samples | 5.86 W | 785.6 Ws
+[11:09:27] streaming — 16068 samples | 5.76 W | 811.2 Ws
+[11:09:32] streaming — 16572 samples | 3.81 W | 836.3 Ws
+[11:09:37] streaming — 17072 samples | 6.08 W | 861.7 Ws
+[11:09:42] streaming — 17572 samples | 6.13 W | 886.9 Ws
+[11:09:47] streaming — 18076 samples | 6.04 W | 912.6 Ws
+[11:09:52] streaming — 18580 samples | 5.98 W | 938.6 Ws
+[11:09:57] streaming — 19084 samples | 3.76 W | 960.9 Ws
+[11:10:02] streaming — 19588 samples | 4.49 W | 981.4 Ws
+[11:10:07] streaming — 20092 samples | 4.21 W | 1002.2 Ws
+[11:10:12] streaming — 20592 samples | 5.63 W | 1028.7 Ws
+[11:10:17] streaming — 21092 samples | 6.24 W | 1055.5 Ws
+[11:10:22] streaming — 21596 samples | 5.19 W | 1082.2 Ws
+[11:10:27] streaming — 22100 samples | 3.74 W | 1103.8 Ws
+[11:10:32] streaming — 22600 samples | 4.10 W | 1124.4 Ws
+[11:10:37] streaming — 23104 samples | 4.43 W | 1145.1 Ws
+[11:10:42] streaming — 23604 samples | 5.32 W | 1168.3 Ws
+[11:10:47] streaming — 24104 samples | 5.30 W | 1194.0 Ws
+[11:10:52] streaming — 24604 samples | 4.14 W | 1219.4 Ws
+[11:10:57] streaming — 25108 samples | 4.20 W | 1245.5 Ws
+[11:11:02] streaming — 25608 samples | 5.20 W | 1270.5 Ws
+[11:11:07] streaming — 26112 samples | 4.12 W | 1296.6 Ws
+[11:11:12] streaming — 26612 samples | 5.98 W | 1321.7 Ws
+[11:11:17] streaming — 27116 samples | 5.87 W | 1347.8 Ws
+[11:11:22] streaming — 27620 samples | 3.85 W | 1373.2 Ws
+[11:11:27] streaming — 28120 samples | 4.32 W | 1399.0 Ws
+[11:11:32] streaming — 28620 samples | 4.16 W | 1423.6 Ws
+[11:11:37] streaming — 29120 samples | 4.15 W | 1449.3 Ws
+[11:11:42] streaming — 29620 samples | 5.69 W | 1474.8 Ws
+[11:11:47] streaming — 30124 samples | 5.29 W | 1500.4 Ws
+[11:11:53] streaming — 30628 samples | 4.16 W | 1526.5 Ws
+[11:11:58] streaming — 31128 samples | 5.09 W | 1551.7 Ws
+[11:12:03] streaming — 31628 samples | 4.15 W | 1577.4 Ws
+[11:12:08] streaming — 32132 samples | 6.17 W | 1601.2 Ws
+[11:12:13] streaming — 32632 samples | 6.35 W | 1627.3 Ws
+[11:12:18] streaming — 33132 samples | 4.16 W | 1652.3 Ws
+[11:12:23] streaming — 33632 samples | 6.27 W | 1677.7 Ws
+[11:12:28] streaming — 34132 samples | 3.65 W | 1703.4 Ws
+[11:12:33] streaming — 34632 samples | 5.10 W | 1728.4 Ws
+[11:12:38] streaming — 35132 samples | 4.16 W | 1753.6 Ws
+[11:12:43] streaming — 35636 samples | 4.23 W | 1778.5 Ws
+[11:12:48] streaming — 36140 samples | 6.36 W | 1803.9 Ws
+[11:12:53] streaming — 36640 samples | 6.27 W | 1828.9 Ws
+[11:12:58] streaming — 37140 samples | 5.74 W | 1854.2 Ws
+[11:13:03] streaming — 37640 samples | 4.15 W | 1879.1 Ws
+[11:13:08] streaming — 38144 samples | 6.09 W | 1904.6 Ws
+[11:13:13] streaming — 38648 samples | 4.17 W | 1929.9 Ws
+[11:13:18] streaming — 39152 samples | 5.10 W | 1954.8 Ws
+[11:13:23] streaming — 39656 samples | 4.52 W | 1980.6 Ws
+[11:13:28] streaming — 40156 samples | 5.95 W | 2005.2 Ws
+[11:13:33] streaming — 40656 samples | 4.11 W | 2030.4 Ws
+[11:13:38] streaming — 41160 samples | 3.89 W | 2054.9 Ws
+[11:13:43] streaming — 41660 samples | 4.25 W | 2080.4 Ws
+[11:13:48] streaming — 42164 samples | 4.46 W | 2105.8 Ws
+[11:13:53] streaming — 42668 samples | 3.90 W | 2131.8 Ws
+[11:13:58] streaming — 43172 samples | 5.66 W | 2157.6 Ws
+[11:14:03] streaming — 43676 samples | 5.05 W | 2182.7 Ws
+[11:14:08] streaming — 44180 samples | 6.02 W | 2208.0 Ws
+[11:14:13] streaming — 44680 samples | 3.66 W | 2232.6 Ws
+[11:14:18] streaming — 45184 samples | 5.17 W | 2258.1 Ws
+[11:14:23] streaming — 45688 samples | 4.25 W | 2283.0 Ws
+[11:14:28] streaming — 46188 samples | 5.22 W | 2308.5 Ws
+[11:14:33] streaming — 46688 samples | 4.18 W | 2333.8 Ws
+[11:14:38] streaming — 47192 samples | 4.06 W | 2358.8 Ws
+[11:14:43] streaming — 47692 samples | 6.26 W | 2384.0 Ws
+[11:14:48] streaming — 48196 samples | 4.15 W | 2409.3 Ws
+[11:14:53] streaming — 48696 samples | 4.79 W | 2434.6 Ws
+[11:14:58] streaming — 49196 samples | 4.10 W | 2458.1 Ws
+[11:15:03] streaming — 49700 samples | 4.48 W | 2478.3 Ws
+[11:15:08] streaming — 50204 samples | 4.01 W | 2499.1 Ws
+[11:15:13] streaming — 50708 samples | 4.88 W | 2523.7 Ws
+[11:15:18] streaming — 51212 samples | 5.19 W | 2550.4 Ws
+[11:15:23] streaming — 51712 samples | 5.28 W | 2577.2 Ws
+[11:15:28] streaming — 52216 samples | 3.75 W | 2601.4 Ws
+[11:15:33] streaming — 52720 samples | 4.08 W | 2621.4 Ws
+[11:15:38] streaming — 53224 samples | 4.10 W | 2642.1 Ws
+[11:15:44] streaming — 53728 samples | 5.38 W | 2663.5 Ws
+[11:15:49] streaming — 54232 samples | 6.20 W | 2689.6 Ws
+[11:15:54] streaming — 54732 samples | 5.42 W | 2715.1 Ws
+[11:15:59] streaming — 55232 samples | 4.32 W | 2740.8 Ws
+[11:16:04] streaming — 55732 samples | 4.05 W | 2766.0 Ws
+[11:16:09] streaming — 56236 samples | 5.21 W | 2792.2 Ws
+[11:16:14] streaming — 56736 samples | 4.11 W | 2817.7 Ws
+[11:16:19] streaming — 57240 samples | 5.81 W | 2843.6 Ws
+[11:16:24] streaming — 57740 samples | 4.09 W | 2869.6 Ws
+[11:16:29] streaming — 58244 samples | 5.84 W | 2895.0 Ws
+[11:16:34] streaming — 58748 samples | 6.07 W | 2920.6 Ws
+[11:16:39] streaming — 59252 samples | 6.33 W | 2946.0 Ws
+[11:16:44] streaming — 59752 samples | 6.07 W | 2971.7 Ws
+[11:16:49] streaming — 60252 samples | 4.19 W | 2996.6 Ws
+[11:16:54] streaming — 60756 samples | 6.37 W | 3022.4 Ws
+[11:16:59] streaming — 61260 samples | 4.18 W | 3047.5 Ws
+[11:17:04] streaming — 61760 samples | 5.90 W | 3073.2 Ws
+[11:17:09] streaming — 62260 samples | 4.18 W | 3097.0 Ws
+[11:17:14] streaming — 62764 samples | 4.16 W | 3122.4 Ws
+[11:17:19] streaming — 63264 samples | 5.96 W | 3147.6 Ws
+[11:17:24] streaming — 63764 samples | 4.22 W | 3172.6 Ws
+[11:17:29] streaming — 64264 samples | 5.23 W | 3198.1 Ws
+[11:17:34] streaming — 64768 samples | 4.21 W | 3223.8 Ws
+[11:17:39] streaming — 65272 samples | 3.63 W | 3249.1 Ws
+[11:17:44] streaming — 65772 samples | 5.99 W | 3273.9 Ws
+[11:17:49] streaming — 66272 samples | 5.11 W | 3299.5 Ws
+[11:17:54] streaming — 66772 samples | 4.18 W | 3325.3 Ws
+[11:17:59] streaming — 67276 samples | 5.57 W | 3351.1 Ws
+[11:18:04] streaming — 67776 samples | 5.97 W | 3375.9 Ws
+[11:18:09] streaming — 68280 samples | 6.28 W | 3402.0 Ws
+[11:18:14] streaming — 68780 samples | 4.76 W | 3427.4 Ws
+[11:18:19] streaming — 69284 samples | 5.95 W | 3453.0 Ws
+[11:18:24] streaming — 69784 samples | 4.99 W | 3478.5 Ws
+[11:18:29] streaming — 70284 samples | 6.04 W | 3503.6 Ws
+[11:18:34] streaming — 70788 samples | 4.25 W | 3529.2 Ws
+[11:18:39] streaming — 71292 samples | 5.52 W | 3554.1 Ws
+[11:18:44] streaming — 71796 samples | 4.22 W | 3579.7 Ws
+[11:18:49] streaming — 72300 samples | 4.95 W | 3604.8 Ws
+[11:18:54] streaming — 72804 samples | 5.28 W | 3630.7 Ws
+[11:18:59] streaming — 73304 samples | 4.14 W | 3655.3 Ws
+[11:19:04] streaming — 73804 samples | 5.01 W | 3681.0 Ws
+[11:19:09] streaming — 74308 samples | 4.17 W | 3706.1 Ws
+[11:19:14] streaming — 74808 samples | 4.18 W | 3731.7 Ws
+[11:19:19] streaming — 75308 samples | 5.29 W | 3757.2 Ws
+[11:19:24] streaming — 75808 samples | 4.21 W | 3782.3 Ws
+[11:19:29] streaming — 76312 samples | 5.97 W | 3808.1 Ws
+[11:19:34] streaming — 76816 samples | 4.15 W | 3833.2 Ws
+[11:19:39] streaming — 77316 samples | 6.34 W | 3858.5 Ws
+[11:19:44] streaming — 77816 samples | 4.15 W | 3883.0 Ws
+[11:19:49] streaming — 78320 samples | 5.40 W | 3908.9 Ws
+[11:19:54] streaming — 78820 samples | 4.59 W | 3934.0 Ws
+[11:19:59] streaming — 79324 samples | 4.06 W | 3954.1 Ws
+[11:20:04] streaming — 79828 samples | 4.04 W | 3974.9 Ws
+[11:20:10] streaming — 80332 samples | 6.27 W | 3998.6 Ws
+[11:20:15] streaming — 80832 samples | 5.54 W | 4025.4 Ws
+[11:20:20] streaming — 81336 samples | 6.21 W | 4052.3 Ws
+[11:20:25] streaming — 81836 samples | 3.75 W | 4077.1 Ws
+[11:20:30] streaming — 82340 samples | 4.16 W | 4097.1 Ws
+[11:20:35] streaming — 82844 samples | 4.11 W | 4117.8 Ws
+[11:20:40] streaming — 83344 samples | 4.06 W | 4138.9 Ws
+[11:20:45] streaming — 83844 samples | 4.13 W | 4164.7 Ws
+[11:20:50] streaming — 84348 samples | 5.92 W | 4189.9 Ws
+[11:20:55] streaming — 84848 samples | 4.28 W | 4215.7 Ws
+[11:21:00] streaming — 85348 samples | 4.10 W | 4240.7 Ws
+[11:21:05] streaming — 85848 samples | 4.92 W | 4266.6 Ws
+[11:21:10] streaming — 86348 samples | 4.13 W | 4292.2 Ws
+[11:21:15] streaming — 86852 samples | 5.92 W | 4318.0 Ws
+[11:21:20] streaming — 87352 samples | 4.11 W | 4343.9 Ws
+[11:21:25] streaming — 87852 samples | 4.13 W | 4369.2 Ws
+[11:21:30] streaming — 88356 samples | 5.59 W | 4395.1 Ws
+[11:21:35] streaming — 88860 samples | 5.14 W | 4420.4 Ws
+[11:21:40] streaming — 89360 samples | 4.17 W | 4446.1 Ws
+[11:21:45] streaming — 89860 samples | 4.12 W | 4471.0 Ws
+[11:21:50] streaming — 90364 samples | 4.20 W | 4497.0 Ws
+[11:21:55] streaming — 90868 samples | 4.13 W | 4522.9 Ws
+[11:22:00] streaming — 91368 samples | 4.14 W | 4548.8 Ws
+[11:22:05] streaming — 91868 samples | 5.84 W | 4572.3 Ws
+[11:22:10] streaming — 92368 samples | 4.17 W | 4598.2 Ws
+[11:22:15] streaming — 92868 samples | 5.74 W | 4623.3 Ws
+[11:22:20] streaming — 93372 samples | 5.91 W | 4649.1 Ws
+[11:22:25] streaming — 93872 samples | 3.99 W | 4674.7 Ws
+[11:22:30] streaming — 94376 samples | 6.37 W | 4699.9 Ws
+[11:22:35] streaming — 94880 samples | 4.62 W | 4725.9 Ws
+[11:22:40] streaming — 95380 samples | 4.14 W | 4750.9 Ws
+[11:22:45] streaming — 95884 samples | 4.13 W | 4776.7 Ws
+[11:22:50] streaming — 96384 samples | 4.33 W | 4801.6 Ws
+[11:22:55] streaming — 96884 samples | 6.40 W | 4827.3 Ws
+[11:23:00] streaming — 97388 samples | 4.20 W | 4852.7 Ws
+[11:23:05] streaming — 97888 samples | 4.18 W | 4878.4 Ws
+[11:23:10] streaming — 98392 samples | 6.33 W | 4903.3 Ws
+[11:23:15] streaming — 98892 samples | 6.04 W | 4929.0 Ws
+[11:23:20] streaming — 99392 samples | 6.26 W | 4954.3 Ws
+[11:23:25] streaming — 99892 samples | 6.08 W | 4979.5 Ws
+[11:23:30] streaming — 100392 samples | 4.12 W | 5004.7 Ws
+[11:23:35] streaming — 100892 samples | 5.49 W | 5029.7 Ws
+[11:23:40] streaming — 101396 samples | 4.29 W | 5055.3 Ws
+[11:23:45] streaming — 101900 samples | 5.30 W | 5080.2 Ws
+[11:23:50] streaming — 102400 samples | 5.94 W | 5106.1 Ws
+[11:23:55] streaming — 102900 samples | 4.16 W | 5132.3 Ws
+[11:24:00] streaming — 103400 samples | 4.18 W | 5157.7 Ws
+[11:24:05] streaming — 103904 samples | 4.14 W | 5183.0 Ws
+[11:24:10] streaming — 104408 samples | 5.44 W | 5208.6 Ws
+[11:24:15] streaming — 104912 samples | 4.17 W | 5233.5 Ws
+[11:24:20] streaming — 105412 samples | 4.14 W | 5258.9 Ws
+[11:24:25] streaming — 105912 samples | 4.12 W | 5283.8 Ws
+[11:24:30] streaming — 106416 samples | 6.01 W | 5309.5 Ws
+[11:24:35] streaming — 106920 samples | 5.86 W | 5335.4 Ws
+[11:24:40] streaming — 107424 samples | 5.21 W | 5360.7 Ws
+[11:24:45] streaming — 107928 samples | 4.14 W | 5386.2 Ws
+[11:24:50] streaming — 108428 samples | 3.73 W | 5407.8 Ws
+[11:24:56] streaming — 108932 samples | 4.12 W | 5427.3 Ws
+[11:25:01] streaming — 109436 samples | 4.23 W | 5448.0 Ws
+[11:25:06] streaming — 109936 samples | 5.32 W | 5471.4 Ws
+[11:25:11] streaming — 110440 samples | 4.12 W | 5498.4 Ws
+[11:25:16] streaming — 110940 samples | 6.06 W | 5525.5 Ws
+[11:25:21] streaming — 111440 samples | 3.78 W | 5549.8 Ws

@@ -1,0 +1,141 @@
+ Container fl-ids-msc-host-runner-run-82b8be3e6286 Creating 
+ Container fl-ids-msc-host-runner-run-82b8be3e6286 Created 
+🎊 Successfully started run 7906220424792374161
+[92mINFO [0m:      Starting logstream for run_id `7906220424792374161`
+[92mINFO [0m:      Start `flwr-serverapp` process
+Successfully installed fl-ids to /app/.flwr/apps/thesis.fl-ids.1.0.0.a9d14c78.
+[92mINFO [0m:      Starting Flower ServerApp, config: num_rounds=10, round_timeout=1200.0s
+[92mINFO [0m:      
+[92mINFO [0m:      [INIT]
+[92mINFO [0m:      Requesting initial parameters from one random client
+[92mINFO [0m:      Received initial parameters from one random client
+[92mINFO [0m:      Starting evaluation of initial global parameters
+[92mINFO [0m:      Evaluation returned no results (`None`)
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 1]
+[92mINFO [0m:      configure_fit: strategy sampled 4 clients (out of 4)
+[92mINFO [0m:      aggregate_fit: received 4 results and 0 failures
+[92mINFO [0m:      configure_evaluate: strategy sampled 4 clients (out of 4)
+[92mINFO [0m:      aggregate_evaluate: received 4 results and 0 failures
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 2]
+[92mINFO [0m:      configure_fit: strategy sampled 4 clients (out of 4)
+[92mINFO [0m:      aggregate_fit: received 4 results and 0 failures
+[92mINFO [0m:      configure_evaluate: strategy sampled 4 clients (out of 4)
+[92mINFO [0m:      aggregate_evaluate: received 4 results and 0 failures
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 3]
+[92mINFO [0m:      configure_fit: strategy sampled 4 clients (out of 4)
+[92mINFO [0m:      aggregate_fit: received 4 results and 0 failures
+[92mINFO [0m:      configure_evaluate: strategy sampled 4 clients (out of 4)
+[92mINFO [0m:      aggregate_evaluate: received 4 results and 0 failures
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 4]
+[92mINFO [0m:      configure_fit: strategy sampled 4 clients (out of 4)
+[92mINFO [0m:      aggregate_fit: received 4 results and 0 failures
+[92mINFO [0m:      configure_evaluate: strategy sampled 4 clients (out of 4)
+[92mINFO [0m:      aggregate_evaluate: received 4 results and 0 failures
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 5]
+[92mINFO [0m:      configure_fit: strategy sampled 4 clients (out of 4)
+[92mINFO [0m:      aggregate_fit: received 4 results and 0 failures
+[92mINFO [0m:      configure_evaluate: strategy sampled 4 clients (out of 4)
+[92mINFO [0m:      aggregate_evaluate: received 4 results and 0 failures
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 6]
+[92mINFO [0m:      configure_fit: strategy sampled 4 clients (out of 4)
+[92mINFO [0m:      aggregate_fit: received 4 results and 0 failures
+[92mINFO [0m:      configure_evaluate: strategy sampled 4 clients (out of 4)
+[92mINFO [0m:      aggregate_evaluate: received 4 results and 0 failures
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 7]
+[92mINFO [0m:      configure_fit: strategy sampled 4 clients (out of 4)
+[92mINFO [0m:      aggregate_fit: received 4 results and 0 failures
+[92mINFO [0m:      configure_evaluate: strategy sampled 4 clients (out of 4)
+[92mINFO [0m:      aggregate_evaluate: received 4 results and 0 failures
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 8]
+[92mINFO [0m:      configure_fit: strategy sampled 4 clients (out of 4)
+[92mINFO [0m:      aggregate_fit: received 4 results and 0 failures
+[92mINFO [0m:      configure_evaluate: strategy sampled 4 clients (out of 4)
+[92mINFO [0m:      aggregate_evaluate: received 4 results and 0 failures
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 9]
+[92mINFO [0m:      configure_fit: strategy sampled 4 clients (out of 4)
+[92mINFO [0m:      aggregate_fit: received 4 results and 0 failures
+[92mINFO [0m:      configure_evaluate: strategy sampled 4 clients (out of 4)
+[92mINFO [0m:      aggregate_evaluate: received 4 results and 0 failures
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 10]
+[92mINFO [0m:      configure_fit: strategy sampled 4 clients (out of 4)
+[92mINFO [0m:      aggregate_fit: received 4 results and 0 failures
+[92mINFO [0m:      configure_evaluate: strategy sampled 4 clients (out of 4)
+[92mINFO [0m:      aggregate_evaluate: received 4 results and 0 failures
+[92mINFO [0m:      
+[92mINFO [0m:      [SUMMARY]
+[92mINFO [0m:      Run finished 10 round(s) in 1515.74s
+[92mINFO [0m:      	History (loss, distributed):
+[92mINFO [0m:      		round 1: 0.18655408389123201
+[92mINFO [0m:      		round 2: 0.15435363959683027
+[92mINFO [0m:      		round 3: 0.14531879239927625
+[92mINFO [0m:      		round 4: 0.143935544992728
+[92mINFO [0m:      		round 5: 0.1440771239859712
+[92mINFO [0m:      		round 6: 0.1436012535906204
+[92mINFO [0m:      		round 7: 0.14373821677292323
+[92mINFO [0m:      		round 8: 0.14325911297803492
+[92mINFO [0m:      		round 9: 0.14451063586317975
+[92mINFO [0m:      		round 10: 0.14243662755583864
+[92mINFO [0m:      	History (metrics, distributed, fit):
+[92mINFO [0m:      	{'train_loss': [(1, 0.23933874813908715),
+[92mINFO [0m:      	                (2, 0.1190838212761231),
+[92mINFO [0m:      	                (3, 0.10484126133928102),
+[92mINFO [0m:      	                (4, 0.09693939650430823),
+[92mINFO [0m:      	                (5, 0.09296572875579612),
+[92mINFO [0m:      	                (6, 0.09037167187446646),
+[92mINFO [0m:      	                (7, 0.08910940822047261),
+[92mINFO [0m:      	                (8, 0.0888127744192714),
+[92mINFO [0m:      	                (9, 0.08701192647924148),
+[92mINFO [0m:      	                (10, 0.0865722870645593)]}
+[92mINFO [0m:      	History (metrics, distributed, evaluate):
+[92mINFO [0m:      	{'accuracy': [(1, 0.96604),
+[92mINFO [0m:      	              (2, 0.965025),
+[92mINFO [0m:      	              (3, 0.96472625),
+[92mINFO [0m:      	              (4, 0.96464625),
+[92mINFO [0m:      	              (5, 0.96461375),
+[92mINFO [0m:      	              (6, 0.96461375),
+[92mINFO [0m:      	              (7, 0.96461375),
+[92mINFO [0m:      	              (8, 0.9646125),
+[92mINFO [0m:      	              (9, 0.9646125),
+[92mINFO [0m:      	              (10, 0.9646125)],
+[92mINFO [0m:      	 'f1': [(1, 0.9825991627632873),
+[92mINFO [0m:      	        (2, 0.9820914115654511),
+[92mINFO [0m:      	        (3, 0.9819420929467574),
+[92mINFO [0m:      	        (4, 0.981902090815217),
+[92mINFO [0m:      	        (5, 0.981885896236762),
+[92mINFO [0m:      	        (6, 0.9818858967585393),
+[92mINFO [0m:      	        (7, 0.9818858967585393),
+[92mINFO [0m:      	        (8, 0.9818852718065941),
+[92mINFO [0m:      	        (9, 0.9818852718065941),
+[92mINFO [0m:      	        (10, 0.9818852718065941)],
+[92mINFO [0m:      	 'precision': [(1, 0.9660284709287416),
+[92mINFO [0m:      	               (2, 0.9650104359077779),
+[92mINFO [0m:      	               (3, 0.9647260385841396),
+[92mINFO [0m:      	               (4, 0.9646472686117178),
+[92mINFO [0m:      	               (5, 0.9646136766308832),
+[92mINFO [0m:      	               (6, 0.9646137279248895),
+[92mINFO [0m:      	               (7, 0.9646137279248895),
+[92mINFO [0m:      	               (8, 0.9646125),
+[92mINFO [0m:      	               (9, 0.9646125),
+[92mINFO [0m:      	               (10, 0.9646125)],
+[92mINFO [0m:      	 'recall': [(1, 0.9999669031584422),
+[92mINFO [0m:      	            (2, 0.9999974040500441),
+[92mINFO [0m:      	            (3, 0.9999974040500441),
+[92mINFO [0m:      	            (4, 0.9999974040500441),
+[92mINFO [0m:      	            (5, 1.0),
+[92mINFO [0m:      	            (6, 1.0),
+[92mINFO [0m:      	            (7, 1.0),
+[92mINFO [0m:      	            (8, 1.0),
+[92mINFO [0m:      	            (9, 1.0),
+[92mINFO [0m:      	            (10, 1.0)]}
+[92mINFO [0m:      
+[92mINFO [0m:      
