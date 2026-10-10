@@ -55,7 +55,7 @@ The folders in `results/msc/superseded/` are named after the study, the run and 
 | Folder | Why it was replaced |
 |---|---|
 | `campaign_{naive,sisa}_seed{50,51}_wrong_fraction` | Poison fraction 0.5 instead of 1.0; rerun with 1.0 |
-| `campaign_sisa_seed50_other_session` | Ran on a different day than its naive pair (Pi idle at 51 °C vs 68 °C); the pair was rerun in one session |
+| `campaign_sisa_seed50_other_session` | First SISA run of seed 50 (morning of 3 Oct, Pi idle at 51 °C); repeated that evening, closer in time to its naive run |
 | `model_size_session_meter_drops` | First benchmark session; the power meter dropped out several times, so the whole session was repeated |
 | `model_size_w1280_sisa_seed42_no_power` | Validation run whose recovery phase has no power data; rerun |
 | `locality_permission_error` | First start of the sweep, stopped at the first recovery by a file permission error; no recovery result |
