@@ -1,22 +1,20 @@
 #!/bin/bash
-# Control runs for the utility analysis (H5), same hybrid topology as the campaign with the
-# Pi as node 4. Nothing physical is measured, so no power meter, telemetry or cooldown.
+# Control runs for the utility analysis, same topology as the campaign; nothing physical is
+# measured. 15 rounds = Phase 1 (10) + Phase 4 (5) of a campaign run.
 #
-#   clean_naive  - no poison, standard client on the Pi, 15 rounds (reference, arm A)
-#   clean_sisa   - no poison, SISA client on the Pi, 15 rounds (reference, arm B)
-#   poisoned_sisa - poisoned Phase 1 (10 rounds) + SISA recovery on the Pi, keeping the
-#                  constituent checkpoints for the ensemble-vs-average comparison
+#   clean_naive    no poison, standard client on the Pi, 15 rounds
+#   clean_sisa     no poison, SISA client on the Pi, 15 rounds
+#   poisoned_sisa  poisoned Phase 1 (10 rounds) + SISA recovery, keeping the shard models
 #
-# 15 rounds = Phase 1 (10) + Phase 4 (5) of the main protocol.
-# Usage: experiments/controls/run.sh SEED [REF_ROUNDS] [P1_ROUNDS]
+#   experiments/controls/run.sh SEED [REF_ROUNDS] [P1_ROUNDS]
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/../.."
+source experiments/lib.sh
 
 SEED=${1:?usage: $0 SEED [REF_ROUNDS] [P1_ROUNDS]}
 REF_ROUNDS=${2:-15}
 P1_ROUNDS=${3:-10}
 OUT=${OUT:-results/msc/controls}
-PI=admin@rasp5node.local
 PI_CKPT=msc-experiment/checkpoints
 HOST_IP=${HOST_IP:-$(ipconfig getifaddr en0)}
 export SEED
@@ -52,7 +50,6 @@ fetch_constituents() {  # dest_dir round
   for s in 0 1 2 3 4; do scp -q "$PI:$PI_CKPT/shard${s}_round$2_slice4.pt" "$1/"; done
 }
 
-# Data for this seed; the Pi gets its partition and must report the same seed back.
 python3 experiments/prepare_edge_data.py --seed "$SEED" > /dev/null
 scp -q data/.cache/msc/partition_3_of_4.npz data/.cache/msc/manifest.json "$PI:master-thesis/data/.cache/msc/"
 pi_seed=$(ssh "$PI" "python3 -c \"import json; print(json.load(open('master-thesis/data/.cache/msc/manifest.json'))['seed'])\"")

@@ -15,4 +15,4 @@ jobs:
       - run: pip install flake8 yamllint
       - run: flake8 .
       - run: yamllint .
-      - run: shellcheck experiments/*.sh experiments/run/*.sh
+      - run: shellcheck experiments/*.sh experiments/*/*.sh
