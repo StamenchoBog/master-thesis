@@ -1,19 +1,11 @@
-"""Utility analysis of the control runs (experiments/controls/run.sh), three questions:
+"""Utility of the control runs (experiments/controls/run.sh).
 
     python -m analysis.evaluate_controls
 
-1. H5 in its registered form: is each arm's Phase-4 model as good as a federation of the
-   same arm trained without any poison? Per seed, Phase-4 model (results/msc/campaign) vs the
-   clean reference (clean_<arm>). Tolerance fixed before the data: a median drop of at
-   most 0.02 in F1 (the registered metric) and in balanced accuracy.
-2. Does the SISA collapse need unlearning at all? Clean SISA federation vs clean naive
-   federation at the 0.5 threshold.
-3. Is the collapse caused by parameter averaging? The Pi's five SISA constituents, scored
-   one by one, as their parameter average (what the client sends) and as an ensemble
-   (mean predicted probability), for the clean, Phase-1 and recovered sets.
-
-Every model is scored on its seed's own test set; the tuned threshold is picked on the
-seed's validation set (analysis.build_val_sets), never on the test set.
+1. H5: each arm's Phase-4 model against a federation of the same arm without poison.
+2. The clean SISA federation against the clean naive one.
+3. The Pi's SISA constituents one by one, as their parameter average and as an ensemble.
+Thresholds are chosen on each seed's validation set, never on the test set.
 """
 
 import argparse
@@ -49,7 +41,6 @@ def metrics(pred, y):
 
 
 def score(prob_test, y_test, prob_val, y_val):
-    """Metrics at 0.5 and at the validation-chosen threshold, plus ROC-AUC."""
     thr = best_threshold(prob_val, y_val)["thr_best"]
     # 0.5 uses `>` like deployment; the tuned threshold uses `>=`, the rule roc_curve picks it with.
     row = dict(metrics((prob_test > 0.5).astype(int), y_test))
@@ -73,14 +64,13 @@ def from_state(state, input_dim):
 
 
 def averaged(states):
-    """Same aggregation as sisa_client.averaged_parameters: mean of every tensor."""
+    """The same aggregation as sisa_client.averaged_parameters."""
     keys = states[0].keys()
     avg = {k: torch.stack([s[k].float() for s in states]).mean(0) for k in keys}
     return {k: v.to(states[0][k].dtype) for k, v in avg.items()}
 
 
 def paired(df, a, b, metric):
-    """Median paired difference a - b over seeds, with the thesis' statistics."""
     p = df.pivot(index="seed", columns="model", values=metric)[[a, b]].dropna()
     if len(p) < 2:
         return None
@@ -117,7 +107,6 @@ def main():
             rows.append({"seed": seed, "model": name,
                          **score(predict(model, Xt), yt, predict(model, Xv), yv)})
 
-        # Global models: campaign Phase 4 and the clean references.
         for arm in ("naive", "sisa"):
             ckpt = os.path.join(args.runs, f"{arm}_seed{seed}", "phase4_checkpoints", "round_5.npz")
             if os.path.exists(ckpt):
@@ -128,12 +117,12 @@ def main():
             if ref:
                 add(f"{arm}_clean", load_model(ref[-1], dim))
 
-        # The Pi's local SISA constituents: one by one, averaged, ensembled.
         sets = {"constituents_clean": ("clean_sisa", "constituents"),
                 "constituents_phase1": ("poisoned_sisa", "phase1_constituents"),
                 "constituents_recovered": ("poisoned_sisa", "constituents")}
         for name, (run, sub) in sets.items():
-            paths = sorted(glob.glob(os.path.join(args.controls, f"{run}_seed{seed}", sub, "shard*.pt")))
+            pattern = os.path.join(args.controls, f"{run}_seed{seed}", sub, "shard*.pt")
+            paths = sorted(glob.glob(pattern))
             if len(paths) != 5:
                 continue
             states = [torch.load(p, map_location="cpu", weights_only=True)["model"] for p in paths]

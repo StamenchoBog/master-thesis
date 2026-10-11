@@ -1,21 +1,10 @@
-"""Empirically verify machine unlearning: has the recovered model *forgotten* the removed data?
+"""Membership-inference check of the unlearning.
 
     python -m analysis.evaluate_unlearning <model.pt|round.npz> \
         [--cache data/.cache/msc/partition_3_of_4.npz]
 
-Exact unlearning is guaranteed by construction (the recovered SISA constituents never
-trained on the removed samples), but a reviewer wants that *demonstrated*, not just
-argued. This is a membership-inference test: a model assigns lower loss to samples it
-trained on than to unseen ones, so we compare the model's per-sample loss on
-
-  removed:  the unlearned samples (poison indices), scored against their TRUE labels
-  holdout:  validation rows never trained on (known non-members)
-  retained: kept training rows (known members; positive control)
-
-For successful unlearning the removed set is indistinguishable from the holdout
-(membership-inference AUC ≈ 0.5). Run it on the pre-recovery poisoned model too and
-the removed set scores like members (AUC > 0.5), so the test can tell "forgotten"
-from "still remembered".
+Compares the per-sample loss on the removed samples (true labels), held-out rows and retained
+training rows. Forgotten data scores like the held-out rows (AUC about 0.5).
 """
 
 import argparse
@@ -40,11 +29,7 @@ def per_sample_loss(model, X, y, batch=4096):
 
 
 def membership_auc(member_loss, nonmember_loss):
-    """AUC that member samples (lower loss ⇒ more member-like) rank above non-members.
-
-    0.5 means the two groups are indistinguishable (forgotten); > 0.5 means members
-    are identifiable (remembered). Rank-based Mann–Whitney form, no sklearn needed.
-    """
+    """AUC that members (lower loss) rank above non-members; 0.5 means indistinguishable."""
     score = np.concatenate([-member_loss, -nonmember_loss])  # higher score = more member-like
     order = np.argsort(score, kind="mergesort")
     ranks = np.empty(len(score))

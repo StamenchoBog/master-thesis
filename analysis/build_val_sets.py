@@ -1,16 +1,9 @@
-"""Rebuild each seed's federation validation set, for picking a decision threshold.
+"""Rebuild each seed's validation splits, used to choose the decision threshold.
 
     python -m analysis.build_val_sets            # writes data/.cache/msc/val_seed{S}.npz
 
-The tuned threshold in evaluate_utility.py is chosen on the test set itself, so it's an
-upper bound. A deployable threshold has to come from data the federation already has:
-the validation split of each node (rows past TRAIN_FRACTION of its 1M subsample). Those
-rows are disjoint from the seed's test set, since prepare_edge_data.py draws the test
-rows after the node subsample.
-
-prepare_edge_data.py is deterministic in the seed, so this re-runs it per seed into a
-temp dir (data/.cache/msc is left alone) and keeps only the 4 validation splits. As a
-sanity check the regenerated test set must match test_seed{S}.npz byte for byte.
+Re-runs prepare_edge_data.py per seed in a temp dir; the regenerated test set must match
+test_seed{S}.npz byte for byte.
 """
 
 import argparse

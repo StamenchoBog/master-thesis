@@ -5,13 +5,11 @@ import os
 import torch
 import torch.nn as nn
 
-# First hidden width; the other two are half and a quarter of it. 128 is the model of the
-# main campaign. Other widths are only used by the model-size study (protocol Addendum A).
+# 128 is the campaign model; other widths are only for the model-size study.
 MODEL_WIDTH = int(os.getenv("MODEL_WIDTH", "128"))
 
 
 class IDSModel(nn.Module):
-    """MLP binary classifier: outputs the probability that a network flow is an attack."""
 
     def __init__(self, input_dim: int, width: int = MODEL_WIDTH):
         super().__init__()

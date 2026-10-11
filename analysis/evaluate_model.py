@@ -1,11 +1,8 @@
-"""Evaluate a model against the clean global test set (host-side).
+"""Score a model on the global test set.
 
     python -m analysis.evaluate_model <model> [--test data/.cache/msc/test_global.npz]
 
-<model> is either a recovered model (.pt state dict) or a per-round global
-checkpoint (.npz array list in state-dict order). Prints JSON with
-accuracy/precision/recall/F1. Recall on the attack class doubles as the
-attack-success readout (attack success = 1 - recall).
+<model> is a recovered model (.pt) or a per-round global checkpoint (.npz).
 """
 
 import argparse

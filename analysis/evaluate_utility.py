@@ -1,31 +1,17 @@
-"""Re-score saved global models with balanced, imbalance-aware metrics (H5).
+"""Re-score the saved global models with metrics that hold up under class imbalance (H5).
 
-    python -m analysis.evaluate_utility           # needs torch + scikit-learn
+    python -m analysis.evaluate_utility --phase1 \
+      --test-template data/.cache/msc/test_seed{seed}.npz \
+      --val-template data/.cache/msc/val_seed{seed}.npz
 
-Recall/F1 are near-trivial on the 96.5%-attack test set (predicting all-attack scores
-recall 1.0, F1 0.98). That masks the real effect: at the deployed 0.5 threshold, SISA's
-parameter-averaged model collapses to the majority class (balanced accuracy ~0.50 =
-chance) while naive retraining keeps benign discrimination (~0.60), even though
-ROC-AUC is comparable, so it's a *calibration* failure, not lost information.
-
-Loads each run's Phase-4 model (and, with --phase1, the Phase-1 model, to show the
-collapse predates recovery). Writes results/msc/tables/campaign_utility.csv.
-
-Threshold sweep: reports the best attainable balanced accuracy per model (the
-`*_tuned` columns), turning "ROC-AUC survives" into a measurement of how much
-discrimination is recoverable by calibration alone.
-
-Per-seed test sets: `prepare_edge_data.py` overwrites the same `test_global.npz` per
-seed, so scoring all 20 models against whichever file is on disk means 9/10 seeds see
-rows from their own training subsample (paired contrasts stay valid; absolute values
-skew optimistic). Use --test-template for a clean per-seed comparison:
+Writes results/msc/tables/campaign_utility.csv: metrics at 0.5, at the threshold chosen on the
+validation splits (*_val) and at the test-optimal threshold (*_tuned). Build the per-seed test
+sets first:
 
     for S in 42 43 44 45 46 47 48 49 50 51; do
       python3 experiments/prepare_edge_data.py --seed $S
       cp data/.cache/msc/test_global.npz data/.cache/msc/test_seed$S.npz
     done
-    python -m analysis.evaluate_utility --phase1 \
-      --test-template data/.cache/msc/test_seed{seed}.npz
 """
 
 import argparse
@@ -61,13 +47,8 @@ def _counts(pred, y):
 
 
 def best_threshold(prob, y):
-    """Threshold maximising balanced accuracy (= Youden's J), and the metrics there.
-
-    Uses the ROC sweep (every attainable operating point) rather than a fixed grid.
-    Metrics are derived from tpr/fpr, not by re-thresholding at `thr`: roc_curve
-    scores positive on `>=` while deployment uses `>`, which would make the *_tuned
-    metrics disagree with balanced_acc_tuned at tied scores.
-    """
+    """Threshold that maximises balanced accuracy. Metrics come from tpr/fpr, because
+    roc_curve picks with >= while deployment uses >."""
     fpr, tpr, thr = roc_curve(y, prob)
     bacc = (tpr + (1.0 - fpr)) / 2.0
     i = int(np.argmax(bacc))
@@ -162,7 +143,6 @@ def main():
     cache = {}
 
     def test_set(seed):
-        """Load (and memoise) the test set for one seed; falls back to the shared file."""
         path = args.test_template.format(seed=seed) if args.test_template else args.test
         if path not in cache:
             d = np.load(path)

@@ -1,21 +1,11 @@
-"""Build MSc experiment data caches from the full course partition caches.
-
-Run on the host after `docker compose run --rm preprocessor`:
+"""Build the experiment's data caches from the course partition caches.
 
     python experiments/prepare_edge_data.py --seed 42
 
-Outputs to data/.cache/msc/:
-  partition_{i}_of_4.npz:  equal-sized stratified subsamples (X, y, poison_idx)
-  test_global.npz:         clean held-out test set drawn disjointly from all partitions
-
-All four nodes get the SAME subsample size: FedAvg weights clients by sample
-count, so unequal sizes would dilute the Pi's poisoned/cleaned contribution and
-confound the arms comparison.
-
-Poison indices (seeded label flips, attack->benign, confined to slices
->= --poison-from-slice of shard --poison-shard) are embedded in the Pi's
-partition only; labels on disk stay clean and are flipped at load time when
-POISON_ENABLED=1.
+Writes data/.cache/msc/partition_{i}_of_4.npz, equal-sized stratified subsamples (FedAvg
+weights clients by sample count), and test_global.npz, a disjoint test set. The Pi's
+partition carries the poison indices; labels on disk stay clean and are flipped at load time
+(POISON_MODE=flip).
 """
 
 import argparse
@@ -55,9 +45,7 @@ def main():
     p.add_argument("--slices", type=int, default=5)
     p.add_argument("--poison-shard", type=int, default=1)
     p.add_argument("--poison-from-slice", type=int, default=3)
-    # 1.0 is the value used for the experiment ("source fully compromised at time tau").
-    # The default used to be 0.5, which is how seeds 50 and 51 ended up with half-sized
-    # poison sets (see the limitations chapter). Don't change it.
+    # Must stay 1.0: an old default of 0.5 gave seeds 50 and 51 half-sized poison sets.
     p.add_argument("--poison-fraction", type=float, default=1.0,
                    help="fraction of attack samples flipped within the target slices")
     args = p.parse_args()

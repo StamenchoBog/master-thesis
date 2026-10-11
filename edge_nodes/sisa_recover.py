@@ -1,21 +1,9 @@
-"""SISA unlearning (Arm B recovery): rollback + partial replay. Run on the Pi.
+"""SISA recovery on the Pi: roll back the affected shards and replay them without the poison.
 
     python -m edge_nodes.sisa_recover
 
-Procedure (timed end-to-end; this is the primary measurement window):
-1. The oracle poison mask (poison_idx in the partition cache) identifies the
-   compromised samples; the shard/slice assignment locates the affected
-   constituent and the earliest poisoned slice l*.
-2. The affected constituent rolls back to its checkpoint from round 1,
-   slice l*-1, the last state provably untouched by poison (later rounds
-   carried poison influence forward, so their checkpoints are all tainted).
-3. Replay: finish round 1 from slice l* and re-run rounds 2..NUM_ROUNDS on the
-   cleaned shard (poisoned samples dropped). Untouched constituents keep their
-   Phase-1 checkpoints. That is the S-fold saving over naive retraining.
-4. The parameter average of all constituents is saved as the recovered model.
-
-Labels on disk are clean (poison is applied at load time), so replay simply
-drops the poisoned rows and trains on true labels for the rest.
+An affected shard returns to its checkpoint from round 1, slice l*-1, the last state without
+poison (every later round trained on it), and replays the rest of rounds 1..NUM_ROUNDS.
 """
 
 import json
@@ -91,7 +79,7 @@ def main():
             model = IDSModel(input_dim=X.shape[1]).to(DEVICE)
             model.load_state_dict(state["model"])
             optimizer = torch.optim.Adam(model.parameters(), lr=LR)
-            optimizer.load_state_dict(state["optim"])  # resume mid-round-1 exactly
+            optimizer.load_state_dict(state["optim"])
             print(f"[shard {shard}] rolled back to {rollback}")
 
         for rnd in range(1, NUM_ROUNDS + 1):

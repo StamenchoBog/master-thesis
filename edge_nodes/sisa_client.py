@@ -1,20 +1,8 @@
-"""SISA client (Arm B): sharded, isolated, sliced training with checkpoint rollback.
+"""SISA client: S shards x R slices, one constituent per shard, a checkpoint after every slice.
 
-Adaptation of SISA (Bourtoule et al., 2021) to a federated client:
-- Local train set split into S shards x R slices (seeded, shared with
-  prepare_edge_data.py via sisa_partition.py).
-- One constituent per shard, trained ONLY on its shard. Constituents never absorb
-  the broadcast global weights, otherwise rollback checkpoints would inherit
-  poison via the global model, breaking the local unlearning guarantee.
-- FL update = parameter average of constituents, not vanilla SISA's prediction
-  ensembling (required to fit FedAvg). Both deviations are documented.
-- Checkpoint after every slice with fsync, since I/O is a measured quantity.
-- Rounds are counted locally (state.json): Phase 4 is a separate `flwr run`
-  whose server_round restarts at 1.
-
-Timings go to TELEMETRY_DIR (RAM) as JSONL; FL fit metrics carry only
-train_loss because the server's _weighted_average requires identical metric
-keys across all clients.
+Constituents never take the global weights (that would carry the poison into every checkpoint),
+and the FL update is their parameter average. Rounds are counted locally (state.json), because
+Phase 4 is a new `flwr run` whose rounds restart at 1.
 """
 
 import json
@@ -42,7 +30,7 @@ def ckpt_path(shard: int, rnd: int, slc: int) -> str:
 
 
 def save_checkpoint(path: str, model, optimizer, rnd: int, slc: int) -> tuple[float, int]:
-    """Persist constituent + optimizer state with fsync; returns (seconds, bytes)."""
+    """Returns (seconds, bytes); fsync, because checkpoint I/O is a measured quantity."""
     start = time.perf_counter()
     with open(path, "wb") as f:
         torch.save({"model": model.state_dict(), "optim": optimizer.state_dict(),
@@ -53,7 +41,7 @@ def save_checkpoint(path: str, model, optimizer, rnd: int, slc: int) -> tuple[fl
 
 
 def slice_loader(X, y, idx, seed_key: int, batch_size: int = 512):
-    """Shuffled loader over one slice; seed_key fixes the batch order so replay is exact."""
+    """seed_key fixes the batch order, so a replay is exact."""
     gen = torch.Generator().manual_seed(seed_key)
     return DataLoader(
         TensorDataset(torch.from_numpy(X[idx]), torch.from_numpy(y[idx])),
@@ -62,7 +50,6 @@ def slice_loader(X, y, idx, seed_key: int, batch_size: int = 512):
 
 
 def train_slice(model, optimizer, loader, criterion):
-    """One epoch over a single slice; returns (summed loss, batch count)."""
     model.train()
     total, batches = 0.0, 0
     for Xb, yb in loader:
@@ -77,12 +64,10 @@ def train_slice(model, optimizer, loader, criterion):
 
 
 def batch_seed(seed: int, rnd: int, shard: int, slc: int) -> int:
-    """Unique seed per (round, shard, slice), so replay reproduces the same batches."""
     return seed * 1_000_000 + rnd * 10_000 + shard * 100 + slc
 
 
 class SISATrainer:
-    """Owns the S constituents, their data assignment, and the local round counter."""
 
     def __init__(self, partition_id: int, num_partitions: int):
         X, y, split, poison_idx = load_arrays(partition_id, num_partitions)
@@ -107,7 +92,7 @@ class SISATrainer:
         return 0
 
     def _init_or_resume(self, shard: int):
-        """Fresh seeded constituent, or resume from its latest checkpoint (Phase 4 rejoin)."""
+        """Fresh seeded constituent, or its latest checkpoint when rejoining in Phase 4."""
         torch.manual_seed(SEED * 1000 + shard)
         model = IDSModel(input_dim=self.input_dim).to(DEVICE)
         if self.round > 0:
@@ -116,7 +101,6 @@ class SISATrainer:
         return model
 
     def train_round(self, lr: float, telemetry) -> float:
-        """Train every constituent one epoch over its shard, checkpointing per slice."""
         rnd = self.round + 1
         # Dropout uses the global torch RNG; re-seed per round so results don't
         # depend on how long the process has been running.
@@ -142,7 +126,6 @@ class SISATrainer:
         return losses / max(batches, 1)
 
     def averaged_parameters(self):
-        """Parameter average of all constituents, used as the client's FL update."""
         keys = self.models[0].state_dict().keys()
         stacked = {k: torch.stack([m.state_dict()[k].float() for m in self.models]).mean(0)
                    for k in keys}
@@ -157,7 +140,6 @@ _trainer = None
 
 
 class SISAClient(FlowerClient):
-    """FL client whose fit trains the isolated constituents; evaluate is inherited."""
 
     def __init__(self, trainer, eval_model, valloader):
         super().__init__(eval_model, None, valloader)  # no trainloader: fit is overridden
@@ -176,7 +158,6 @@ class SISAClient(FlowerClient):
 
 
 def client_fn(context: Context):
-    """Instantiate the SISA client, keeping the trainer alive across fit calls."""
     global _trainer
     partition_id = int(context.node_config["partition-id"])
     num_partitions = int(context.node_config["num-partitions"])

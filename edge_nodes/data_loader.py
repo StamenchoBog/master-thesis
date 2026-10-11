@@ -13,8 +13,7 @@ CACHE_DIR = os.getenv("CACHE_DIR", os.path.join(DATA_DIR, ".cache"))
 # off: clean data. flip: poisoned labels (Phase 1). drop: poisoned rows removed (Phase 4).
 POISON_MODE = os.getenv("POISON_MODE", "off")
 
-# client_fn can run once per message, so cache the arrays instead of re-reading
-# the ~160 MB npz from the SD card every round.
+# client_fn can run once per message: read the npz once, not every round.
 _arrays_cache = {}
 
 
@@ -23,15 +22,8 @@ def _cache_path(partition_id: int, num_partitions: int) -> str:
 
 
 def load_arrays(partition_id: int, num_partitions: int):
-    """Load a partition's raw arrays, applying POISON_MODE=flip if set.
-
-    Poison indices come from experiments/prepare_edge_data.py (seeded, confined
-    to one SISA shard's later slices) so the poisoned dataset is bit-identical
-    across arms. Row dropping (POISON_MODE=drop) is left to callers since the
-    SISA shard/slice assignment is positional and must keep original indexing.
-
-    Returns (X, y, split, poison_idx); split is the train/val boundary.
-    """
+    """Returns (X, y, split, poison_idx). Poisoned rows are never dropped here, because the
+    SISA shard/slice assignment is positional."""
     key = (partition_id, num_partitions)
     if key in _arrays_cache:
         return _arrays_cache[key]
@@ -63,11 +55,7 @@ def load_arrays(partition_id: int, num_partitions: int):
 
 
 def load_data(partition_id: int, num_partitions: int, batch_size: int = 512):
-    """Return (trainloader, valloader, input_dim) for one partition.
-
-    With POISON_MODE=drop the poisoned rows are removed from the train loader
-    (labels stay true for the retained rows); the val loader is always clean.
-    """
+    """With POISON_MODE=drop the poisoned rows leave the train loader; validation stays clean."""
     X, y, split, poison_idx = load_arrays(partition_id, num_partitions)
 
     train_idx = np.arange(split)

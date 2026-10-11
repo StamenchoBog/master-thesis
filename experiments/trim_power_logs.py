@@ -1,16 +1,9 @@
-"""Trim each run's power_fnb58.csv to the samples the analysis actually uses.
+"""Trim each run's power_fnb58.csv to the phase-marker span the analysis reads.
 
     python experiments/trim_power_logs.py [--runs results/msc/campaign] [--apply]
 
-The FNB58 logger runs continuously, so most of a run's power CSV is idle pre-roll
-(before Phase 1) and post-tail (after `done`), pure noise that bloats the file to
-100+ MB. `analysis/analyze_runs.py` only reads samples inside the phase-marker windows
-(phase1/idle/phase3/idle/phase4 → done). This keeps exactly that span
-[first marker − 1 s, last marker + 1 s] and drops the rest, so the analysis output is
-unchanged while the file shrinks to a size small enough to version in git.
-
-Dry-run by default (prints before/after sizes); pass --apply to rewrite in place.
-The original blank-line + header are preserved.
+Keeps [first marker - 1 s, last marker + 1 s], so the analysis output does not change.
+Dry run unless --apply.
 """
 
 import argparse

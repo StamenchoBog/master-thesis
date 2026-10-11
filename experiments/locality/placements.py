@@ -1,13 +1,9 @@
-"""Poison placements for the locality sweep (experiments/protocol.md, Addendum B).
+"""Poison placements for the locality sweep, written to data/.cache/locality/<name>/.
 
-    python3 experiments/locality/placements.py            # writes data/.cache/locality/<name>/
+    python3 experiments/locality/placements.py
 
-Each placement is a copy of the Pi's partition (seed 42) with a different poison index
-set: a fraction of the attack samples in slices >= l* of shards 1..k, chosen the same way
-as in the campaign (edge_nodes.sisa_partition). The sweep uses fraction 0.05, so about the
-same data is left to replay in every configuration; k1_l3_full uses 1.0 and is exactly the
-campaign placement. The recovery scripts read the file through CACHE_DIR, so nothing in
-the recovery code changes.
+Each is the Pi's seed-42 partition with 5 % of the attack samples in slices >= l* of shards
+1..k poisoned; k1_l3_full poisons all of them, as in the campaign.
 """
 
 import argparse

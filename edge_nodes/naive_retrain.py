@@ -1,13 +1,8 @@
-"""Naive retraining (Arm A recovery): from-scratch local retrain. Run on the Pi.
+"""Naive retraining on the Pi: drop the poisoned rows and retrain from scratch.
 
     python -m edge_nodes.naive_retrain
 
-The oracle poison mask identifies compromised samples; they are dropped and a
-fresh seeded model is trained on all retained local data for NUM_ROUNDS epochs
-(the same budget as Phase-1 participation: NUM_ROUNDS rounds x 1 local epoch,
-with a fresh Adam per epoch to mirror the FL client's per-round optimizer).
-This is the exact-unlearning gold standard at client level, and the expensive
-arm: full-dataset compute, sustained load on the fanless Pi.
+NUM_ROUNDS epochs with a fresh Adam per epoch, the same budget as the client in Phase 1.
 """
 
 import json

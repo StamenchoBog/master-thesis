@@ -1,18 +1,8 @@
-"""Aggregate MSc experiment runs into a summary table and paired statistics.
+"""Summary table and paired statistics of the campaign runs.
 
-    python -m analysis.analyze_runs [--runs results/msc/campaign]
+    python -m analysis.analyze_runs [--runs results/msc/campaign] [--tables results/msc/tables]
 
-Per run directory (layout described in the README) it reads:
-  recovery_manifest.json      TTR, checkpoint I/O (SISA)
-  hardware_telemetry_*.csv    temp/throttle/iowait/SD-I/O traces + phase markers
-  power_fnb58.csv + phases.log  FNB58 power samples, integrated per phase window
-  sisa_timings.jsonl          Phase-1 SISA overhead (per-slice train + ckpt I/O)
-  results_phase{1,4}.json     per-round global F1/recall
-
-Writes campaign_summary.csv and campaign_paired_stats.csv to results/msc/tables. Per metric: medians + IQR,
-Wilcoxon signed-rank p, Cliff's delta, and a bootstrap 95% CI on the paired difference.
-With small N the effect size and CI carry the argument, not p. Throttling counts only
-the *live* flag bits (the "occurred" bits are sticky); energy is net of the idle baseline.
+Writes campaign_summary.csv and campaign_paired_stats.csv.
 """
 
 import argparse
@@ -37,7 +27,7 @@ POISON_FROM_SLICE = 3
 
 
 def cliffs_delta(a, b) -> float:
-    """Cliff's delta effect size: P(a>b) - P(a<b) over all pairs."""
+    """P(a > b) - P(a < b) over all pairs."""
     a, b = np.asarray(a), np.asarray(b)
     gt = sum((x > b).sum() for x in a)
     lt = sum((x < b).sum() for x in a)
@@ -45,11 +35,7 @@ def cliffs_delta(a, b) -> float:
 
 
 def active_throttle(hexflag) -> tuple:
-    """(thermal_now, undervoltage_now) from a vcgencmd get_throttled hex string.
-
-    Bits 1/2/3 = capped/throttled/soft-limit *now*; bit 0 = under-voltage *now*.
-    Bits 16-19 are sticky "occurred since boot" flags and are ignored, or throttling
-    would be massively over-reported.
+    """Live bits only: 0 = under-voltage, 1-3 = throttling. Bits 16-19 are sticky.
     """
     try:
         v = int(str(hexflag), 16)
@@ -59,11 +45,7 @@ def active_throttle(hexflag) -> tuple:
 
 
 def _phase_windows(run_dir: str) -> list:
-    """Read phases.log into [(label, start_epoch, end_epoch)] for the measured phases.
-
-    Each phase runs from its marker until the next marker of any kind (usually an
-    `idle`/`done`), so the window bounds the actual workload.
-    """
+    """[(label, start, end)] per measured phase; a phase lasts until the next marker."""
     path = os.path.join(run_dir, "phases.log")
     if not os.path.exists(path):
         return []
@@ -78,8 +60,7 @@ def _phase_windows(run_dir: str) -> list:
 
 
 def _idle_power_w(p: pd.DataFrame, run_dir: str):
-    """Median power over the run's `idle` marker windows, i.e. the baseline draw of the
-    whole Pi doing nothing, used to report *net* (marginal) recovery energy."""
+    """Median idle power, subtracted to report net energy."""
     path = os.path.join(run_dir, "phases.log")
     if not os.path.exists(path):
         return None
@@ -101,12 +82,8 @@ def _idle_power_w(p: pd.DataFrame, run_dir: str):
 
 
 def parse_power(run_dir: str, row: dict) -> None:
-    """Per-phase energy (Wh, gross and idle-subtracted net) and power (W) from the FNB58 log.
-
-    Energy is the trapezoidal integral of V*I over each phase window (not the device's
-    cumulative counter, which a mid-run logger restart would zero). Net energy subtracts
-    the idle baseline so H2 reports the *marginal* cost, not the whole idling board.
-    """
+    """Energy integrated from V*I per phase: the meter's own counter restarts with the
+    logger."""
     path = os.path.join(run_dir, "power_fnb58.csv")
     windows = _phase_windows(run_dir)
     if not os.path.exists(path) or not windows:
@@ -141,7 +118,6 @@ def parse_power(run_dir: str, row: dict) -> None:
 
 
 def parse_run(run_dir: str) -> dict:
-    """Extract one run's scalar outcomes from its artifacts."""
     row = {"run": os.path.basename(run_dir)}
     m = re.match(r"(naive|sisa)_seed(\d+)", row["run"])
     if not m:
@@ -172,7 +148,7 @@ def parse_run(run_dir: str) -> dict:
         t["_thermal"] = flags.map(lambda x: x[0])
         t["_undervolt"] = flags.map(lambda x: x[1])
         row["peak_temp_c"] = t["Temp_C"].max()
-        row["undervolt_s"] = int(t["_undervolt"].sum())  # should be 0 with the 5 A cable
+        row["undervolt_s"] = int(t["_undervolt"].sum())
         p3 = t[t["Marker"].astype(str).str.startswith("phase3")]
         if len(p3):
             row["p3_throttled_s"] = int(p3["_thermal"].sum())
@@ -217,11 +193,7 @@ def parse_run(run_dir: str) -> dict:
 
 
 def _bootstrap_ci(diffs, n=10000, seed=0) -> tuple:
-    """95% bootstrap CI for the median paired difference (naive - sisa).
-
-    With small N the CI on the effect communicates uncertainty far better than a
-    p-value; the resample is seeded so the reported interval is reproducible.
-    """
+    """Seeded 95 % bootstrap CI for the median paired difference (naive - sisa)."""
     diffs = np.asarray(diffs, dtype=float)
     rng = np.random.default_rng(seed)
     meds = np.median(rng.choice(diffs, size=(n, len(diffs)), replace=True), axis=1)
@@ -229,14 +201,8 @@ def _bootstrap_ci(diffs, n=10000, seed=0) -> tuple:
 
 
 def add_work_columns(df: pd.DataFrame) -> pd.DataFrame:
-    """Sample-updates performed during recovery, and the resulting throughput.
-
-    Quantifies "SISA is faster because it does less work" (H1): if the time ratio
-    exceeds the work ratio, the surplus is a physical (thermal) effect a FLOP count
-    would miss. naive = retained rows x epochs; sisa = full replayed slices x slice
-    size, plus depleted (poisoned) slices at whatever survived in them. These recur
-    every round, so at S=R=5 with 47 replayed slices it's 27 full + 20 depleted.
-    """
+    """Sample updates in the recovery: naive = rows x epochs; SISA = rows of the replayed
+    slices."""
     pools = {r.seed: r.retained_samples + r.poisoned_samples
              for r in df.itertuples() if r.arm == "naive"
              and pd.notna(r.retained_samples) and pd.notna(r.poisoned_samples)}
@@ -259,7 +225,6 @@ def add_work_columns(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def paired_stats(df: pd.DataFrame, metric: str) -> dict | None:
-    """Wilcoxon signed-rank + Cliff's delta + bootstrap CI for one metric, paired by seed."""
     wide = df.pivot_table(index="seed", columns="arm", values=metric).dropna()
     if len(wide) < 2 or "naive" not in wide or "sisa" not in wide:
         return None

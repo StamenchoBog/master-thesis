@@ -1,17 +1,10 @@
-"""Model-size micro-benchmark on the Pi (experiments/protocol.md, Addendum A). Run inside
-the client image:
+"""Model-size micro-benchmark, run inside the client image on the Pi.
 
     python -m experiments.model_size.benchmark --width 384 --rep 1
 
-For one model width it measures, on the Pi's own data and SD card:
-  1. sustained training throughput (rows/s): slice-by-slice training with the recovery's
-     own loader and training step for --train-s seconds, over the slices of the last 120 s
-  2. checkpoint write and read time for one constituent (model + Adam state), --ckpts
-     times each, fsync'd, distinct files, deleted afterwards
-  3. peak RSS with 5 constituents held in memory (the SISA client keeps all of them)
-
-Results go to TELEMETRY_DIR (RAM) as one JSON per run, and every block writes its name
-to /dev/shm/run_marker so the power log and monitor.sh telemetry can be cut per block.
+For one model width: training throughput with the recovery's own slice code (rows/s over the
+last 120 s of --train-s), checkpoint write and read time (fsync, --ckpts each) and peak RAM
+with 5 constituents in memory. Each block writes its name to /dev/shm/run_marker.
 """
 
 import argparse
@@ -42,13 +35,7 @@ def mark(label: str):
 
 
 def train_block(model, X, y, seconds: float, lr: float, seed: int):
-    """Train slice by slice with the recovery's own code until `seconds` have passed.
-
-    Uses slice_loader + train_slice from the SISA client, so each timing covers what a
-    real recovery pays per slice: building the loader (row copy), batching and the
-    training step, including the per-batch loss.item() sync. Returns per-slice
-    (end timestamp, rows, seconds).
-    """
+    """Returns per-slice (end time, rows, seconds) until `seconds` have passed."""
     criterion = nn.BCELoss()
     order = np.random.default_rng(seed).permutation(len(X))
     slices = np.array_split(order, S * R)  # same slice size as the campaign's SISA layout
@@ -67,7 +54,6 @@ def train_block(model, X, y, seconds: float, lr: float, seed: int):
 
 
 def checkpoint_block(model, optimizer, n: int, tag: str):
-    """Write then read n distinct checkpoints with fsync; returns timings and size."""
     paths = [os.path.join(CHECKPOINT_DIR, f"bench_{tag}_{i}.pt") for i in range(n)]
     writes, reads = [], []
     for p in paths:

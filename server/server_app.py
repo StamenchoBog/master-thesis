@@ -30,14 +30,13 @@ _results = {
 
 
 def _weighted_average(metrics):
-    """Weighted by sample count; requires identical metric keys across clients."""
+    """Requires identical metric keys across clients."""
     total = sum(n for n, _ in metrics)
     keys = metrics[0][1].keys()
     return {k: sum(n * m[k] for n, m in metrics) / total for k in keys}
 
 
 def _save_results():
-    """Persist the current results dict to a JSON file after every round."""
     os.makedirs(RESULTS_DIR, exist_ok=True)
     with open(os.path.join(RESULTS_DIR, f"{FL_STRATEGY}{RESULTS_SUFFIX}.json"), "w") as f:
         json.dump(_results, f, indent=2)
@@ -81,11 +80,7 @@ class ResilientFedAvg(FedAvg):
 
 
 def _with_global_checkpoints(strategy):
-    """Save the aggregated global weights after every round (MSc experiment only).
-
-    Enabled via SAVE_GLOBAL_CHECKPOINTS=1; the course simulation leaves it off.
-    Checkpoints allow the round-resume logic after client-side recovery.
-    """
+    """Saves the global weights after every round when SAVE_GLOBAL_CHECKPOINTS=1."""
     if os.getenv("SAVE_GLOBAL_CHECKPOINTS", "0") != "1":
         return strategy
     original = strategy.aggregate_fit
@@ -104,7 +99,6 @@ def _with_global_checkpoints(strategy):
 
 
 def build_strategy():
-    """Instantiate the aggregation strategy selected via the FL_STRATEGY env var."""
     common = dict(
         fraction_fit=1.0,
         fraction_evaluate=1.0,

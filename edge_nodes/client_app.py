@@ -18,14 +18,12 @@ RECOVERED_MODEL_PATH = os.getenv("RECOVERED_MODEL_PATH", "")
 
 
 def seed_everything(seed: int):
-    """Fix all RNGs for run-to-run comparability (MSc determinism requirement)."""
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
 
 
 class FlowerClient(NumPyClient):
-    """Flower client that trains and evaluates the IDS model on a local data partition."""
 
     def __init__(self, model, trainloader, valloader):
         self.model = model
@@ -42,12 +40,8 @@ class FlowerClient(NumPyClient):
         self.model.load_state_dict(state_dict, strict=True)
 
     def _apply_incoming(self, parameters):
-        """Adopt the broadcast global weights, or the recovered local model once.
-
-        Post-recovery, incoming global weights still carry poison influence, so
-        the first fit after rejoin starts from the recovered model instead
-        (one-time override, tracked with a .used marker file).
-        """
+        """After recovery the global weights still carry the poison, so the first fit after
+        rejoining starts once from the recovered model (tracked with a .used marker)."""
         marker = RECOVERED_MODEL_PATH + ".used" if RECOVERED_MODEL_PATH else ""
         use_recovered = (RECOVERED_MODEL_PATH and os.path.exists(RECOVERED_MODEL_PATH)
                          and not os.path.exists(marker))
@@ -59,7 +53,6 @@ class FlowerClient(NumPyClient):
             self.set_parameters(parameters)
 
     def fit(self, parameters, config):
-        """Train locally for one round; hyperparameters come from the server config."""
         self._apply_incoming(parameters)
         optimizer = torch.optim.Adam(self.model.parameters(), lr=float(config.get("lr", 0.001)))
         self.model.train()
@@ -77,7 +70,6 @@ class FlowerClient(NumPyClient):
         return self.get_parameters({}), len(self.trainloader.dataset), metrics
 
     def evaluate(self, parameters, config):
-        """Evaluate the global model on the local validation set."""
         self.set_parameters(parameters)
         total_loss = 0.0
         tp = fp = fn = correct = 0
@@ -106,7 +98,6 @@ class FlowerClient(NumPyClient):
 
 
 def client_fn(context: Context):
-    """Instantiate a FlowerClient; the partition comes from the SuperNode's --node-config."""
     partition_id = int(context.node_config["partition-id"])
     num_partitions = int(context.node_config["num-partitions"])
     seed_everything(SEED + partition_id)

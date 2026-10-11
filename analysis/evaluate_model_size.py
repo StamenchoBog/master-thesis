@@ -1,19 +1,6 @@
-"""Model-size study (experiments/protocol.md, Addendum A): measurements, fits and cost model.
+"""Model-size study: component fits, cost model and its check against full runs (A1-A5).
 
     python -m analysis.evaluate_model_size
-
-Reads the benchmark output in results/msc/model_size/ (one JSON per width and repetition,
-plus the session's power log, phase log and Pi telemetry) and the campaign tables, then:
-
-1. per measurement: throughput, checkpoint write/read time and size, peak RAM, and from
-   the telemetry the seconds of live under-voltage and throttling in each block
-2. fits fixed in the addendum: A1 1/throughput ~ P^b, A2 checkpoint bytes ~ a*P + c and
-   write time ~ bytes / bandwidth + latency
-3. the cost model T(P) = U / thr(P) + N * t_ckpt(P) + t_load(P) for both arms (U, N from the
-   campaign), with the predicted speed-up and checkpoint I/O share per size (A3)
-4. Phase-1 checkpoint storage and RAM per size, and where storage runs out (A4)
-5. predicted vs measured recovery time at the campaign size and, if present, at the
-   validation pair (A5), plus the same structure for energy where the power log covers it
 """
 
 import argparse
@@ -35,16 +22,16 @@ def load_measurements(d):
     rows = []
     for p in sorted(glob.glob(os.path.join(d, "model_size_w*_r*.json"))):
         j = json.load(open(p))
-        rows.append({k: j[k] for k in ("width", "rep", "params", "rows_per_s_tail", "rows_per_s_all",
-                                       "ckpt_bytes", "ckpt_write_median_s", "ckpt_read_median_s",
-                                       "peak_rss_mb_5_constituents")}
-                    | {"t_train": j["blocks"]["train"], "t_ckpt": j["blocks"]["ckpt"],
-                       "t_ram": j["blocks"]["ram"], "t_end": j["blocks"]["end"]})
+        keys = ("width", "rep", "params", "rows_per_s_tail", "rows_per_s_all", "ckpt_bytes",
+                "ckpt_write_median_s", "ckpt_read_median_s", "peak_rss_mb_5_constituents")
+        blocks = j["blocks"]
+        rows.append({k: j[k] for k in keys}
+                    | {"t_train": blocks["train"], "t_ckpt": blocks["ckpt"],
+                       "t_ram": blocks["ram"], "t_end": blocks["end"]})
     return pd.DataFrame(rows)
 
 
 def telemetry_per_block(d, df):
-    """Live under-voltage / throttling seconds per block, from the Pi telemetry markers."""
     files = sorted(glob.glob(os.path.join(d, "hardware_telemetry_*.csv")))
     if not files:
         return df
@@ -61,16 +48,20 @@ def telemetry_per_block(d, df):
     return df
 
 
+def read_power(path):
+    p = pd.read_csv(path, sep=r"\s+", comment="#", skiprows=1, on_bad_lines="skip",
+                    names=["timestamp", "sample", "v", "i", "dp", "dn", "temp", "energy",
+                           "capacity"])
+    p = p[pd.to_numeric(p["timestamp"], errors="coerce").notna()].astype(float)
+    p["w"] = p["v"] * p["i"]
+    return p
+
+
 def power_per_block(d, df):
-    """Mean power in the training and checkpoint blocks, and the session's idle baseline."""
     p_path = os.path.join(d, "power_fnb58.csv")
     if not os.path.exists(p_path):
         return df, np.nan
-    p = pd.read_csv(p_path, sep=r"\s+", comment="#", names=["timestamp", "sample", "v", "i", "dp", "dn",
-                                                            "temp", "energy", "capacity"],
-                    skiprows=1, on_bad_lines="skip")
-    p = p[pd.to_numeric(p["timestamp"], errors="coerce").notna()].astype(float)
-    p["w"] = p["v"] * p["i"]
+    p = read_power(p_path)
     # Block timestamps come from the Pi's clock; shift them to the host's.
     offset = 0.0
     for line in open(os.path.join(d, "phases.log")):
@@ -87,8 +78,7 @@ def power_per_block(d, df):
         pre = p[(p.timestamp >= r.t_train - offset - 60) & (p.timestamp < r.t_train - offset - 5)]
         if len(pre) > 1000:
             idle.append(pre.w.mean())
-    # Checkpoint-only blocks (one per width, at the end of the session): the planned source of
-    # checkpoint power, independent of drops of the meter in the short checkpoint blocks above.
+    # Checkpoint power comes from the checkpoint-only blocks at the end of the session.
     ckpt_only = {}
     for path in glob.glob(os.path.join(d, "model_size_ckptonly_w*.json")):
         j = json.load(open(path))
@@ -117,8 +107,8 @@ def fit_power_law(x, y):
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--dir", default="results/msc/model_size")
-    ap.add_argument("--tables", default="results/msc/tables", help="where the campaign tables are")
-    ap.add_argument("--out", default="results/msc/tables", help="where to write this study's tables")
+    ap.add_argument("--tables", default="results/msc/tables")
+    ap.add_argument("--out", default="results/msc/tables")
     args = ap.parse_args()
 
     df = load_measurements(args.dir)
@@ -146,14 +136,14 @@ def main():
     ttr_naive = camp[camp.arm == "naive"].ttr_s.median()
     ttr_sisa = camp[camp.arm == "sisa"].ttr_s.median()
 
-    def predict(params, thr, t_ckpt, t_load):
+    def predict(thr, t_ckpt, t_load):
         t_naive = u_naive / thr
         t_sisa = u_sisa / thr + N_CKPT_SISA * t_ckpt + t_load
         return t_naive, t_sisa
 
     pred = []
     for p_, r in med.iterrows():
-        t_n, t_s = predict(p_, r.rows_per_s_tail, r.ckpt_write_median_s, r.ckpt_read_median_s)
+        t_n, t_s = predict(r.rows_per_s_tail, r.ckpt_write_median_s, r.ckpt_read_median_s)
         row = {"params": int(p_), "width": int(r.width), "thr_rows_per_s": r.rows_per_s_tail,
                "ckpt_mb": r.ckpt_bytes / 1e6, "ckpt_write_s": r.ckpt_write_median_s,
                "t_naive_s": t_n, "t_sisa_s": t_s, "speedup": t_n / t_s,
@@ -184,16 +174,18 @@ def main():
     thr_g = 1.0 / (a1_a * grid ** a1_b)
     bytes_g = a2_slope * grid + a2_const
     t_n_g = u_naive / thr_g
-    t_s_g = u_sisa / thr_g + N_CKPT_SISA * (bw_inv * bytes_g + latency) + (rd_inv * bytes_g + rd_latency)
+    t_s_g = (u_sisa / thr_g + N_CKPT_SISA * (bw_inv * bytes_g + latency)
+             + (rd_inv * bytes_g + rd_latency))
     cross = grid[np.argmax(t_s_g >= t_n_g)] if (t_s_g >= t_n_g).any() else np.nan
 
     pd.set_option("display.width", 200)
     print(f"Idle baseline (session): {idle_w:.2f} W")
     print("\nPer size (medians over repetitions):")
     print(pred.round(3).to_string(index=False))
-    print(f"\nA1  sec/row = {a1_a:.3e} * P^{a1_b:.3f}   (exponent < 1: throughput falls slower than P)")
-    print(f"A2  ckpt bytes = {a2_slope:.2f} * P + {a2_const:.0f};  write s = bytes / {1 / bw_inv / 1e6:.1f} MB/s "
-          f"+ {latency * 1e3:.1f} ms")
+    print(f"\nA1  sec/row = {a1_a:.3e} * P^{a1_b:.3f}   "
+          "(exponent < 1: throughput falls slower than P)")
+    print(f"A2  ckpt bytes = {a2_slope:.2f} * P + {a2_const:.0f};  "
+          f"write s = bytes / {1 / bw_inv / 1e6:.1f} MB/s + {latency * 1e3:.1f} ms")
     print(f"A3  speed-up per size: {', '.join(f'{s:.2f}' for s in pred.speedup)}  "
           f"(all > 1: {bool((pred.speedup > 1).all())}); I/O share: "
           f"{', '.join(f'{x:.1%}' for x in pred.io_share_sisa)}")
@@ -201,11 +193,12 @@ def main():
     print(f"A4  storage runs out at P ~ {p_storage:.2e}; fitted time crossover: {cross_txt}"
           f"  (storage first: {bool(np.isnan(cross) or p_storage < cross)})")
 
-    # A5: the campaign point (P = 12,865) and the validation pair if it exists.
+    # A5: predicted against measured recovery time.
     checks = []
     base = pred[pred.params == 12865]
     if len(base):
-        checks.append(("campaign, P=12,865", base.t_naive_s.iloc[0], ttr_naive, base.t_sisa_s.iloc[0], ttr_sisa))
+        checks.append(("campaign, P=12,865", base.t_naive_s.iloc[0], ttr_naive,
+                       base.t_sisa_s.iloc[0], ttr_sisa))
     for vdir in sorted(glob.glob(os.path.join(args.dir, "validation", "w*_naive_seed*"))):
         w = int(os.path.basename(vdir).split("_")[0][1:])
         sdir = vdir.replace("_naive_", "_sisa_")
@@ -213,15 +206,15 @@ def main():
         if len(row) and os.path.exists(os.path.join(sdir, "recovery_manifest.json")):
             m_n = json.load(open(os.path.join(vdir, "recovery_manifest.json")))["total_s"]
             m_s = json.load(open(os.path.join(sdir, "recovery_manifest.json")))["total_s"]
-            checks.append((f"validation, width {w}", row.t_naive_s.iloc[0], m_n, row.t_sisa_s.iloc[0], m_s))
+            checks.append((f"validation, width {w}", row.t_naive_s.iloc[0], m_n,
+                           row.t_sisa_s.iloc[0], m_s))
     for name, pn, mn, ps, ms in checks:
         en, es = abs(pn - mn) / mn, abs(ps - ms) / ms
         ok = en <= TOLERANCE_A5 and es <= TOLERANCE_A5
         print(f"A5  {name}: naive predicted {pn:.1f}s vs measured {mn:.1f}s ({en:.0%}), "
               f"SISA {ps:.1f}s vs {ms:.1f}s ({es:.0%}) -> {'holds' if ok else 'fails'}")
 
-    # Energy check: energy = power x time and time is checked by A5, so compare the mean power
-    # measured in Phase 3 of every full run with the benchmark's training power at that width.
+    # Energy = power x time and A5 checks the time, so compare Phase 3 power with the benchmark.
     print("\nPhase 3 mean power, full runs vs benchmark training power (gross W):")
     bench_w = df.groupby("width").train_mean_w.median()
     for run in sorted(glob.glob(os.path.join(args.dir, "validation", "w*_*_seed*"))):
@@ -234,13 +227,10 @@ def main():
         ends = [float(marks[i + 1][0]) for i, (t, m) in enumerate(marks[:-1]) if m == "phase3"]
         if not starts:
             continue
-        pw = pd.read_csv(p_path, sep=r"\s+", comment="#", names=["timestamp", "sample", "v", "i", "dp",
-                                                                 "dn", "temp", "energy", "capacity"],
-                         skiprows=1, on_bad_lines="skip")
-        pw = pw[pd.to_numeric(pw["timestamp"], errors="coerce").notna()].astype(float)
+        pw = read_power(p_path)
         seg = pw[(pw.timestamp >= starts[0]) & (pw.timestamp < ends[0])]
         cover = coverage(seg.timestamp.values, starts[0], ends[0])
-        mean_w = (seg.v * seg.i).mean() if cover >= 0.95 else float("nan")
+        mean_w = seg.w.mean() if cover >= 0.95 else float("nan")
         ref = bench_w.get(w, float("nan"))
         print(f"  {os.path.basename(run)}: {mean_w:.3f} W (coverage {cover:.0%}) vs benchmark "
               f"{ref:.3f} W -> {(mean_w / ref - 1):+.1%}")

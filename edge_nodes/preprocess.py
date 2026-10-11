@@ -1,7 +1,6 @@
 """Split the TON_IoT CSVs into per-node .npz caches (run once via the preprocessor service).
 
-Each node gets a disjoint set of whole CSV files, scaled independently, so the
-partitions are non-IID by source. Skips work if the caches already exist.
+Each node gets whole CSV files, scaled on their own, so the partitions are non-IID.
 """
 
 import glob

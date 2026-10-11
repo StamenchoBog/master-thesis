@@ -1,13 +1,6 @@
-"""Verification of the unlearning guarantee (synthetic data, no dataset needed).
-
-Checks, on 2000 synthetic rows:
-  1. Poison placement is deterministic and confined to the target slices.
-  2. POISON_MODE=flip corrupts labels in memory while disk labels stay clean.
-  3. The SISA trainer produces one checkpoint per (round, shard, slice).
-  4. Recovery rolls back to a checkpoint that predates the poison and is
-     bit-identical across reruns (determinism requirement of the protocol).
-
-Run inside the client image (has torch + flwr):
+"""Checks the unlearning guarantee on 2000 synthetic rows (no dataset needed): deterministic,
+confined poison placement; flip in memory only; one checkpoint per (round, shard, slice);
+rollback before the poison and a bit-identical recovery.
 
     docker run --rm -v "$PWD":/app -w /app --entrypoint python \
         fl-ids-preprocessor:latest tests/smoke_test.py

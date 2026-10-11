@@ -1,12 +1,7 @@
 #!/usr/bin/env python3
-#
-# FNIRSI FNB58 USB power logger, based on baryluk/fnirsi-usb-power-data-logger
-# (commit 746e4d38515a), reduced to what the thesis uses: FNB58 only, no USB reset (the
-# reflashed meter hangs on one), the stream is restarted after timeouts and I/O errors, and
-# the process exits with code 3 when the meter is lost, so that the restart loop in
-# experiments/run/02_instruments.sh starts a fresh logger (on macOS only a new process gets
-# the meter back). A 5 s heartbeat goes to stderr. Runs as root, because it detaches the
-# kernel HID driver:
+# FNIRSI FNB58 power logger, reduced from baryluk/fnirsi-usb-power-data-logger (746e4d38515a).
+# Exits with code 3 when the meter is lost; the restart loop in experiments/run/02_instruments.sh
+# then starts a fresh process (on macOS only a new process gets the meter back).
 #   sudo python3 -u experiments/fnirsi_logger.py > power_fnb58.csv
 
 import signal
@@ -85,7 +80,8 @@ def connect(attempts=10):
         if dev is not None:
             try:
                 interface_hid_num = next(
-                    intf.bInterfaceNumber for cfg in dev for intf in cfg if intf.bInterfaceClass == 0x03)
+                    intf.bInterfaceNumber for cfg in dev for intf in cfg
+                    if intf.bInterfaceClass == 0x03)
                 break
             except (usb.core.USBError, StopIteration):
                 pass
@@ -103,14 +99,18 @@ def connect(attempts=10):
                 try:
                     dev.detach_kernel_driver(intf.bInterfaceNumber)
                 except usb.core.USBError as e:
-                    sys.exit(f"Could not detach the kernel driver from interface {intf.bInterfaceNumber}: {e}")
+                    sys.exit(f"Could not detach the kernel driver from interface "
+                             f"{intf.bInterfaceNumber}: {e}")
     dev.set_configuration()
 
     intf = dev.get_active_configuration()[(interface_hid_num, 0)]
-    ep_out = usb.util.find_descriptor(
-        intf, custom_match=lambda e: usb.util.endpoint_direction(e.bEndpointAddress) == usb.util.ENDPOINT_OUT)
-    ep_in = usb.util.find_descriptor(
-        intf, custom_match=lambda e: usb.util.endpoint_direction(e.bEndpointAddress) == usb.util.ENDPOINT_IN)
+
+    def endpoint(direction):
+        def match(e):
+            return usb.util.endpoint_direction(e.bEndpointAddress) == direction
+        return usb.util.find_descriptor(intf, custom_match=match)
+
+    ep_out, ep_in = endpoint(usb.util.ENDPOINT_OUT), endpoint(usb.util.ENDPOINT_IN)
     assert ep_in and ep_out
 
     # The start command itself sometimes fails with an I/O error: clear the stall and retry.
@@ -159,14 +159,16 @@ def main():
     dev, interface_hid_num, ep_in, ep_out = conn
 
     print()  # the original logger's format starts with a blank line
-    print("timestamp sample_in_packet voltage_V current_A dp_V dn_V temp_C_ema energy_Ws capacity_As")
+    print("timestamp sample_in_packet voltage_V current_A dp_V dn_V temp_C_ema energy_Ws "
+          "capacity_As")
 
     time.sleep(0.1)
     continue_time = time.time() + REFRESH_S
     timeouts = errors = 0
     lost = False
     last_beat = time.time()
-    print("Logger running (this heartbeat is on stderr; sample data goes to the file).", file=sys.stderr, flush=True)
+    print("Logger running (this heartbeat is on stderr; sample data goes to the file).",
+          file=sys.stderr, flush=True)
     while not STOP_REQUESTED:
         try:
             data = ep_in.read(size_or_buffer=64, timeout=5000)
