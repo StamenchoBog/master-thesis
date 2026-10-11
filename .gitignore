@@ -24,11 +24,6 @@ docs/thesis-notes.md
 # Experiment protocol, kept locally
 experiments/protocol.md
 
-# Local figure/table generators for the thesis document
-analysis/make_figures.py
-analysis/make_pgf_figures.py
-analysis/make_study_figures.py
-
 # Docker
 .env
 
