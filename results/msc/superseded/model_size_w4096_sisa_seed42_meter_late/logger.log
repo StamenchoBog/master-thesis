@@ -1,0 +1,393 @@
+Logger running (this heartbeat is on stderr; sample data goes to the file).
+[08:43:11] streaming — 0 samples | 0.00 W | 0.0 Ws
+[08:43:17] streaming — 0 samples | 0.00 W | 0.0 Ws
+[08:43:23] streaming — 0 samples | 0.00 W | 0.0 Ws
+[08:43:29] streaming — 0 samples | 0.00 W | 0.0 Ws
+[08:43:35] streaming — 0 samples | 0.00 W | 0.0 Ws
+[08:43:41] streaming — 0 samples | 0.00 W | 0.0 Ws
+[08:43:47] streaming — 0 samples | 0.00 W | 0.0 Ws
+[08:43:54] streaming — 0 samples | 0.00 W | 0.0 Ws
+[08:44:00] streaming — 0 samples | 0.00 W | 0.0 Ws
+[08:44:06] streaming — 0 samples | 0.00 W | 0.0 Ws
+[08:44:12] streaming — 0 samples | 0.00 W | 0.0 Ws
+[08:44:17] meter silent
+[08:44:17] exiting for a fresh restart
+Start command failed ([Errno 60] Operation timed out), retrying
+Start command failed ([Errno 19] No such device (it may have been disconnected)), retrying
+Start command failed ([Errno 19] No such device (it may have been disconnected)), retrying
+Start command failed ([Errno 19] No such device (it may have been disconnected)), retrying
+Start command failed ([Errno 19] No such device (it may have been disconnected)), retrying
+Start command failed ([Errno 19] No such device (it may have been disconnected)), retrying
+Start command failed ([Errno 19] No such device (it may have been disconnected)), retrying
+Start command failed ([Errno 19] No such device (it may have been disconnected)), retrying
+Start command failed ([Errno 19] No such device (it may have been disconnected)), retrying
+Start command failed ([Errno 19] No such device (it may have been disconnected)), retrying
+Meter not found or did not accept the start command.
+Logger running (this heartbeat is on stderr; sample data goes to the file).
+[08:44:44] streaming — 0 samples | 0.00 W | 0.0 Ws
+[08:44:50] streaming — 0 samples | 0.00 W | 0.0 Ws
+[08:44:53] USB error ([Errno 5] Input/Output Error), restarting the stream
+[08:44:54] USB error ([Errno 19] No such device (it may have been disconnected)), restarting the stream
+[08:44:55] USB error ([Errno 19] No such device (it may have been disconnected)), restarting the stream
+[08:44:56] streaming — 0 samples | 0.00 W | 0.0 Ws
+[08:44:56] USB error ([Errno 19] No such device (it may have been disconnected)), restarting the stream
+[08:44:57] USB error ([Errno 19] No such device (it may have been disconnected)), restarting the stream
+[08:44:57] meter lost
+[08:44:57] exiting for a fresh restart
+Logger running (this heartbeat is on stderr; sample data goes to the file).
+[08:45:04] USB error ([Errno 5] Input/Output Error), restarting the stream
+[08:45:05] USB error ([Errno 19] No such device (it may have been disconnected)), restarting the stream
+[08:45:06] streaming — 0 samples | 0.00 W | 0.0 Ws
+[08:45:06] USB error ([Errno 19] No such device (it may have been disconnected)), restarting the stream
+[08:45:07] USB error ([Errno 19] No such device (it may have been disconnected)), restarting the stream
+[08:45:08] USB error ([Errno 19] No such device (it may have been disconnected)), restarting the stream
+[08:45:08] meter lost
+[08:45:08] exiting for a fresh restart
+Logger running (this heartbeat is on stderr; sample data goes to the file).
+[08:45:29] streaming — 504 samples | 7.78 W | 33.3 Ws
+[08:45:34] streaming — 1004 samples | 4.00 W | 65.4 Ws
+[08:45:39] streaming — 1508 samples | 6.92 W | 97.4 Ws
+[08:45:44] streaming — 2008 samples | 7.22 W | 128.0 Ws
+[08:45:49] streaming — 2508 samples | 6.63 W | 158.7 Ws
+[08:45:54] streaming — 3008 samples | 7.27 W | 189.1 Ws
+[08:46:00] streaming — 3512 samples | 3.88 W | 217.0 Ws
+[08:46:05] streaming — 4012 samples | 5.13 W | 240.8 Ws
+[08:46:10] streaming — 4516 samples | 6.92 W | 269.6 Ws
+[08:46:11] USB error ([Errno 5] Input/Output Error), restarting the stream
+[08:46:13] USB error ([Errno 5] Input/Output Error), restarting the stream
+[08:46:14] USB error ([Errno 5] Input/Output Error), restarting the stream
+[08:46:15] streaming — 4704 samples | 7.34 W | 280.9 Ws
+[08:46:15] USB error ([Errno 5] Input/Output Error), restarting the stream
+[08:46:16] USB error ([Errno 5] Input/Output Error), restarting the stream
+[08:46:16] meter lost
+[08:46:16] exiting for a fresh restart
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Meter not found or did not accept the start command.
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Meter not found or did not accept the start command.
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Meter not found or did not accept the start command.
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Meter not found or did not accept the start command.
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Meter not found or did not accept the start command.
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Meter not found or did not accept the start command.
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Meter not found or did not accept the start command.
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Meter not found or did not accept the start command.
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Meter not found or did not accept the start command.
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Meter not found or did not accept the start command.
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Meter not found or did not accept the start command.
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Meter not found or did not accept the start command.
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Meter not found or did not accept the start command.
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Meter not found or did not accept the start command.
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Meter not found or did not accept the start command.
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Meter not found or did not accept the start command.
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Meter not found or did not accept the start command.
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Meter not found or did not accept the start command.
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Meter not found or did not accept the start command.
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Meter not found or did not accept the start command.
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Meter not found or did not accept the start command.
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Meter not found or did not accept the start command.
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Meter not found or did not accept the start command.
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Meter not found or did not accept the start command.
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Meter not found or did not accept the start command.
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Meter not found or did not accept the start command.
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Meter not found or did not accept the start command.
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Meter not found or did not accept the start command.
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Meter not found or did not accept the start command.
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Start command failed ([Errno 5] Input/Output Error), retrying
+Meter not found or did not accept the start command.

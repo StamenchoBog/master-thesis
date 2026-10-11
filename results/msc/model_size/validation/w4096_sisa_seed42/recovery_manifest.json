@@ -1,0 +1,390 @@
+{
+  "method": "sisa",
+  "total_s": 2292.609,
+  "affected_shards": {
+    "1": 3
+  },
+  "poisoned_samples": 63060,
+  "retrained_slices": 47,
+  "ckpt_io_s": 327.166,
+  "ckpt_bytes": 5964898592,
+  "recovered_model": "/checkpoints/recovered_model.pt",
+  "slices": [
+    {
+      "shard": 1,
+      "round": 1,
+      "slice": 3,
+      "train_s": 0.9859,
+      "ckpt_s": 6.0277,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 1,
+      "slice": 4,
+      "train_s": 0.7074,
+      "ckpt_s": 7.0309,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 2,
+      "slice": 0,
+      "train_s": 48.1947,
+      "ckpt_s": 7.8493,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 2,
+      "slice": 1,
+      "train_s": 53.4874,
+      "ckpt_s": 7.0873,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 2,
+      "slice": 2,
+      "train_s": 58.9136,
+      "ckpt_s": 7.0127,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 2,
+      "slice": 3,
+      "train_s": 0.7392,
+      "ckpt_s": 6.8792,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 2,
+      "slice": 4,
+      "train_s": 0.7045,
+      "ckpt_s": 6.8403,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 3,
+      "slice": 0,
+      "train_s": 59.5136,
+      "ckpt_s": 6.9788,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 3,
+      "slice": 1,
+      "train_s": 62.23,
+      "ckpt_s": 6.8978,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 3,
+      "slice": 2,
+      "train_s": 62.7983,
+      "ckpt_s": 6.8754,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 3,
+      "slice": 3,
+      "train_s": 0.8903,
+      "ckpt_s": 6.9127,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 3,
+      "slice": 4,
+      "train_s": 0.7555,
+      "ckpt_s": 7.062,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 4,
+      "slice": 0,
+      "train_s": 62.39,
+      "ckpt_s": 6.8511,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 4,
+      "slice": 1,
+      "train_s": 64.7737,
+      "ckpt_s": 6.9593,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 4,
+      "slice": 2,
+      "train_s": 66.7156,
+      "ckpt_s": 7.1256,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 4,
+      "slice": 3,
+      "train_s": 0.9376,
+      "ckpt_s": 6.8344,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 4,
+      "slice": 4,
+      "train_s": 0.8267,
+      "ckpt_s": 6.8738,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 5,
+      "slice": 0,
+      "train_s": 66.4648,
+      "ckpt_s": 7.0852,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 5,
+      "slice": 1,
+      "train_s": 70.4771,
+      "ckpt_s": 6.9679,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 5,
+      "slice": 2,
+      "train_s": 72.11,
+      "ckpt_s": 6.9384,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 5,
+      "slice": 3,
+      "train_s": 0.9533,
+      "ckpt_s": 6.9694,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 5,
+      "slice": 4,
+      "train_s": 0.8821,
+      "ckpt_s": 7.0411,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 6,
+      "slice": 0,
+      "train_s": 71.4049,
+      "ckpt_s": 6.8985,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 6,
+      "slice": 1,
+      "train_s": 74.0437,
+      "ckpt_s": 6.9608,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 6,
+      "slice": 2,
+      "train_s": 74.6159,
+      "ckpt_s": 7.0588,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 6,
+      "slice": 3,
+      "train_s": 0.9739,
+      "ckpt_s": 6.8473,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 6,
+      "slice": 4,
+      "train_s": 0.9186,
+      "ckpt_s": 6.9383,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 7,
+      "slice": 0,
+      "train_s": 71.4353,
+      "ckpt_s": 7.074,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 7,
+      "slice": 1,
+      "train_s": 77.6795,
+      "ckpt_s": 6.8501,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 7,
+      "slice": 2,
+      "train_s": 79.5951,
+      "ckpt_s": 7.0086,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 7,
+      "slice": 3,
+      "train_s": 0.953,
+      "ckpt_s": 7.059,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 7,
+      "slice": 4,
+      "train_s": 0.962,
+      "ckpt_s": 7.008,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 8,
+      "slice": 0,
+      "train_s": 77.4974,
+      "ckpt_s": 6.9012,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 8,
+      "slice": 1,
+      "train_s": 82.3472,
+      "ckpt_s": 6.9445,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 8,
+      "slice": 2,
+      "train_s": 83.0186,
+      "ckpt_s": 7.0602,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 8,
+      "slice": 3,
+      "train_s": 0.9421,
+      "ckpt_s": 6.8843,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 8,
+      "slice": 4,
+      "train_s": 0.9315,
+      "ckpt_s": 6.9866,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 9,
+      "slice": 0,
+      "train_s": 79.9588,
+      "ckpt_s": 7.0738,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 9,
+      "slice": 1,
+      "train_s": 84.2537,
+      "ckpt_s": 6.8601,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 9,
+      "slice": 2,
+      "train_s": 85.5485,
+      "ckpt_s": 6.863,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 9,
+      "slice": 3,
+      "train_s": 0.9509,
+      "ckpt_s": 7.0887,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 9,
+      "slice": 4,
+      "train_s": 0.9544,
+      "ckpt_s": 6.8088,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 10,
+      "slice": 0,
+      "train_s": 80.79,
+      "ckpt_s": 7.02,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 10,
+      "slice": 1,
+      "train_s": 85.6088,
+      "ckpt_s": 7.0693,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 10,
+      "slice": 2,
+      "train_s": 86.3532,
+      "ckpt_s": 6.9967,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 10,
+      "slice": 3,
+      "train_s": 0.9469,
+      "ckpt_s": 6.8985,
+      "ckpt_bytes": 126912736
+    },
+    {
+      "shard": 1,
+      "round": 10,
+      "slice": 4,
+      "train_s": 0.9416,
+      "ckpt_s": 6.9063,
+      "ckpt_bytes": 126912736
+    }
+  ]
+}
