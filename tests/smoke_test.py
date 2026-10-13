@@ -1,6 +1,7 @@
 """Checks the unlearning guarantee on 2000 synthetic rows (no dataset needed): deterministic,
 confined poison placement; flip in memory only; one checkpoint per (round, shard, slice);
-rollback before the poison and a bit-identical recovery.
+rollback before the poison and a bit-identical recovery; a rollback state identical to a
+never-poisoned node and a replay that never reads a poisoned row.
 
     docker run --rm -v "$PWD":/app -w /app --entrypoint python \
         fl-ids-preprocessor:latest tests/smoke_test.py
@@ -79,6 +80,23 @@ assert all(os.path.exists(ckpt_path(s, r, sl))
            for s in range(S) for r in (1, 2) for sl in range(R))
 print(f"[3] SISA trained 2 rounds, {len(telemetry_log)} slice checkpoints OK")
 
+
+def ckpt_hash(path):
+    """Model and optimizer state: recovery restores both."""
+    ckpt = torch.load(path, map_location="cpu")
+    h = hashlib.sha256()
+    for k in sorted(ckpt["model"]):
+        h.update(ckpt["model"][k].numpy().tobytes())
+    for idx in sorted(ckpt["optim"]["state"]):
+        for k in sorted(ckpt["optim"]["state"][idx]):
+            h.update(ckpt["optim"]["state"][idx][k].numpy().tobytes())
+    return h.hexdigest()
+
+
+# Recovery overwrites the checkpoints from the poisoned slice on, so hash them now.
+poisoned_rollback = ckpt_hash(ckpt_path(POISON_SHARD, 1, FROM_SLICE - 1))
+poisoned_first = ckpt_hash(ckpt_path(POISON_SHARD, 1, FROM_SLICE))
+
 # ---- 4. Recovery: rollback predates poison; recovery is deterministic
 from edge_nodes import sisa_recover  # noqa: E402
 
@@ -102,5 +120,41 @@ h_second = state_hash(os.environ["RECOVERED_MODEL_PATH"])
 assert h_first == h_second, "recovery not deterministic across identical reruns"
 print(f"[4] rollback at shard {POISON_SHARD} slice {FROM_SLICE} (predates poison), "
       f"deterministic recovery OK ({h_first[:12]})")
+
+# ---- 5. Exactness: the rollback state never saw the poison, and the replay never reads it
+from edge_nodes import data_loader, sisa_client  # noqa: E402
+
+
+# The same node with the true labels: if the rollback state matches bit for bit, the
+# poisoned rows had no influence on it.
+clean_dir = os.path.join(BASE, "ckpt_clean")
+os.makedirs(clean_dir)
+sisa_client.CHECKPOINT_DIR = clean_dir
+os.environ["POISON_MODE"] = data_loader.POISON_MODE = "off"
+data_loader._arrays_cache.clear()
+SISATrainer(2, 3).train_round(0.001, lambda _: None)
+clean_rollback = ckpt_hash(sisa_client.ckpt_path(POISON_SHARD, 1, FROM_SLICE - 1))
+clean_first = ckpt_hash(sisa_client.ckpt_path(POISON_SHARD, 1, FROM_SLICE))
+sisa_client.CHECKPOINT_DIR = os.environ["CHECKPOINT_DIR"]
+assert poisoned_rollback == clean_rollback, "rollback checkpoint depends on the poison"
+# and the comparison can see the poison: the first poisoned slice must differ
+assert poisoned_first != clean_first, "check cannot tell poisoned from clean"
+
+seen = []
+real_loader = sisa_recover.slice_loader
+
+
+def recording_loader(X_, y_, idx, seed_key, *args, **kwargs):
+    seen.append(idx)
+    return real_loader(X_, y_, idx, seed_key, *args, **kwargs)
+
+
+sisa_recover.slice_loader = recording_loader
+sisa_recover.main()
+sisa_recover.slice_loader = real_loader
+replayed = np.concatenate(seen)
+assert not set(replayed.tolist()) & set(p1.tolist()), "replay read a poisoned row"
+print(f"[5] rollback checkpoint identical to a never-poisoned node, replay of "
+      f"{len(replayed)} rows without poison OK")
 
 print("\nSMOKE TEST PASSED")

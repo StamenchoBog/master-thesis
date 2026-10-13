@@ -192,7 +192,7 @@ After these, `python -m analysis.make_figures` writes the thesis figures (pgfplo
 docker run --rm -v "$PWD":/app -w /app --entrypoint python fl-ids-preprocessor:latest tests/smoke_test.py
 ```
 
-Uses synthetic data (no dataset needed). Checks that poison placement is deterministic and confined, that label flipping only happens in memory, that SISA writes one checkpoint per round/shard/slice, and that recovery rolls back to a clean checkpoint and is bit-identical across reruns.
+Uses synthetic data (no dataset needed). Checks that poison placement is deterministic and confined, that label flipping only happens in memory, that SISA writes one checkpoint per round/shard/slice, that recovery rolls back to a clean checkpoint and is bit-identical across reruns, and that the rollback state matches a node that never had the poison while the replay never reads a poisoned row.
 
 Linting (config in `.flake8`, `.yamllint` and `.shellcheckrc`):
 
