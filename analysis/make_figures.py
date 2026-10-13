@@ -155,58 +155,54 @@ def model_size(pred, meas, measured, io):
     grid = np.logspace(4, 8, 30)
     mark = "mark options={draw=white, line width=0.5pt}"
     measured_speedup = [n / s for (_, n), (_, s) in zip(measured["naive"], measured["sisa"])]
-    left = (
-        "\\begin{axis}[name=ttr, scale only axis, width=0.32\\linewidth, height=5cm, xmode=log, "
-        "xmin=5e3, xmax=3e7, ymin=6.5, ymax=9, axis y line*=left, xlabel={Број на параметри $P$}, "
-        f"ylabel={{Забрзување на SISA}}, ymajorgrids, {AXIS}]\n"
+    panel = ("scale only axis, width=0.21\\linewidth, height=4.2cm, xmode=log, "
+             "xlabel={Број на параметри $P$}, ymajorgrids, title style={font=\\small}")
+    legend = ("legend style={font=\\small, at={(1.95,1.2)}, anchor=south, draw=none, "
+              "legend columns=3, /tikz/every even column/.append style={column sep=0.8em}}")
+    speedup = (
+        f"\\begin{{axis}}[name=su, {panel}, xmin=5e3, xmax=3e7, ymin=0, ymax=10, "
+        f"title={{Забрзување на SISA}}, ylabel={{пати}}, {legend}, {AXIS}]\n"
+        f"\\addplot[color=sisacol, line width=0.9pt, mark=*, mark size=1.6pt] "
+        f"coordinates {{{pts(pred.params, pred.speedup)}}};\n"
+        "\\addlegendentry{модел на трошокот}\n"
+        f"\\addplot[only marks, mark=square*, mark size=2.4pt, color=black!75, {mark}] "
+        f"coordinates {{{pts([p for p, _ in measured['naive']], measured_speedup)}}};\n"
+        "\\addlegendentry{измерено}\n"
         "\\addplot[gray, densely dashed, line width=0.8pt] coordinates "
         f"{{(5e3,{WORK_RATIO:.3f}) (3e7,{WORK_RATIO:.3f})}};\n"
-        f"\\node[anchor=south west, font=\\scriptsize, gray] at (axis cs:6e3,{WORK_RATIO:.3f}) "
-        f"{{однос на обемот на пресметки ({mk(WORK_RATIO, 2)})}};\n"
-        f"\\addplot[color=sisacol, line width=0.9pt, mark=square*, mark size=2.2pt, {mark}] "
-        f"coordinates {{{pts(pred.params, pred.speedup)}}};\n"
-        f"\\addplot[only marks, mark=square*, mark size=2.4pt, color=black!70, {mark}] "
-        f"coordinates {{{pts([p for p, _ in measured['naive']], measured_speedup)}}};\n"
-        f"\\node[anchor=north east, font=\\scriptsize, sisacol] at "
-        f"(axis cs:1.2e7,{pred.speedup.iloc[-1]:.3f}) {{забрзување (модел; квадрати: мерење)}};\n"
-        "\\end{axis}\n"
-        "\\begin{axis}[at={(ttr.south west)}, anchor=south west, scale only axis, "
-        "width=0.32\\linewidth, height=5cm, xmode=log, xmin=5e3, xmax=3e7, ymin=0, ymax=20, "
-        f"axis y line*=right, axis x line=none, ylabel={{Удел на запишувањето (\\%)}}, {AXIS}]\n"
-        "\\addplot[color=black!60, densely dashed, line width=0.9pt, mark=o, mark size=2.2pt, "
-        f"mark options={{solid}}] coordinates {{{pts(pred.params, io)}}};\n"
-        f"\\node[anchor=south east, font=\\scriptsize, black!60] at (axis cs:1.2e7,{io[-1]:.2f}) "
-        "{удел на запишувањето};\n\\end{axis}\n")
-    right = (
-        "\\begin{axis}[name=st, at={(ttr.east)}, anchor=west, xshift=2.9cm, scale only axis, "
-        "width=0.32\\linewidth, height=5cm, xmode=log, ymode=log, xmin=5e3, xmax=1e8, ymin=0.01, "
-        "ymax=1000, xlabel={Број на параметри $P$}, ylabel={Контролни точки од Фаза 1 (GB)}, "
-        f"ymajorgrids, {AXIS}]\n"
+        f"\\addlegendentry{{однос на обемот на пресметки ({mk(WORK_RATIO, 2)})}}\n"
+        "\\end{axis}\n")
+    share = (
+        f"\\begin{{axis}}[name=io, at={{(su.east)}}, anchor=west, xshift=1.3cm, {panel}, "
+        "xmin=5e3, xmax=3e7, ymin=0, ymax=20, title={Удел на запишувањето}, "
+        f"ylabel={{\\% од времето на SISA}}, {AXIS}]\n"
+        "\\addplot[color=sisacol, line width=0.9pt, mark=*, mark size=1.6pt] "
+        f"coordinates {{{pts(pred.params, io)}}};\n"
+        "\\end{axis}\n")
+    storage = (
+        f"\\begin{{axis}}[name=st, at={{(io.east)}}, anchor=west, xshift=1.3cm, {panel}, "
+        "xmin=5e3, xmax=1e8, ymode=log, ymin=0.01, ymax=1000, "
+        f"title={{Простор за контролните точки}}, ylabel={{GB}}, {AXIS}]\n"
         "\\addplot[color=sisacol, line width=0.9pt] coordinates "
         f"{{{pts(grid, 250 * (slope * grid + icpt) / 1e9)}}};\n"
-        f"\\addplot[only marks, mark=square*, mark size=2.2pt, color=sisacol, {mark}] "
+        f"\\addplot[only marks, mark=square*, mark size=2.2pt, color=black!75, {mark}] "
         f"coordinates {{{pts(pred.params, pred.phase1_ckpt_gb)}}};\n"
         f"\\addplot[gray, densely dashed, line width=0.8pt] coordinates "
         f"{{(5e3,{FREE_GB}) (1e8,{FREE_GB})}};\n"
         f"\\node[anchor=south west, font=\\scriptsize, gray] at (axis cs:7e3,{FREE_GB}) "
-        "{слободен простор, 94\\,GB};\n"
+        "{слободни 94\\,GB};\n"
         f"\\draw[gray, densely dotted, line width=0.8pt] (axis cs:{limit:.4g},0.01) -- "
         f"(axis cs:{limit:.4g},{FREE_GB});\n"
-        f"\\node[anchor=north east, font=\\scriptsize, gray, align=right] at "
-        f"(axis cs:{limit:.4g},2) {{$P \\approx {mk(limit / 1e7, 1)} \\cdot 10^{{7}}$}};\n"
+        f"\\node[rotate=90, anchor=south, font=\\scriptsize, gray] at "
+        f"(axis cs:{limit:.4g},0.3) {{$P \\approx "
+        f"{mk(limit / 1e7, 1)} \\cdot 10^{{7}}$}};\n"
         "\\end{axis}\n")
     return figure(
         "model_size_*.csv, campaign_summary.csv and the validation runs' recovery_manifest.json",
-        left + right,
-        "[Забрзување, удел на запишувањето и простор за контролни точки според големината на "
-        "моделот]{Лево: забрзување на SISA во однос на наивното повторно тренирање (лева оска) и "
-        "удел на запишувањето на контролните точки во времето до обновување на SISA (десна оска), "
-        "според моделот на трошокот; квадратите се измерените забрзувања (медијана на кампањата, "
-        "по едно извршување при поголемите модели, а при 10,6 милиони параметри само "
-        "обновувањето), а испрекинатата хоризонтална линија е односот на обемот на пресметки. "
-        "Десно: простор за 250-те контролни точки од Фаза 1 (измерен при четирите големини, "
-        "линијата е линеарното приспособување); точкестата линија го означува моделот при кој "
-        "тие го надминуваат слободниот простор на SD-картичката.}",
+        speedup + share + storage,
+        "{Влијание на големината на моделот врз забрзувањето на SISA, уделот на запишувањето "
+        "на контролните точки во времето до обновување и просторот за 250-те контролни точки "
+        "од Фаза 1.}",
         "fig:model-size")
 
 
@@ -228,86 +224,77 @@ def locality(g):
     naive = g.loc["naive", "med"]
     ebar = "error bars/.cd, y dir=both, y explicit, error bar style={sisacol, line width=0.7pt}"
     model = "only marks, mark=diamond, mark size=2.8pt, color=black!70"
+    common = ("scale only axis, width=0.36\\linewidth, height=5cm, ymin=0, ymax=300, "
+              f"ymajorgrids, {AXIS}, title style={{font=\\small}}")
+    naive_line = ("\\addplot[naivecol, line width=0.9pt] coordinates "
+                  f"{{(-1,{naive:.2f}) (6,{naive:.2f})}};\n")
     left = (
-        "\\begin{axis}[name=pos, scale only axis, width=0.36\\linewidth, height=5cm, xmin=-0.5, "
-        "xmax=4.5, ymin=0, ymax=65, xtick={0,...,4}, "
-        "xlabel={Најран затруен сегмент $l^{*}$ ($k = 1$)}, ylabel={Време до обновување (s)}, "
-        f"ymajorgrids, {AXIS}, legend style={{at={{(1.12,1.04)}}, anchor=south, legend columns=3, "
-        "draw=none, font=\\small, /tikz/every even column/.append style={column sep=0.8em}}]\n"
+        f"\\begin{{axis}}[name=pos, {common}, xmin=-0.5, xmax=4.5, xtick={{0,...,4}}, "
+        "title={Положба во шардот}, xlabel={Најран затруен сегмент $l^{*}$}, "
+        "ylabel={Време до обновување (s)}, legend style={at={(1.12,1.18)}, anchor=south, "
+        "legend columns=3, draw=none, font=\\small, "
+        "/tikz/every even column/.append style={column sep=0.8em}}]\n"
         f"\\addplot[only marks, mark=square*, mark size=2.2pt, color=sisacol, {ebar}] "
-        f"coordinates {{{errpts(pos, range(5))}}};\n\\addlegendentry{{SISA (медијана, опсег)}}\n"
+        f"coordinates {{{errpts(pos, range(5))}}};\n\\addlegendentry{{SISA (измерено)}}\n"
         f"\\addplot[{model}] coordinates {{{pts(range(5), [g.loc[c, 'pred'] for c in pos])}}};\n"
         "\\addlegendentry{Модел на трошокот}\n"
-        "\\addplot[only marks, mark=triangle*, mark size=2.6pt, color=black!45] coordinates "
-        f"{{(3,{g.loc['k1_l3_full', 'med']:.2f})}};\n"
-        "\\addlegendentry{Положба од главната кампања}\n"
+        + naive_line + "\\addlegendentry{Наивно повторно тренирање}\n"
         "\\end{axis}\n")
     right = (
-        "\\begin{axis}[name=spr, at={(pos.east)}, anchor=west, xshift=1.9cm, scale only axis, "
-        "width=0.36\\linewidth, height=5cm, xmin=0.5, xmax=5.5, ymin=0, ymax=300, "
-        "xtick={1,2,3,4,5}, xlabel={Број на засегнати шардови $k$ ($l^{*} = 3$)}, "
-        f"ylabel={{Време до обновување (s)}}, ymajorgrids, {AXIS}]\n"
-        "\\addplot[naivecol, line width=0.9pt] coordinates "
-        f"{{(0.5,{naive:.2f}) (5.5,{naive:.2f})}};\n"
-        f"\\node[anchor=south west, font=\\scriptsize, naivecol] at (axis cs:0.6,{naive:.2f}) "
-        "{наивно повторно тренирање};\n"
+        f"\\begin{{axis}}[name=spr, at={{(pos.east)}}, anchor=west, xshift=0.6cm, {common}, "
+        "xmin=0.5, xmax=5.5, xtick={1,2,3,5}, title={Број на засегнати шардови}, "
+        "xlabel={Засегнати шардови $k$}, yticklabels={}]\n"
+        + naive_line +
         "\\addplot[sisacol, densely dashed, line width=0.8pt, domain=0.8:5.2, samples=2] "
         f"{{{b:.4f}*x+{a:.4f}}};\n"
         f"\\addplot[only marks, mark=square*, mark size=2.2pt, color=sisacol, {ebar}] "
         f"coordinates {{{errpts(spread, ks)}}};\n"
         f"\\addplot[{model}] coordinates {{{pts(ks, [g.loc[c, 'pred'] for c in spread])}}};\n"
+        f"\\node[anchor=east, font=\\scriptsize, black!70] at "
+        f"(axis cs:4.85,{(naive + g.loc['k5_l3', 'med']) / 2:.2f}) "
+        f"{{{mk(naive / g.loc['k5_l3', 'med'], 2)}$\\times$}};\n"
         "\\end{axis}\n")
     return figure(
         "locality_runs.csv", left + right,
-        "[Време до обновување според положбата и раширеноста на труењето]{Време до обновување "
-        "преку SISA според положбата на труењето во еден шард (лево) и според бројот на засегнати "
-        "шардови (десно); медијана и опсег од три повторувања. Ромбовите се предвидувањата на "
-        "моделот на трошокот, испрекинатата линија е линеарното приспособување "
-        f"({mk(b, 1)}\\,s по шард), а хоризонталната линија е наивното повторно тренирање. "
-        "Положбата од главната кампања ги отстранува сите напади во целните сегменти, па останува "
-        "помалку податоци за повторно тренирање.}", "fig:locality")
+        "{Време до обновување преку SISA кога се менува положбата на труењето во еден шард "
+        "(лево, $k = 1$) и бројот на засегнати шардови (десно, $l^{*} = 3$), со медијана и "
+        "опсег од три повторувања. Испрекинатата линија е линеарното приспособување.}",
+        "fig:locality")
 
 
 def cost_model_check(pred, measured, g):
     by_p = pred.set_index("params")
-    groups = {
-        ("*", "Главна кампања (медијана)"): [
-            (by_p.loc[12865, f"t_{arm}_s"], measured[arm][0][1], arm) for arm in ("naive", "sisa")],
-        ("square*", "Поголеми модели (по едно извршување)"): [
-            (by_p.loc[p, f"t_{arm}_s"], t, arm) for arm in ("naive", "sisa")
-            for p, t in measured[arm][1:]],
-        ("diamond*", "Положба на труењето (медијана)"): [
-            (g.loc[c, "pred"], g.loc[c, "med"], "naive" if c == "naive" else "sisa")
-            for c in g.index],
-    }
-    body = ("\\addplot[fill=gray!13, draw=none, forget plot] coordinates "
-            "{(15,12.75) (30000,25500) (30000,34500) (15,17.25) (15,12.75)};\n"
-            "\\addplot[gray, line width=0.7pt, forget plot] coordinates {(15,15) (30000,30000)};\n")
-    for mark, label in groups:
-        body += (f"\\addlegendimage{{only marks, mark={mark}, mark size=2.4pt, color=black!55}}\n"
-                 f"\\addlegendentry{{{label}}}\n")
-    for (mark, _), rows in groups.items():
-        for arm in ("naive", "sisa"):
-            sel = [(x, y) for x, y, a in rows if a == arm]
-            if sel:
-                body += (f"\\addplot[only marks, mark={mark}, mark size=2.4pt, color={arm}col, "
-                         "forget plot, mark options={draw=white, line width=0.5pt}] "
-                         f"coordinates {{{pts(*zip(*sel))}}};\n")
-    worst = max(abs(x - y) / y for rows in groups.values() for x, y, _ in rows)
-    axis = ("\\begin{axis}[scale only axis, width=0.55\\linewidth, height=0.55\\linewidth, "
-            "xmode=log, ymode=log, xmin=15, xmax=30000, ymin=15, ymax=30000, "
-            "xlabel={Предвидено време до обновување (s)}, "
-            f"ylabel={{Измерено време до обновување (s)}}, grid=major, {AXIS}, "
-            "legend style={at={(0.03,0.97)}, anchor=north west, draw=none, fill=white, "
-            "fill opacity=0.85, text opacity=1, font=\\small}]\n")
+    rows = ([(by_p.loc[12865, f"t_{arm}_s"], measured[arm][0][1], arm) for arm in ("naive", "sisa")]
+            + [(by_p.loc[p, f"t_{arm}_s"], t, arm) for arm in ("naive", "sisa")
+               for p, t in measured[arm][1:]]
+            + [(g.loc[c, "pred"], g.loc[c, "med"], "naive" if c == "naive" else "sisa")
+               for c in g.index])
+    err = [(y, 100 * (x - y) / y, arm) for x, y, arm in rows]
+    body = ("\\addplot[fill=gray!15, draw=none, forget plot] coordinates "
+            "{(15,-15) (30000,-15) (30000,15) (15,15) (15,-15)};\n"
+            "\\addplot[gray, line width=0.7pt, forget plot] coordinates {(15,0) (30000,0)};\n"
+            "\\node[anchor=north west, font=\\scriptsize, gray] at (axis cs:17,14.5) "
+            "{праг $\\pm 15$\\,\\%};\n")
+    for arm, label in (("naive", "Наивно повторно тренирање"), ("sisa", "SISA")):
+        sel = [(y, e) for y, e, a in err if a == arm]
+        body += (f"\\addplot[only marks, mark=*, mark size=2.4pt, color={arm}col, "
+                 "mark options={draw=white, line width=0.5pt}] "
+                 f"coordinates {{{pts(*zip(*sel))}}};\n\\addlegendentry{{{label}}}\n")
+    y, e, _ = min(err, key=lambda r: r[1])
+    body += (f"\\node[anchor=south east, font=\\scriptsize, naivecol, align=right] at "
+             f"(axis cs:{y:.0f},{e:.2f}) {{10,6 милиони параметри,\\\\ термички придушено}};\n")
+    axis = ("\\begin{axis}[scale only axis, width=0.8\\linewidth, height=5cm, "
+            "xmode=log, xmin=15, xmax=30000, ymin=-20, ymax=20, ytick={-15,-10,...,15}, "
+            "xlabel={Измерено време до обновување (s)}, "
+            f"ylabel={{Грешка на предвидувањето (\\%)}}, ymajorgrids, {AXIS}, "
+            "legend style={at={(0.5,1.03)}, anchor=south, legend columns=2, draw=none, "
+            "font=\\small, /tikz/every even column/.append style={column sep=0.8em}}]\n")
     return figure(
         "model_size_predictions.csv, campaign_summary.csv,\n% the validation runs' "
         "recovery_manifest.json and locality_runs.csv", axis + body + "\\end{axis}\n",
-        "[Проверка на моделот на трошокот]{Предвидено наспроти измерено време до обновување за "
-        "сите проверки на моделот на трошокот: наивното повторно тренирање (портокалово) и SISA "
-        "(сино). Дијагоналата е совршено предвидување, а засенчената зона отстапување од "
-        "$\\pm 15$\\,\\%, прагот на хипотезите A5 и B1; најголемото отстапување е "
-        f"{mk(100 * worst, 1)}\\,\\%.}}", "fig:cost-model-check")
+        "{Грешка на моделот на трошокот кај сите 18 проверки: главниот експеримент, трите "
+        "поголеми модели и десетте конфигурации за положбата на труењето. Грешката е во "
+        "однос на измереното време.}", "fig:cost-model-check")
 
 
 def utility():
@@ -348,8 +335,9 @@ def utility():
     return figure(
         "controls_scores.csv", axis + body + "\\end{axis}\n",
         "[Избалансирана точност на глобалните модели]{Избалансирана точност на глобалниот модел "
-        "по Фаза 4 и на федерацијата од ист тип тренирана без труење, за секоја од десетте "
-        "почетни вредности, при прагот 0,5 (кругови) и при прагот избран врз валидациските "
+        "по Фаза 4 и на федерацијата со ист тип клиент без труење, за секоја од десетте "
+        "почетни вредности, при прагот на одлучување 0,5 (кругови) и при прагот избран врз "
+        "валидациските "
         "податоци (ромбови); хоризонталните црти се медијаните. Вредност од 0,5 (испрекината "
         "линија) значи дека моделот не ги разликува класите.}", "fig:utility")
 
@@ -365,9 +353,8 @@ def model_size_table(pred, meas):
         "% Generated by analysis/make_figures.py from "
         "results/msc/tables/model_size_predictions.csv.\n"
         "\\begin{table}[htbp]\n\\centering\n\\small\n"
-        "\\caption[Измерени компоненти и предвидување на моделот на трошокот]{Измерени компоненти "
-        "на трошокот (медијана од три повторувања) и предвидување на моделот на трошокот за "
-        "двата пристапа.}\n\\label{tab:model-size}\n\\setlength{\\tabcolsep}{3.5pt}\n"
+        "\\caption{Измерени компоненти и предвидено време до обновување.}\n"
+        "\\label{tab:model-size}\n\\setlength{\\tabcolsep}{3.5pt}\n"
         "\\begin{tabular}{@{}rrrrrrrrrr@{}}\n\\toprule\n"
         "\\makecell[r]{$P$} & \\makecell[r]{$\\theta$\\\\(прим./s)} & "
         "\\makecell[r]{Контр.\\\\точка (MB)} & \\makecell[r]{$t_{\\mathrm{w}}$\\\\(s)} & "
