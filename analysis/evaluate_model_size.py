@@ -1,4 +1,4 @@
-"""Model-size study: component fits, cost model and its check against full runs (A1-A5).
+"""Model-size study: component fits, cost model and its check against full runs (A1-A4).
 
     python -m analysis.evaluate_model_size
 """
@@ -15,7 +15,7 @@ S, R, ROUNDS = 5, 5, 10
 N_CKPT_SISA = 47            # slices replayed by SISA recovery in the campaign design
 CKPT_PHASE1 = ROUNDS * S * R  # checkpoints written during Phase 1
 FREE_SD_BYTES = 94e9        # free space on the Pi's card at the start of the study
-TOLERANCE_A5 = 0.15
+TOLERANCE_A4 = 0.15
 
 
 def load_measurements(d):
@@ -122,7 +122,7 @@ def main():
     P = med.index.values.astype(float)
     sec_per_row = 1.0 / med.rows_per_s_tail.values
 
-    # A1, A2 fits.
+    # A1 fit, and the checkpoint size and write-time fits the cost model uses.
     a1_a, a1_b = fit_power_law(P, sec_per_row)
     a2_slope, a2_const = np.polyfit(P, med.ckpt_bytes.values, 1)
     bw_inv, latency = np.polyfit(med.ckpt_bytes.values, med.ckpt_write_median_s.values, 1)
@@ -168,7 +168,7 @@ def main():
     pred = pd.DataFrame(pred)
     pred.round(4).to_csv(os.path.join(args.out, "model_size_predictions.csv"), index=False)
 
-    # A4: where storage runs out, and where the fitted model would lose the time advantage.
+    # A3: where storage runs out, and where the fitted model would lose the time advantage.
     p_storage = (FREE_SD_BYTES / CKPT_PHASE1 - a2_const) / a2_slope
     grid = np.logspace(4, 10, 2000)
     thr_g = 1.0 / (a1_a * grid ** a1_b)
@@ -184,16 +184,16 @@ def main():
     print(pred.round(3).to_string(index=False))
     print(f"\nA1  sec/row = {a1_a:.3e} * P^{a1_b:.3f}   "
           "(exponent < 1: throughput falls slower than P)")
-    print(f"A2  ckpt bytes = {a2_slope:.2f} * P + {a2_const:.0f};  "
+    print(f"    ckpt bytes = {a2_slope:.2f} * P + {a2_const:.0f};  "
           f"write s = bytes / {1 / bw_inv / 1e6:.1f} MB/s + {latency * 1e3:.1f} ms")
-    print(f"A3  speed-up per size: {', '.join(f'{s:.2f}' for s in pred.speedup)}  "
+    print(f"A2  speed-up per size: {', '.join(f'{s:.2f}' for s in pred.speedup)}  "
           f"(all > 1: {bool((pred.speedup > 1).all())}); I/O share: "
           f"{', '.join(f'{x:.1%}' for x in pred.io_share_sisa)}")
     cross_txt = f"P ~ {cross:.2e}" if not np.isnan(cross) else f"none up to P = {grid[-1]:.0e}"
-    print(f"A4  storage runs out at P ~ {p_storage:.2e}; fitted time crossover: {cross_txt}"
+    print(f"A3  storage runs out at P ~ {p_storage:.2e}; fitted time crossover: {cross_txt}"
           f"  (storage first: {bool(np.isnan(cross) or p_storage < cross)})")
 
-    # A5: predicted against measured recovery time.
+    # A4: predicted against measured recovery time.
     checks = []
     base = pred[pred.params == 12865]
     if len(base):
@@ -210,11 +210,11 @@ def main():
                            row.t_sisa_s.iloc[0], m_s))
     for name, pn, mn, ps, ms in checks:
         en, es = abs(pn - mn) / mn, abs(ps - ms) / ms
-        ok = en <= TOLERANCE_A5 and es <= TOLERANCE_A5
-        print(f"A5  {name}: naive predicted {pn:.1f}s vs measured {mn:.1f}s ({en:.0%}), "
+        ok = en <= TOLERANCE_A4 and es <= TOLERANCE_A4
+        print(f"A4  {name}: naive predicted {pn:.1f}s vs measured {mn:.1f}s ({en:.0%}), "
               f"SISA {ps:.1f}s vs {ms:.1f}s ({es:.0%}) -> {'holds' if ok else 'fails'}")
 
-    # Energy = power x time and A5 checks the time, so compare Phase 3 power with the benchmark.
+    # Energy = power x time and A4 checks the time, so compare Phase 3 power with the benchmark.
     print("\nPhase 3 mean power, full runs vs benchmark training power (gross W):")
     bench_w = df.groupby("width").train_mean_w.median()
     for run in sorted(glob.glob(os.path.join(args.dir, "validation", "w*_*_seed*"))):
