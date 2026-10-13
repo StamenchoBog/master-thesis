@@ -110,6 +110,8 @@ def score_model(npz_path, X, y, val=None):
         "mcc": matthews_corrcoef(y, pred),
         "roc_auc": roc_auc_score(y, prob),
         "pr_auc": average_precision_score(y, prob),
+        # benign is the rare class (~3.5 %), so its PR curve is the informative one
+        "pr_auc_benign": average_precision_score(1 - y, 1 - prob),
         "pred_pos_rate": float(pred.mean()),
         "tn": tn, "fp": fp,
         **best_threshold(prob, y),
