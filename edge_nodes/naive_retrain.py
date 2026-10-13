@@ -1,8 +1,10 @@
-"""Naive retraining on the Pi: drop the poisoned rows and retrain from scratch.
+"""Naive retraining on the Pi: drop the poisoned rows and retrain from
+scratch.
 
     python -m edge_nodes.naive_retrain
 
-NUM_ROUNDS epochs with a fresh Adam per epoch, the same budget as the client in Phase 1.
+NUM_ROUNDS epochs with a fresh Adam per epoch, the same budget as the
+client in Phase 1.
 """
 
 import json
@@ -15,7 +17,12 @@ import torch
 
 from .client_app import DEVICE, SEED
 from .model import IDSModel
-from .sisa_client import CHECKPOINT_DIR, TELEMETRY_DIR, slice_loader, train_slice
+from .sisa_client import (
+    CHECKPOINT_DIR,
+    TELEMETRY_DIR,
+    slice_loader,
+    train_slice,
+)
 from .sisa_partition import TRAIN_FRACTION
 
 NUM_ROUNDS = int(os.getenv("NUM_ROUNDS", "10"))
@@ -29,7 +36,9 @@ RECOVERED_MODEL_PATH = os.getenv(
 
 
 def main():
-    cache = os.path.join(CACHE_DIR, f"partition_{PARTITION_ID}_of_{NUM_PARTITIONS}.npz")
+    cache = os.path.join(
+        CACHE_DIR, f"partition_{PARTITION_ID}_of_{NUM_PARTITIONS}.npz"
+    )
     data = np.load(cache)
     X, y, poison_idx = data["X"], data["y"], data["poison_idx"]
     if len(poison_idx) == 0:
@@ -37,7 +46,10 @@ def main():
 
     split = int(TRAIN_FRACTION * len(X))
     retained = np.setdiff1d(np.arange(split), poison_idx)
-    print(f"Retained {len(retained)}/{split} train rows ({len(poison_idx)} poisoned dropped)")
+    print(
+        f"Retained {len(retained)}/{split} train rows ({len(poison_idx)} "
+        "poisoned dropped)"
+    )
 
     torch.manual_seed(SEED * 1000 + 999)
     model = IDSModel(input_dim=X.shape[1]).to(DEVICE)
@@ -47,13 +59,23 @@ def main():
     t_start = time.perf_counter()
     for epoch in range(1, NUM_ROUNDS + 1):
         optimizer = torch.optim.Adam(model.parameters(), lr=LR)
-        loader = slice_loader(X, y, retained, SEED * 1_000_000 + 999_000 + epoch)
+        loader = slice_loader(
+            X, y, retained, SEED * 1_000_000 + 999_000 + epoch
+        )
         t0 = time.perf_counter()
         loss, batches = train_slice(model, optimizer, loader, criterion)
-        epoch_log.append({"epoch": epoch, "train_s": round(time.perf_counter() - t0, 4),
-                          "loss": round(loss / max(batches, 1), 6)})
+        epoch_log.append(
+            {
+                "epoch": epoch,
+                "train_s": round(time.perf_counter() - t0, 4),
+                "loss": round(loss / max(batches, 1), 6),
+            }
+        )
         last = epoch_log[-1]
-        print(f"[epoch {epoch}/{NUM_ROUNDS}] loss={last['loss']} in {last['train_s']}s")
+        print(
+            f"[epoch {epoch}/{NUM_ROUNDS}] loss={last['loss']} in "
+            f"{last['train_s']}s"
+        )
     total_s = time.perf_counter() - t_start
 
     os.makedirs(os.path.dirname(RECOVERED_MODEL_PATH), exist_ok=True)
@@ -73,7 +95,10 @@ def main():
     }
     with open(os.path.join(TELEMETRY_DIR, "recovery_manifest.json"), "w") as f:
         json.dump(manifest, f, indent=2)
-    print(f"Naive retraining done in {total_s:.1f}s. Recovered model: {RECOVERED_MODEL_PATH}")
+    print(
+        f"Naive retraining done in {total_s:.1f}s. Recovered model: "
+        f"{RECOVERED_MODEL_PATH}"
+    )
 
 
 if __name__ == "__main__":

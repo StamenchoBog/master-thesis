@@ -1,6 +1,7 @@
 """Summary table and paired statistics of the campaign runs.
 
-    python -m analysis.analyze_runs [--runs results/msc/campaign] [--tables results/msc/tables]
+    python -m analysis.analyze_runs [--runs results/msc/campaign] \
+        [--tables results/msc/tables]
 
 Writes campaign_summary.csv and campaign_paired_stats.csv.
 """
@@ -16,12 +17,23 @@ import numpy as np
 import pandas as pd
 from scipy.stats import wilcoxon
 
-METRICS = ["ttr_s", "p3_energy_net_wh", "p3_throttled_s", "p3_min_clock_mhz",
-           "p3_sd_written_mb", "p1_ckpt_bytes", "p4_final_f1", "p4_final_recall",
-           # RAM was added after the campaign, so it's descriptive only
-           "p3_ram_peak_mb", "p3_ram_peak_net_mb"]
+METRICS = [
+    "ttr_s",
+    "p3_energy_net_wh",
+    "p3_throttled_s",
+    "p3_min_clock_mhz",
+    "p3_sd_written_mb",
+    "p1_ckpt_bytes",
+    "p4_final_f1",
+    "p4_final_recall",
+    # RAM was added after the campaign, so it's descriptive only
+    "p3_ram_peak_mb",
+    "p3_ram_peak_net_mb",
+]
 
-PHASE1_ROUNDS = 10  # rounds above this in sisa_timings.jsonl belong to the Phase-4 rejoin
+PHASE1_ROUNDS = (
+    10  # rounds above this in sisa_timings.jsonl belong to the Phase-4 rejoin
+)
 NUM_SHARDS = NUM_SLICES = 5
 POISON_FROM_SLICE = 3
 
@@ -35,7 +47,8 @@ def cliffs_delta(a, b) -> float:
 
 
 def active_throttle(hexflag) -> tuple:
-    """Live bits only: 0 = under-voltage, 1-3 = throttling. Bits 16-19 are sticky.
+    """Live bits only: 0 = under-voltage, 1-3 = throttling. Bits 16-19
+    are sticky.
     """
     try:
         v = int(str(hexflag), 16)
@@ -45,12 +58,16 @@ def active_throttle(hexflag) -> tuple:
 
 
 def _phase_windows(run_dir: str) -> list:
-    """[(label, start, end)] per measured phase; a phase lasts until the next marker."""
+    """[(label, start, end)] per measured phase; a phase lasts until the
+    next marker."""
     path = os.path.join(run_dir, "phases.log")
     if not os.path.exists(path):
         return []
-    marks = sorted((float(p[0]), p[1]) for line in open(path)
-                   if len(p := line.split()) == 2)
+    marks = sorted(
+        (float(p[0]), p[1])
+        for line in open(path)
+        if len(p := line.split()) == 2
+    )
     windows = []
     for i, (ts, label) in enumerate(marks):
         if label in ("phase1", "phase3", "phase4"):
@@ -64,17 +81,24 @@ def _idle_power_w(p: pd.DataFrame, run_dir: str):
     path = os.path.join(run_dir, "phases.log")
     if not os.path.exists(path):
         return None
-    marks = sorted((float(x[0]), x[1]) for line in open(path) if len(x := line.split()) == 2)
+    marks = sorted(
+        (float(x[0]), x[1])
+        for line in open(path)
+        if len(x := line.split()) == 2
+    )
     segs = []
     for i, (ts, label) in enumerate(marks):
         end = marks[i + 1][0] if i + 1 < len(marks) else ts
         if label == "idle" and end > ts:
-            segs.append(p[(p["timestamp"] >= ts) & (p["timestamp"] < end)]["power_w"])
+            segs.append(
+                p[(p["timestamp"] >= ts) & (p["timestamp"] < end)]["power_w"]
+            )
     allidle = pd.concat(segs) if segs else pd.Series(dtype=float)
     if len(allidle) < 60 * 100 and marks:
-        # Runs driven by experiments/run/ go straight from one phase to the next, so their
-        # idle windows are a second or two right after load. Use the idle stretch the logger
-        # records after the cooldown gate, just before Phase 1, instead.
+        # Runs driven by experiments/run/ go straight from one phase to
+        # the next, so their idle windows are a second or two right
+        # after load. Use the idle stretch the logger records after the
+        # cooldown gate, just before Phase 1, instead.
         pre = p[p["timestamp"] < marks[0][0]]["power_w"]
         if len(pre) >= 5 * 100:
             return float(pre.median())
@@ -82,13 +106,15 @@ def _idle_power_w(p: pd.DataFrame, run_dir: str):
 
 
 def parse_power(run_dir: str, row: dict) -> None:
-    """Energy integrated from V*I per phase: the meter's own counter restarts with the
-    logger."""
+    """Energy integrated from V*I per phase: the meter's own counter
+    restarts with the logger."""
     path = os.path.join(run_dir, "power_fnb58.csv")
     windows = _phase_windows(run_dir)
     if not os.path.exists(path) or not windows:
         return
-    p = pd.read_csv(path, sep=r"\s+")  # the log starts with a blank line; read_csv skips it
+    p = pd.read_csv(
+        path, sep=r"\s+"
+    )  # the log starts with a blank line; read_csv skips it
     if "timestamp" not in p.columns or len(p) < 2:
         return
     p["power_w"] = p["voltage_V"] * p["current_A"]
@@ -100,21 +126,34 @@ def parse_power(run_dir: str, row: dict) -> None:
         n = label[-1]
         seg = p[(p["timestamp"] >= start) & (p["timestamp"] < end)]
         if len(seg) < 2:
-            print(f"  [warn] {os.path.basename(run_dir)}: no power coverage for {label} "
-                  f"(window {start:.0f}-{end:.0f}, log spans {lo:.0f}-{hi:.0f})", file=sys.stderr)
+            print(
+                f"  [warn] {os.path.basename(run_dir)}: no power coverage for "
+                f"{label} "
+                f"(window {start:.0f}-{end:.0f}, log spans {lo:.0f}-{hi:.0f})",
+                file=sys.stderr,
+            )
             continue
         dur_s = float(seg["timestamp"].iloc[-1] - seg["timestamp"].iloc[0])
         if dur_s < 0.95 * (end - start):
-            # the logger dropped out mid-window; a partial integral would understate energy
-            print(f"  [warn] {os.path.basename(run_dir)}: power covers only {dur_s:.0f} of "
-                  f"{end - start:.0f} s for {label}, leaving it out", file=sys.stderr)
+            # the logger dropped out mid-window; a partial integral
+            # would understate energy
+            print(
+                f"  [warn] {os.path.basename(run_dir)}: power covers only "
+                f"{dur_s:.0f} of "
+                f"{end - start:.0f} s for {label}, leaving it out",
+                file=sys.stderr,
+            )
             continue
-        gross_wh = float(np.trapezoid(seg["power_w"], seg["timestamp"]) / 3600.0)
+        gross_wh = float(
+            np.trapezoid(seg["power_w"], seg["timestamp"]) / 3600.0
+        )
         row[f"p{n}_energy_wh"] = round(gross_wh, 4)
         row[f"p{n}_mean_w"] = round(float(seg["power_w"].mean()), 3)
         row[f"p{n}_peak_w"] = round(float(seg["power_w"].max()), 3)
         if idle_w is not None:
-            row[f"p{n}_energy_net_wh"] = round(gross_wh - idle_w * dur_s / 3600.0, 4)
+            row[f"p{n}_energy_net_wh"] = round(
+                gross_wh - idle_w * dur_s / 3600.0, 4
+            )
 
 
 def parse_run(run_dir: str) -> dict:
@@ -137,11 +176,14 @@ def parse_run(run_dir: str) -> dict:
         row["retrained_slices"] = man.get("retrained_slices")
         if "slices" in man:
             # No leading underscore: itertuples() renames those columns.
-            row["depleted_slices"] = sum(1 for s in man["slices"]
-                                         if s["slice"] >= POISON_FROM_SLICE)
+            row["depleted_slices"] = sum(
+                1 for s in man["slices"] if s["slice"] >= POISON_FROM_SLICE
+            )
             row["full_slices"] = len(man["slices"]) - row["depleted_slices"]
 
-    telemetry = sorted(glob.glob(os.path.join(run_dir, "hardware_telemetry_*.csv")))
+    telemetry = sorted(
+        glob.glob(os.path.join(run_dir, "hardware_telemetry_*.csv"))
+    )
     if telemetry:
         t = pd.read_csv(telemetry[-1])
         flags = t["Throttled"].map(active_throttle)
@@ -155,15 +197,22 @@ def parse_run(run_dir: str) -> dict:
             row["p3_min_clock_mhz"] = int(p3["CPU_Freq_MHz"].min())
             row["p3_mean_clock_mhz"] = int(round(p3["CPU_Freq_MHz"].mean()))
             row["p3_iowait_mean_pct"] = round(p3["IOWait_Pct"].mean(), 2)
-            row["p3_sd_written_mb"] = round(p3["SD_Write_kBps"].sum() / 1024, 1)
+            row["p3_sd_written_mb"] = round(
+                p3["SD_Write_kBps"].sum() / 1024, 1
+            )
             row["p3_peak_temp_c"] = p3["Temp_C"].max()
-            # RAM_Used_MB is system-wide (free -m "used", no cache); net subtracts the idle level
+            # RAM_Used_MB is system-wide (free -m "used", no cache); net
+            # subtracts the idle level
             row["p3_ram_peak_mb"] = int(p3["RAM_Used_MB"].max())
             row["p3_ram_median_mb"] = float(p3["RAM_Used_MB"].median())
-            idle = t[t["Marker"].astype(str).str.startswith("idle")]["RAM_Used_MB"]
+            idle = t[t["Marker"].astype(str).str.startswith("idle")][
+                "RAM_Used_MB"
+            ]
             if len(idle):
                 row["idle_ram_mb"] = float(idle.median())
-                row["p3_ram_peak_net_mb"] = row["p3_ram_peak_mb"] - row["idle_ram_mb"]
+                row["p3_ram_peak_net_mb"] = (
+                    row["p3_ram_peak_mb"] - row["idle_ram_mb"]
+                )
             if "Ambient_C" in p3:
                 amb = pd.to_numeric(p3["Ambient_C"], errors="coerce").mean()
                 if pd.notna(amb):
@@ -171,11 +220,15 @@ def parse_run(run_dir: str) -> dict:
 
     sisa_log = os.path.join(run_dir, "sisa_timings.jsonl")
     if os.path.exists(sisa_log):
-        # The jsonl is append-only: it also holds Phase-4 rounds (11-15) and duplicates
-        # from re-runs. Keep Phase 1 only, deduped by (round, shard, slice).
+        # The jsonl is append-only: it also holds Phase-4 rounds (11-15)
+        # and duplicates from re-runs. Keep Phase 1 only, deduped by
+        # (round, shard, slice).
         entries = [json.loads(line) for line in open(sisa_log)]
-        p1 = {(e["round"], e["shard"], e["slice"]): e
-              for e in entries if e["round"] <= PHASE1_ROUNDS}
+        p1 = {
+            (e["round"], e["shard"], e["slice"]): e
+            for e in entries
+            if e["round"] <= PHASE1_ROUNDS
+        }
         row["p1_ckpt_io_s"] = round(sum(e["ckpt_s"] for e in p1.values()), 2)
         row["p1_ckpt_bytes"] = sum(e["ckpt_bytes"] for e in p1.values())
 
@@ -193,19 +246,26 @@ def parse_run(run_dir: str) -> dict:
 
 
 def _bootstrap_ci(diffs, n=10000, seed=0) -> tuple:
-    """Seeded 95 % bootstrap CI for the median paired difference (naive - sisa)."""
+    """Seeded 95 % bootstrap CI for the median paired difference (naive
+    - sisa)."""
     diffs = np.asarray(diffs, dtype=float)
     rng = np.random.default_rng(seed)
-    meds = np.median(rng.choice(diffs, size=(n, len(diffs)), replace=True), axis=1)
+    meds = np.median(
+        rng.choice(diffs, size=(n, len(diffs)), replace=True), axis=1
+    )
     return float(np.percentile(meds, 2.5)), float(np.percentile(meds, 97.5))
 
 
 def add_work_columns(df: pd.DataFrame) -> pd.DataFrame:
-    """Sample updates in the recovery: naive = rows x epochs; SISA = rows of the replayed
-    slices."""
-    pools = {r.seed: r.retained_samples + r.poisoned_samples
-             for r in df.itertuples() if r.arm == "naive"
-             and pd.notna(r.retained_samples) and pd.notna(r.poisoned_samples)}
+    """Sample updates in the recovery: naive = rows x epochs; SISA =
+    rows of the replayed slices."""
+    pools = {
+        r.seed: r.retained_samples + r.poisoned_samples
+        for r in df.itertuples()
+        if r.arm == "naive"
+        and pd.notna(r.retained_samples)
+        and pd.notna(r.poisoned_samples)
+    }
 
     def work(r):
         pool = pools.get(r.seed)
@@ -216,12 +276,18 @@ def add_work_columns(df: pd.DataFrame) -> pd.DataFrame:
         slice_rows = pool / (NUM_SHARDS * NUM_SLICES)
         n_poisoned_slices = NUM_SLICES - POISON_FROM_SLICE
         survived = n_poisoned_slices * slice_rows - r.poisoned_samples
-        return (r.full_slices * slice_rows
-                + r.depleted_slices * survived / n_poisoned_slices)
+        return (
+            r.full_slices * slice_rows
+            + r.depleted_slices * survived / n_poisoned_slices
+        )
 
     df["recovery_sample_updates"] = [work(r) for r in df.itertuples()]
-    df["recovery_rows_per_s"] = (df["recovery_sample_updates"] / df["ttr_s"]).round(0)
-    return df.drop(columns=[c for c in ("full_slices", "depleted_slices") if c in df])
+    df["recovery_rows_per_s"] = (
+        df["recovery_sample_updates"] / df["ttr_s"]
+    ).round(0)
+    return df.drop(
+        columns=[c for c in ("full_slices", "depleted_slices") if c in df]
+    )
 
 
 def paired_stats(df: pd.DataFrame, metric: str) -> dict | None:
@@ -235,9 +301,12 @@ def paired_stats(df: pd.DataFrame, metric: str) -> dict | None:
         p = 1.0
     ci_lo, ci_hi = _bootstrap_ci((naive - sisa).values)
     return {
-        "metric": metric, "n_pairs": len(wide),
+        "metric": metric,
+        "n_pairs": len(wide),
         "naive_median": round(float(naive.median()), 3),
-        "naive_iqr": round(float(naive.quantile(0.75) - naive.quantile(0.25)), 3),
+        "naive_iqr": round(
+            float(naive.quantile(0.75) - naive.quantile(0.25)), 3
+        ),
         "sisa_median": round(float(sisa.median()), 3),
         "sisa_iqr": round(float(sisa.quantile(0.75) - sisa.quantile(0.25)), 3),
         "diff_median": round(float((naive - sisa).median()), 3),
@@ -254,7 +323,11 @@ def main():
     p.add_argument("--tables", default="results/msc/tables")
     args = p.parse_args()
 
-    rows = [r for d in sorted(glob.glob(os.path.join(args.runs, "*"))) if (r := parse_run(d))]
+    rows = [
+        r
+        for d in sorted(glob.glob(os.path.join(args.runs, "*")))
+        if (r := parse_run(d))
+    ]
     if not rows:
         raise SystemExit(f"No runs found under {args.runs}")
     df = add_work_columns(pd.DataFrame(rows))
@@ -264,15 +337,24 @@ def main():
 
     poisoned = df.groupby("seed")["poisoned_samples"].first().dropna()
     if len(poisoned) and poisoned.max() / poisoned.min() > 1.1:
-        print(f"\nWARNING: poisoned-set size is not constant across seeds "
-              f"({poisoned.min():.0f}..{poisoned.max():.0f}). The paired contrasts stay "
-              f"valid (both arms of a seed share its poison set), but the treatment is "
-              f"heterogeneous and must be disclosed. Per seed:\n{poisoned.to_string()}")
+        print(
+            f"\nWARNING: poisoned-set size is not constant across seeds "
+            f"({poisoned.min():.0f}..{poisoned.max():.0f}). The paired "
+            "contrasts stay "
+            "valid (both arms of a seed share its poison set), but the "
+            "treatment is "
+            "heterogeneous and must be disclosed. Per "
+            f"seed:\n{poisoned.to_string()}"
+        )
 
-    stats = [s for m in METRICS if m in df.columns and (s := paired_stats(df, m))]
+    stats = [
+        s for m in METRICS if m in df.columns and (s := paired_stats(df, m))
+    ]
     if stats:
         stats_df = pd.DataFrame(stats)
-        stats_df.to_csv(os.path.join(args.tables, "campaign_paired_stats.csv"), index=False)
+        stats_df.to_csv(
+            os.path.join(args.tables, "campaign_paired_stats.csv"), index=False
+        )
         print("\n", stats_df.to_string(index=False))
 
 

@@ -1,4 +1,5 @@
-"""Flower ClientApp. CLIENT_MODE picks the standard client (naive arm) or the SISA client."""
+"""Flower ClientApp. CLIENT_MODE picks the standard client (naive arm)
+or the SISA client."""
 
 import os
 import random
@@ -40,21 +41,32 @@ class FlowerClient(NumPyClient):
         self.model.load_state_dict(state_dict, strict=True)
 
     def _apply_incoming(self, parameters):
-        """After recovery the global weights still carry the poison, so the first fit after
-        rejoining starts once from the recovered model (tracked with a .used marker)."""
+        """After recovery the global weights still carry the poison, so
+        the first fit after rejoining starts once from the recovered
+        model (tracked with a .used marker)."""
         marker = RECOVERED_MODEL_PATH + ".used" if RECOVERED_MODEL_PATH else ""
-        use_recovered = (RECOVERED_MODEL_PATH and os.path.exists(RECOVERED_MODEL_PATH)
-                         and not os.path.exists(marker))
+        use_recovered = (
+            RECOVERED_MODEL_PATH
+            and os.path.exists(RECOVERED_MODEL_PATH)
+            and not os.path.exists(marker)
+        )
         if use_recovered:
-            self.model.load_state_dict(torch.load(RECOVERED_MODEL_PATH, map_location=DEVICE))
+            self.model.load_state_dict(
+                torch.load(RECOVERED_MODEL_PATH, map_location=DEVICE)
+            )
             open(marker, "w").close()
-            print(f"[Client] Rejoin: starting from recovered model {RECOVERED_MODEL_PATH}")
+            print(
+                "[Client] Rejoin: starting from recovered model "
+                f"{RECOVERED_MODEL_PATH}"
+            )
         else:
             self.set_parameters(parameters)
 
     def fit(self, parameters, config):
         self._apply_incoming(parameters)
-        optimizer = torch.optim.Adam(self.model.parameters(), lr=float(config.get("lr", 0.001)))
+        optimizer = torch.optim.Adam(
+            self.model.parameters(), lr=float(config.get("lr", 0.001))
+        )
         self.model.train()
         total_loss, batches = 0.0, 0
         for _ in range(int(config.get("local_epochs", 1))):
@@ -89,12 +101,16 @@ class FlowerClient(NumPyClient):
         precision = tp / max(tp + fp, 1)
         recall = tp / max(tp + fn, 1)
         f1 = 2 * precision * recall / max(precision + recall, 1e-8)
-        return total_loss / max(len(self.valloader), 1), n, {
-            "accuracy": correct / n,
-            "precision": precision,
-            "recall": recall,
-            "f1": f1,
-        }
+        return (
+            total_loss / max(len(self.valloader), 1),
+            n,
+            {
+                "accuracy": correct / n,
+                "precision": precision,
+                "recall": recall,
+                "f1": f1,
+            },
+        )
 
 
 def client_fn(context: Context):
@@ -106,7 +122,8 @@ def client_fn(context: Context):
     return FlowerClient(model, trainloader, valloader).to_client()
 
 
-# Imported here, not at top: sisa_client imports FlowerClient back from this module.
+# Imported here, not at top: sisa_client imports FlowerClient back from
+# this module.
 if CLIENT_MODE == "sisa":
     from .sisa_client import client_fn as _selected_client_fn
 else:

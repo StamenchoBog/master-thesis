@@ -1,4 +1,5 @@
-"""Flower ServerApp. Strategy, rounds and client minimums come from environment variables."""
+"""Flower ServerApp. Strategy, rounds and client minimums come from
+environment variables."""
 
 import json
 import os
@@ -10,7 +11,8 @@ from flwr.server.strategy import FedAvg, FedProx, FedTrimmedAvg, Krum
 
 FL_STRATEGY = os.getenv("FL_STRATEGY", "fedavg")
 NUM_ROUNDS = int(os.getenv("NUM_ROUNDS", "10"))
-# Stops a stalled client from hanging the run; ResilientFedAvg then reuses the last weights.
+# Stops a stalled client from hanging the run; ResilientFedAvg then
+# reuses the last weights.
 ROUND_TIMEOUT = float(os.getenv("ROUND_TIMEOUT", "1200"))
 MIN_FIT_CLIENTS = int(os.getenv("MIN_FIT_CLIENTS", "2"))
 MIN_EVAL_CLIENTS = int(os.getenv("MIN_EVAL_CLIENTS", "2"))
@@ -38,7 +40,9 @@ def _weighted_average(metrics):
 
 def _save_results():
     os.makedirs(RESULTS_DIR, exist_ok=True)
-    with open(os.path.join(RESULTS_DIR, f"{FL_STRATEGY}{RESULTS_SUFFIX}.json"), "w") as f:
+    with open(
+        os.path.join(RESULTS_DIR, f"{FL_STRATEGY}{RESULTS_SUFFIX}.json"), "w"
+    ) as f:
         json.dump(_results, f, indent=2)
 
 
@@ -58,12 +62,14 @@ def aggregate_eval_metrics(metrics):
 
 
 def fit_config(server_round: int) -> dict:
-    """Hyperparameters live server-side so clients never need a rebuild to change them."""
+    """Hyperparameters live server-side so clients never need a rebuild
+    to change them."""
     return {"local_epochs": 1, "lr": 0.001}
 
 
 class ResilientFedAvg(FedAvg):
-    """FedAvg that reuses the previous round's weights if too few clients respond."""
+    """FedAvg that reuses the previous round's weights if too few
+    clients respond."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -71,16 +77,22 @@ class ResilientFedAvg(FedAvg):
 
     def aggregate_fit(self, server_round, results, failures):
         if len(results) < self.min_fit_clients:
-            print(f"[Round {server_round}] Only {len(results)} clients responded, "
-                  "reusing previous weights.")
+            print(
+                f"[Round {server_round}] Only {len(results)} clients "
+                "responded, "
+                "reusing previous weights."
+            )
             return self._last_good_weights, {}
-        parameters, metrics = super().aggregate_fit(server_round, results, failures)
+        parameters, metrics = super().aggregate_fit(
+            server_round, results, failures
+        )
         self._last_good_weights = parameters
         return parameters, metrics
 
 
 def _with_global_checkpoints(strategy):
-    """Saves the global weights after every round when SAVE_GLOBAL_CHECKPOINTS=1."""
+    """Saves the global weights after every round when
+    SAVE_GLOBAL_CHECKPOINTS=1."""
     if os.getenv("SAVE_GLOBAL_CHECKPOINTS", "0") != "1":
         return strategy
     original = strategy.aggregate_fit
@@ -91,7 +103,9 @@ def _with_global_checkpoints(strategy):
             ckpt_dir = os.path.join(RESULTS_DIR, "global_checkpoints")
             os.makedirs(ckpt_dir, exist_ok=True)
             arrays = parameters_to_ndarrays(aggregated)
-            np.savez(os.path.join(ckpt_dir, f"round_{server_round}.npz"), *arrays)
+            np.savez(
+                os.path.join(ckpt_dir, f"round_{server_round}.npz"), *arrays
+            )
         return aggregated, metrics
 
     strategy.aggregate_fit = aggregate_fit
@@ -109,11 +123,14 @@ def build_strategy():
         fit_metrics_aggregation_fn=aggregate_fit_metrics,
         evaluate_metrics_aggregation_fn=aggregate_eval_metrics,
     )
-    # Phase 4 resumes from the Phase-1 global model instead of a random init.
+    # Phase 4 resumes from the Phase-1 global model instead of a random
+    # init.
     init_ckpt = os.getenv("INIT_FROM_CHECKPOINT", "")
     if init_ckpt:
         z = np.load(init_ckpt)
-        common["initial_parameters"] = ndarrays_to_parameters([z[f] for f in z.files])
+        common["initial_parameters"] = ndarrays_to_parameters(
+            [z[f] for f in z.files]
+        )
         print(f"Resuming global model from {init_ckpt}")
     if FL_STRATEGY == "fedprox":
         return FedProx(**common, proximal_mu=0.1)
@@ -128,7 +145,9 @@ def build_strategy():
 def server_fn(context):
     return ServerAppComponents(
         strategy=_with_global_checkpoints(build_strategy()),
-        config=ServerConfig(num_rounds=NUM_ROUNDS, round_timeout=ROUND_TIMEOUT),
+        config=ServerConfig(
+            num_rounds=NUM_ROUNDS, round_timeout=ROUND_TIMEOUT
+        ),
     )
 
 

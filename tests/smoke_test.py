@@ -1,7 +1,8 @@
-"""Checks the unlearning guarantee on 2000 synthetic rows (no dataset needed): deterministic,
-confined poison placement; flip in memory only; one checkpoint per (round, shard, slice);
-rollback before the poison and a bit-identical recovery; a rollback state identical to a
-never-poisoned node and a replay that never reads a poisoned row.
+"""Checks the unlearning guarantee on 2000 synthetic rows (no dataset
+needed): deterministic, confined poison placement; flip in memory only;
+one checkpoint per (round, shard, slice); rollback before the poison and
+a bit-identical recovery; a rollback state identical to a never-poisoned
+node and a replay that never reads a poisoned row.
 
     docker run --rm -v "$PWD":/app -w /app --entrypoint python \
         fl-ids-preprocessor:latest tests/smoke_test.py
@@ -14,14 +15,25 @@ import sys
 import tempfile
 
 BASE = tempfile.mkdtemp(prefix="sisa_smoke_")
-# Must be set before importing edge_nodes modules, since they read env at import time.
-os.environ.update({
-    "SEED": "7", "NUM_SHARDS": "3", "NUM_SLICES": "4", "NUM_ROUNDS": "2",
-    "POISON_MODE": "flip", "PARTITION_ID": "2", "NUM_PARTITIONS": "3", "LR": "0.001",
-    "DATA_DIR": f"{BASE}/data", "CACHE_DIR": f"{BASE}/data/.cache/msc",
-    "CHECKPOINT_DIR": f"{BASE}/ckpt", "TELEMETRY_DIR": f"{BASE}/shm",
-    "RECOVERED_MODEL_PATH": f"{BASE}/ckpt/recovered_model.pt",
-})
+# Must be set before importing edge_nodes modules, since they read env
+# at import time.
+os.environ.update(
+    {
+        "SEED": "7",
+        "NUM_SHARDS": "3",
+        "NUM_SLICES": "4",
+        "NUM_ROUNDS": "2",
+        "POISON_MODE": "flip",
+        "PARTITION_ID": "2",
+        "NUM_PARTITIONS": "3",
+        "LR": "0.001",
+        "DATA_DIR": f"{BASE}/data",
+        "CACHE_DIR": f"{BASE}/data/.cache/msc",
+        "CHECKPOINT_DIR": f"{BASE}/ckpt",
+        "TELEMETRY_DIR": f"{BASE}/shm",
+        "RECOVERED_MODEL_PATH": f"{BASE}/ckpt/recovered_model.pt",
+    }
+)
 for sub in ("data/.cache/msc", "ckpt", "shm"):
     os.makedirs(os.path.join(BASE, sub), exist_ok=True)
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -30,12 +42,15 @@ import numpy as np  # noqa: E402
 import torch  # noqa: E402
 
 from edge_nodes.sisa_partition import (  # noqa: E402
-    TRAIN_FRACTION, poison_indices, shard_slice_assignment)
+    TRAIN_FRACTION,
+    poison_indices,
+    shard_slice_assignment,
+)
 
 SEED, S, R = 7, 3, 4
 N, D = 2000, 10
 
-# ---- 1. Poison placement: deterministic, attack-only, confined to target slices
+# ---- 1. Poison placement: deterministic, attack-only, confined
 rng = np.random.default_rng(0)
 X = rng.normal(size=(N, D)).astype(np.float32)
 y = (rng.random(N) < 0.5).astype(np.int64)
@@ -43,8 +58,9 @@ y = (rng.random(N) < 0.5).astype(np.int64)
 n_train = int(TRAIN_FRACTION * N)
 a1 = shard_slice_assignment(n_train, SEED, S, R)
 a2 = shard_slice_assignment(n_train, SEED, S, R)
-assert all((s1 == s2).all() for sh1, sh2 in zip(a1, a2) for s1, s2 in zip(sh1, sh2)), \
-    "assignment not deterministic"
+assert all(
+    (s1 == s2).all() for sh1, sh2 in zip(a1, a2) for s1, s2 in zip(sh1, sh2)
+), "assignment not deterministic"
 
 POISON_SHARD, FROM_SLICE, FRACTION = 1, 2, 0.8
 p1 = poison_indices(y, a1, POISON_SHARD, FROM_SLICE, FRACTION, SEED)
@@ -55,8 +71,12 @@ target = set(np.concatenate(a1[POISON_SHARD][FROM_SLICE:]).tolist())
 assert set(p1.tolist()) <= target, "poison leaked outside target slices"
 print(f"[1] poisoning deterministic and confined: {len(p1)} samples OK")
 
-np.savez(os.path.join(os.environ["CACHE_DIR"], "partition_2_of_3.npz"),
-         X=X, y=y, poison_idx=p1)
+np.savez(
+    os.path.join(os.environ["CACHE_DIR"], "partition_2_of_3.npz"),
+    X=X,
+    y=y,
+    poison_idx=p1,
+)
 
 # ---- 2. POISON_MODE=flip semantics
 from edge_nodes.data_loader import load_arrays  # noqa: E402
@@ -76,8 +96,12 @@ for _ in range(2):
     trainer.train_round(0.001, telemetry_log.append)
 assert trainer.round == 2
 assert len(telemetry_log) == 2 * S * R, "one telemetry entry per slice"
-assert all(os.path.exists(ckpt_path(s, r, sl))
-           for s in range(S) for r in (1, 2) for sl in range(R))
+assert all(
+    os.path.exists(ckpt_path(s, r, sl))
+    for s in range(S)
+    for r in (1, 2)
+    for sl in range(R)
+)
 print(f"[3] SISA trained 2 rounds, {len(telemetry_log)} slice checkpoints OK")
 
 
@@ -93,7 +117,8 @@ def ckpt_hash(path):
     return h.hexdigest()
 
 
-# Recovery overwrites the checkpoints from the poisoned slice on, so hash them now.
+# Recovery overwrites the checkpoints from the poisoned slice on, so
+# hash them now.
 poisoned_rollback = ckpt_hash(ckpt_path(POISON_SHARD, 1, FROM_SLICE - 1))
 poisoned_first = ckpt_hash(ckpt_path(POISON_SHARD, 1, FROM_SLICE))
 
@@ -111,33 +136,46 @@ def state_hash(path):
 
 sisa_recover.main()
 h_first = state_hash(os.environ["RECOVERED_MODEL_PATH"])
-with open(os.path.join(os.environ["TELEMETRY_DIR"], "recovery_manifest.json")) as f:
+with open(
+    os.path.join(os.environ["TELEMETRY_DIR"], "recovery_manifest.json")
+) as f:
     man = json.load(f)
-assert man["affected_shards"] == {str(POISON_SHARD): FROM_SLICE}, man["affected_shards"]
+assert man["affected_shards"] == {str(POISON_SHARD): FROM_SLICE}, man[
+    "affected_shards"
+]
 
 sisa_recover.main()
 h_second = state_hash(os.environ["RECOVERED_MODEL_PATH"])
-assert h_first == h_second, "recovery not deterministic across identical reruns"
-print(f"[4] rollback at shard {POISON_SHARD} slice {FROM_SLICE} (predates poison), "
-      f"deterministic recovery OK ({h_first[:12]})")
+assert (
+    h_first == h_second
+), "recovery not deterministic across identical reruns"
+print(
+    f"[4] rollback at shard {POISON_SHARD} slice {FROM_SLICE} (predates "
+    "poison), "
+    f"deterministic recovery OK ({h_first[:12]})"
+)
 
-# ---- 5. Exactness: the rollback state never saw the poison, and the replay never reads it
+# ---- 5. Exactness: clean rollback state, replay without poison
 from edge_nodes import data_loader, sisa_client  # noqa: E402
 
-
-# The same node with the true labels: if the rollback state matches bit for bit, the
-# poisoned rows had no influence on it.
+# The same node with the true labels: if the rollback state matches bit
+# for bit, the poisoned rows had no influence on it.
 clean_dir = os.path.join(BASE, "ckpt_clean")
 os.makedirs(clean_dir)
 sisa_client.CHECKPOINT_DIR = clean_dir
 os.environ["POISON_MODE"] = data_loader.POISON_MODE = "off"
 data_loader._arrays_cache.clear()
 SISATrainer(2, 3).train_round(0.001, lambda _: None)
-clean_rollback = ckpt_hash(sisa_client.ckpt_path(POISON_SHARD, 1, FROM_SLICE - 1))
+clean_rollback = ckpt_hash(
+    sisa_client.ckpt_path(POISON_SHARD, 1, FROM_SLICE - 1)
+)
 clean_first = ckpt_hash(sisa_client.ckpt_path(POISON_SHARD, 1, FROM_SLICE))
 sisa_client.CHECKPOINT_DIR = os.environ["CHECKPOINT_DIR"]
-assert poisoned_rollback == clean_rollback, "rollback checkpoint depends on the poison"
-# and the comparison can see the poison: the first poisoned slice must differ
+assert (
+    poisoned_rollback == clean_rollback
+), "rollback checkpoint depends on the poison"
+# and the comparison can see the poison: the first poisoned slice must
+# differ
 assert poisoned_first != clean_first, "check cannot tell poisoned from clean"
 
 seen = []
@@ -153,8 +191,12 @@ sisa_recover.slice_loader = recording_loader
 sisa_recover.main()
 sisa_recover.slice_loader = real_loader
 replayed = np.concatenate(seen)
-assert not set(replayed.tolist()) & set(p1.tolist()), "replay read a poisoned row"
-print(f"[5] rollback checkpoint identical to a never-poisoned node, replay of "
-      f"{len(replayed)} rows without poison OK")
+assert not set(replayed.tolist()) & set(
+    p1.tolist()
+), "replay read a poisoned row"
+print(
+    f"[5] rollback checkpoint identical to a never-poisoned node, replay of "
+    f"{len(replayed)} rows without poison OK"
+)
 
 print("\nSMOKE TEST PASSED")

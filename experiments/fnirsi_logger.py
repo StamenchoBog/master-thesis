@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
-# FNIRSI FNB58 power logger, reduced from baryluk/fnirsi-usb-power-data-logger (746e4d38515a).
-# Exits with code 3 when the meter is lost; the restart loop in experiments/run/02_instruments.sh
-# then starts a fresh process (on macOS only a new process gets the meter back).
+# FNIRSI FNB58 power logger, reduced from
+# baryluk/fnirsi-usb-power-data-logger (746e4d38515a). Exits with code 3
+# when the meter is lost; the restart loop in
+# experiments/run/02_instruments.sh then starts a fresh process (on
+# macOS only a new process gets the meter back).
 #   sudo python3 -u experiments/fnirsi_logger.py > power_fnb58.csv
 
 import signal
@@ -29,8 +31,9 @@ sample_count = 0
 
 
 def request_stop(signum, frame):
-    # Finish the read loop instead of dying mid-stream: a killed logger leaves the meter
-    # claimed, and the next start then often gets no data.
+    # Finish the read loop instead of dying mid-stream: a killed logger
+    # leaves the meter claimed, and the next start then often gets no
+    # data.
     global STOP_REQUESTED
     STOP_REQUESTED = True
 
@@ -39,8 +42,8 @@ def decode(data):
     global energy, capacity, last_power, sample_count
     temp_ema = None
 
-    # 64 bytes: 0xaa, the packet type (0x04 = data), 4 samples of 15 bytes, then one byte
-    # of unknown purpose and an 8-bit CRC.
+    # 64 bytes: 0xaa, the packet type (0x04 = data), 4 samples of 15
+    # bytes, then one byte of unknown purpose and an 8-bit CRC.
     if data[1] != 0x04:
         return
 
@@ -48,12 +51,21 @@ def decode(data):
     for i in range(4):
         offset = 2 + 15 * i
         # 4 + 4 + 2 + 2 + 2 + 1 (unknown constant 1) = 15 bytes
-        voltage = int.from_bytes(bytes(data[offset:offset + 4]), "little") / 100000
-        current = int.from_bytes(bytes(data[offset + 4:offset + 8]), "little") / 100000
+        voltage = (
+            int.from_bytes(bytes(data[offset : offset + 4]), "little") / 100000
+        )
+        current = (
+            int.from_bytes(bytes(data[offset + 4 : offset + 8]), "little")
+            / 100000
+        )
         dp = (data[offset + 8] + data[offset + 9] * 256) / 1000
         dn = (data[offset + 10] + data[offset + 11] * 256) / 1000
         temp_C = (data[offset + 13] + data[offset + 14] * 256) / 10.0
-        temp_ema = temp_C if temp_ema is None else temp_C * (1.0 - ALPHA) + temp_ema * ALPHA
+        temp_ema = (
+            temp_C
+            if temp_ema is None
+            else temp_C * (1.0 - ALPHA) + temp_ema * ALPHA
+        )
         power = voltage * current
         last_power = power
         sample_count += 1
@@ -73,15 +85,19 @@ def request_data(ep_out):
 
 
 def connect(attempts=10):
-    """Find the meter, claim its HID interface and start the stream. None if that fails."""
+    """Find the meter, claim its HID interface and start the stream.
+    None if that fails."""
     dev = interface_hid_num = None
     for _ in range(attempts):
         dev = usb.core.find(idVendor=VID, idProduct=PID)
         if dev is not None:
             try:
                 interface_hid_num = next(
-                    intf.bInterfaceNumber for cfg in dev for intf in cfg
-                    if intf.bInterfaceClass == 0x03)
+                    intf.bInterfaceNumber
+                    for cfg in dev
+                    for intf in cfg
+                    if intf.bInterfaceClass == 0x03
+                )
                 break
             except (usb.core.USBError, StopIteration):
                 pass
@@ -99,8 +115,10 @@ def connect(attempts=10):
                 try:
                     dev.detach_kernel_driver(intf.bInterfaceNumber)
                 except usb.core.USBError as e:
-                    sys.exit(f"Could not detach the kernel driver from interface "
-                             f"{intf.bInterfaceNumber}: {e}")
+                    sys.exit(
+                        f"Could not detach the kernel driver from interface "
+                        f"{intf.bInterfaceNumber}: {e}"
+                    )
     dev.set_configuration()
 
     intf = dev.get_active_configuration()[(interface_hid_num, 0)]
@@ -108,12 +126,16 @@ def connect(attempts=10):
     def endpoint(direction):
         def match(e):
             return usb.util.endpoint_direction(e.bEndpointAddress) == direction
+
         return usb.util.find_descriptor(intf, custom_match=match)
 
-    ep_out, ep_in = endpoint(usb.util.ENDPOINT_OUT), endpoint(usb.util.ENDPOINT_IN)
+    ep_out, ep_in = endpoint(usb.util.ENDPOINT_OUT), endpoint(
+        usb.util.ENDPOINT_IN
+    )
     assert ep_in and ep_out
 
-    # The start command itself sometimes fails with an I/O error: clear the stall and retry.
+    # The start command itself sometimes fails with an I/O error: clear
+    # the stall and retry.
     for _ in range(10):
         try:
             request_data(ep_out)
@@ -135,8 +157,9 @@ def clear_stall(*eps):
 
 
 def release(dev, interface_hid_num):
-    """Free our claim on the meter. The OS drivers are not reattached: macOS would remount
-    the meter's USB drive, and a logger started during that remount gets no samples."""
+    """Free our claim on the meter. The OS drivers are not reattached:
+    macOS would remount the meter's USB drive, and a logger started
+    during that remount gets no samples."""
     try:
         usb.util.release_interface(dev, interface_hid_num)
     except usb.core.USBError:
@@ -152,23 +175,32 @@ def main():
     for sig in (signal.SIGTERM, signal.SIGALRM, signal.SIGHUP):
         signal.signal(sig, request_stop)
 
-    time.sleep(2.0)  # macOS mounts the meter's USB drive right after it appears; let it settle
+    # macOS mounts the meter's USB drive right after it appears; let it
+    # settle.
+    time.sleep(2.0)
     conn = connect()
     if conn is None:
         sys.exit("Meter not found or did not accept the start command.")
     dev, interface_hid_num, ep_in, ep_out = conn
 
     print()  # the original logger's format starts with a blank line
-    print("timestamp sample_in_packet voltage_V current_A dp_V dn_V temp_C_ema energy_Ws "
-          "capacity_As")
+    print(
+        "timestamp sample_in_packet voltage_V current_A dp_V dn_V temp_C_ema "
+        "energy_Ws "
+        "capacity_As"
+    )
 
     time.sleep(0.1)
     continue_time = time.time() + REFRESH_S
     timeouts = errors = 0
     lost = False
     last_beat = time.time()
-    print("Logger running (this heartbeat is on stderr; sample data goes to the file).",
-          file=sys.stderr, flush=True)
+    print(
+        "Logger running (this heartbeat is on stderr; sample data goes to the "
+        "file).",
+        file=sys.stderr,
+        flush=True,
+    )
     while not STOP_REQUESTED:
         try:
             data = ep_in.read(size_or_buffer=64, timeout=5000)
@@ -178,8 +210,8 @@ def main():
                 continue_time = time.time() + REFRESH_S
                 ep_out.write(KEEP_ALIVE)
         except usb.core.USBTimeoutError:
-            # The meter sometimes goes quiet: resend the start command, and after about a
-            # minute of silence treat it as lost.
+            # The meter sometimes goes quiet: resend the start command,
+            # and after about a minute of silence treat it as lost.
             timeouts += 1
             if timeouts >= 12:
                 log("meter silent")
@@ -191,7 +223,8 @@ def main():
             except usb.core.USBError:
                 pass
         except usb.core.USBError as e:
-            # Single I/O errors happen on the reflashed meter; five in a row mean it is gone.
+            # Single I/O errors happen on the reflashed meter; five in a
+            # row mean it is gone.
             errors += 1
             log(f"USB error ({e}), restarting the stream")
             if errors >= 5:
@@ -199,7 +232,8 @@ def main():
                 lost = True
                 break
             time.sleep(1.0)
-            # A stalled endpoint ("Pipe error") must be cleared before restarting.
+            # A stalled endpoint ("Pipe error") must be cleared before
+            # restarting.
             clear_stall(ep_in, ep_out)
             try:
                 request_data(ep_out)
@@ -210,7 +244,10 @@ def main():
 
         if time.time() - last_beat >= 5.0:
             last_beat = time.time()
-            log(f"streaming — {sample_count} samples | {last_power:.2f} W | {energy:.1f} Ws")
+            log(
+                f"streaming — {sample_count} samples | {last_power:.2f} W | "
+                f"{energy:.1f} Ws"
+            )
 
     if lost:
         log("exiting for a fresh restart")

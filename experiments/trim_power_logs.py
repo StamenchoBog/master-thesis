@@ -1,9 +1,11 @@
-"""Trim each run's power_fnb58.csv to the phase-marker span the analysis reads.
+"""Trim each run's power_fnb58.csv to the phase-marker span the analysis
+reads.
 
-    python experiments/trim_power_logs.py [--runs results/msc/campaign] [--apply]
+    python experiments/trim_power_logs.py \
+        [--runs results/msc/campaign] [--apply]
 
-Keeps [first marker - 1 s, last marker + 1 s], so the analysis output does not change.
-Dry run unless --apply.
+Keeps [first marker - 1 s, last marker + 1 s], so the analysis output
+does not change. Dry run unless --apply.
 """
 
 import argparse
@@ -26,8 +28,9 @@ def trim(run_dir, apply):
         return
     lo, hi = bounds
     lines = open(csv).read().splitlines()
-    # Keep only the first header: a logger restarted with `>>` writes it again mid-file,
-    # and analyze_runs.py would then read that second header as data.
+    # Keep only the first header: a logger restarted with `>>` writes it
+    # again mid-file, and analyze_runs.py would then read that second
+    # header as data.
     head, data, seen_header = [], [], False
     for ln in lines:
         parts = ln.split()
@@ -41,13 +44,19 @@ def trim(run_dir, apply):
             head.append(ln)
     kept = [ln for ln in data if lo <= float(ln.split()[0]) <= hi]
     if not kept:  # markers don't overlap the log, so leave the file alone
-        print(f"  {os.path.basename(run_dir):16s} SKIP (no samples in marker window)")
+        print(
+            f"  {os.path.basename(run_dir):16s} SKIP (no samples in marker "
+            "window)"
+        )
         return
     before = os.path.getsize(csv)
     out = "\n".join(head + kept) + "\n"
     after = len(out.encode())
-    print(f"  {os.path.basename(run_dir):16s} {before/1e6:7.1f} MB -> {after/1e6:6.2f} MB "
-          f"({len(kept)}/{len(data)} samples)")
+    print(
+        f"  {os.path.basename(run_dir):16s} {before/1e6:7.1f} MB -> "
+        f"{after/1e6:6.2f} MB "
+        f"({len(kept)}/{len(data)} samples)"
+    )
     if apply:
         with open(csv, "w") as f:
             f.write(out)
@@ -56,7 +65,9 @@ def trim(run_dir, apply):
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--runs", default="results/msc/campaign")
-    p.add_argument("--apply", action="store_true", help="rewrite files (default: dry run)")
+    p.add_argument(
+        "--apply", action="store_true", help="rewrite files (default: dry run)"
+    )
     args = p.parse_args()
     for d in sorted(glob.glob(os.path.join(args.runs, "*"))):
         if os.path.isdir(d):

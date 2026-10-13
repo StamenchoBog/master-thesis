@@ -1,9 +1,11 @@
-"""SISA recovery on the Pi: roll back the affected shards and replay them without the poison.
+"""SISA recovery on the Pi: roll back the affected shards and replay
+them without the poison.
 
     python -m edge_nodes.sisa_recover
 
-An affected shard returns to its checkpoint from round 1, slice l*-1, the last state without
-poison (every later round trained on it), and replays the rest of rounds 1..NUM_ROUNDS.
+An affected shard returns to its checkpoint from round 1, slice l*-1,
+the last state without poison (every later round trained on it), and
+replays the rest of rounds 1..NUM_ROUNDS.
 """
 
 import json
@@ -40,9 +42,12 @@ RECOVERED_MODEL_PATH = os.getenv(
 
 
 def main():
-    # Dropout uses the global torch RNG; seed it so recovery is deterministic.
+    # Dropout uses the global torch RNG; seed it so recovery is
+    # deterministic.
     torch.manual_seed(SEED * 6271)
-    cache = os.path.join(CACHE_DIR, f"partition_{PARTITION_ID}_of_{NUM_PARTITIONS}.npz")
+    cache = os.path.join(
+        CACHE_DIR, f"partition_{PARTITION_ID}_of_{NUM_PARTITIONS}.npz"
+    )
     data = np.load(cache)
     X, y, poison_idx = data["X"], data["y"], data["poison_idx"]
     if len(poison_idx) == 0:
@@ -72,7 +77,10 @@ def main():
             torch.manual_seed(SEED * 1000 + shard)
             model = IDSModel(input_dim=X.shape[1]).to(DEVICE)
             optimizer = torch.optim.Adam(model.parameters(), lr=LR)
-            print(f"[shard {shard}] poison in slice 0, no clean checkpoint, fresh init")
+            print(
+                f"[shard {shard}] poison in slice 0, no clean checkpoint, "
+                "fresh init"
+            )
         else:
             rollback = ckpt_path(shard, 1, from_slice - 1)
             state = torch.load(rollback, map_location=DEVICE)
@@ -87,23 +95,38 @@ def main():
                 optimizer = torch.optim.Adam(model.parameters(), lr=LR)
             start_slice = from_slice if rnd == 1 else 0
             for slc in range(start_slice, NUM_SLICES):
-                loader = slice_loader(X, y, clean[slc], batch_seed(SEED, rnd, shard, slc))
+                loader = slice_loader(
+                    X, y, clean[slc], batch_seed(SEED, rnd, shard, slc)
+                )
                 t0 = time.perf_counter()
                 train_slice(model, optimizer, loader, criterion)
                 train_s = time.perf_counter() - t0
-                ckpt_s, ckpt_bytes = save_checkpoint(ckpt_path(shard, rnd, slc),
-                                                     model, optimizer, rnd, slc)
-                slice_log.append({"shard": shard, "round": rnd, "slice": slc,
-                                  "train_s": round(train_s, 4), "ckpt_s": round(ckpt_s, 4),
-                                  "ckpt_bytes": ckpt_bytes})
+                ckpt_s, ckpt_bytes = save_checkpoint(
+                    ckpt_path(shard, rnd, slc), model, optimizer, rnd, slc
+                )
+                slice_log.append(
+                    {
+                        "shard": shard,
+                        "round": rnd,
+                        "slice": slc,
+                        "train_s": round(train_s, 4),
+                        "ckpt_s": round(ckpt_s, 4),
+                        "ckpt_bytes": ckpt_bytes,
+                    }
+                )
 
     total_s = time.perf_counter() - t_start
 
     states = []
     for shard in range(NUM_SHARDS):
-        ckpt = torch.load(ckpt_path(shard, NUM_ROUNDS, NUM_SLICES - 1), map_location=DEVICE)
+        ckpt = torch.load(
+            ckpt_path(shard, NUM_ROUNDS, NUM_SLICES - 1), map_location=DEVICE
+        )
         states.append(ckpt["model"])
-    averaged = {k: torch.stack([s[k].float() for s in states]).mean(0) for k in states[0]}
+    averaged = {
+        k: torch.stack([s[k].float() for s in states]).mean(0)
+        for k in states[0]
+    }
     with open(RECOVERED_MODEL_PATH, "wb") as f:
         torch.save(averaged, f)
         f.flush()
@@ -122,9 +145,12 @@ def main():
     }
     with open(os.path.join(TELEMETRY_DIR, "recovery_manifest.json"), "w") as f:
         json.dump(manifest, f, indent=2)
-    print(f"SISA recovery done in {total_s:.1f}s "
-          f"({len(slice_log)} slice-retrains, {manifest['ckpt_io_s']}s checkpoint I/O). "
-          f"Recovered model: {RECOVERED_MODEL_PATH}")
+    print(
+        f"SISA recovery done in {total_s:.1f}s "
+        f"({len(slice_log)} slice-retrains, {manifest['ckpt_io_s']}s "
+        "checkpoint I/O). "
+        f"Recovered model: {RECOVERED_MODEL_PATH}"
+    )
 
 
 if __name__ == "__main__":

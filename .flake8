@@ -1,3 +1,6 @@
 [flake8]
-max-line-length = 100
+max-line-length = 79
+max-doc-length = 72
+# Black puts spaces around ":" in complex slices, which PEP 8 allows.
+extend-ignore = E203
 exclude = .git,__pycache__,.venv,data,results,docs

@@ -1,8 +1,10 @@
 """Score a model on the global test set.
 
-    python -m analysis.evaluate_model <model> [--test data/.cache/msc/test_global.npz]
+    python -m analysis.evaluate_model <model> \
+        [--test data/.cache/msc/test_global.npz]
 
-<model> is a recovered model (.pt) or a per-round global checkpoint (.npz).
+<model> is a recovered model (.pt) or a per-round global checkpoint
+(.npz).
 """
 
 import argparse
@@ -20,19 +22,25 @@ def load_model(path: str, input_dim: int) -> IDSModel:
         z = np.load(path)
         arrays = [z[f] for f in z.files]
         keys = list(model.state_dict().keys())
-        model.load_state_dict({k: torch.tensor(a) for k, a in zip(keys, arrays)})
+        model.load_state_dict(
+            {k: torch.tensor(a) for k, a in zip(keys, arrays)}
+        )
     else:
         model.load_state_dict(torch.load(path, map_location="cpu"))
     model.train(False)
     return model
 
 
-def metrics(model: IDSModel, X: np.ndarray, y: np.ndarray, batch: int = 4096) -> dict:
+def metrics(
+    model: IDSModel, X: np.ndarray, y: np.ndarray, batch: int = 4096
+) -> dict:
     tp = fp = fn = correct = 0
     with torch.no_grad():
         for i in range(0, len(X), batch):
-            pred = (model(torch.from_numpy(X[i:i + batch])).squeeze() > 0.5).long()
-            labels = torch.from_numpy(y[i:i + batch]).long()
+            pred = (
+                model(torch.from_numpy(X[i : i + batch])).squeeze() > 0.5
+            ).long()
+            labels = torch.from_numpy(y[i : i + batch]).long()
             correct += (pred == labels).sum().item()
             tp += ((pred == 1) & (labels == 1)).sum().item()
             fp += ((pred == 1) & (labels == 0)).sum().item()
