@@ -258,18 +258,19 @@ def model_size(pred, meas, measured, io):
     panel = (
         "scale only axis, width=0.21\\linewidth, height=4.2cm, xmode=log, "
         "xlabel={Број на параметри $P$}, ymajorgrids, title "
-        "style={font=\\small}"
+        "style={font=\\small, align=center}"
     )
     legend = (
         "legend "
-        "style={font=\\small, at={(1.95,1.2)}, anchor=south, draw=none, "
+        "style={font=\\small, at={(1.95,1.35)}, anchor=south, draw=none, "
         "legend columns=3, /tikz/every even column/.append "
         "style={column sep=0.8em}}"
     )
     speedup = (
         f"\\begin{{axis}}[name=su, {panel}, xmin=5e3, xmax=3e7, ymin=0, "
         "ymax=10, "
-        f"title={{Забрзување на SISA}}, ylabel={{пати}}, {legend}, {AXIS}]\n"
+        "title={Забрзување\\\\на SISA}, "
+        f"ylabel={{пати}}, {legend}, {AXIS}]\n"
         f"\\addplot[color=sisacol, line width=0.9pt, mark=*, mark size=1.6pt] "
         f"coordinates {{{pts(pred.params, pred.speedup)}}};\n"
         "\\addlegendentry{модел на трошокот}\n"
@@ -287,7 +288,8 @@ def model_size(pred, meas, measured, io):
     share = (
         f"\\begin{{axis}}[name=io, at={{(su.east)}}, anchor=west, "
         f"xshift=1.3cm, {panel}, "
-        "xmin=5e3, xmax=3e7, ymin=0, ymax=20, title={Удел на запишувањето}, "
+        "xmin=5e3, xmax=3e7, ymin=0, ymax=20, "
+        "title={Удел на\\\\запишувањето}, "
         f"ylabel={{\\% од времето на SISA}}, {AXIS}]\n"
         "\\addplot[color=sisacol, line width=0.9pt, mark=*, mark size=1.6pt] "
         f"coordinates {{{pts(pred.params, io)}}};\n"
@@ -297,7 +299,7 @@ def model_size(pred, meas, measured, io):
         f"\\begin{{axis}}[name=st, at={{(io.east)}}, anchor=west, "
         f"xshift=1.3cm, {panel}, "
         "xmin=5e3, xmax=1e8, ymode=log, ymin=0.01, ymax=1000, "
-        f"title={{Простор за контролните точки}}, ylabel={{GB}}, {AXIS}]\n"
+        f"title={{Простор за\\\\контролните точки}}, ylabel={{GB}}, {AXIS}]\n"
         "\\addplot[color=sisacol, line width=0.9pt] coordinates "
         f"{{{pts(grid, 250 * (slope * grid + icpt) / 1e9)}}};\n"
         "\\addplot[only marks, mark=square*, mark size=2.2pt, "
