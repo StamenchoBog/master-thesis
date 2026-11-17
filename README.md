@@ -106,6 +106,10 @@ Everything runs in Docker on one machine:
 
 ![Course architecture](./docs/diagrams/msc-thesis-diagrams-course.png)
 
+The same setup at container level, as defined in `docker-compose.yml`:
+
+![Course containers](./docs/diagrams/msc-thesis-diagrams-course-detailed.drawio.png)
+
 ```sh
 docker compose run --rm preprocessor    # build per-node caches, once
 docker compose up
